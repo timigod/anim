@@ -35,7 +35,7 @@ jobs:
           tag = os.environ["GITHUB_REF_NAME"]
           if tag != f"v{version}":
               raise SystemExit(f"tag {tag!r} does not match project version {version!r}")
-          if version != "0.1.0":
+          if version != "0.1.1":
               raise SystemExit(f"unexpected first public version {version!r}")
           PY
 
@@ -56,7 +56,7 @@ jobs:
               for path in Path("dist").iterdir()
               if path.is_file() and not path.name.startswith(".")
           )
-          expected = ["anim-0.1.0-py3-none-any.whl", "anim-0.1.0.tar.gz"]
+          expected = ["anim-0.1.1-py3-none-any.whl", "anim-0.1.1.tar.gz"]
           if actual != expected:
               raise SystemExit(f"unexpected distributions: {actual!r}")
           PY
@@ -74,8 +74,8 @@ jobs:
 
           from packaging.specifiers import SpecifierSet
 
-          wheel = Path("dist/anim-0.1.0-py3-none-any.whl")
-          source = Path("dist/anim-0.1.0.tar.gz")
+          wheel = Path("dist/anim-0.1.1-py3-none-any.whl")
+          source = Path("dist/anim-0.1.1.tar.gz")
           expected_requirements = {
               "attrs": "26.1.0",
               "jsonschema": "4.26.0",
@@ -143,7 +143,7 @@ jobs:
               metadata = email.parser.BytesParser().parsebytes(
                   archive.read(metadata_names[0])
               )
-          if metadata["Name"] != "anim" or metadata["Version"] != "0.1.0":
+          if metadata["Name"] != "anim" or metadata["Version"] != "0.1.1":
               raise SystemExit("wheel name/version metadata mismatch")
           if SpecifierSet(metadata["Requires-Python"]) != SpecifierSet(">=3.12,<3.13"):
               raise SystemExit("wheel Python requirement mismatch")
@@ -167,9 +167,9 @@ jobs:
               source_payloads = {}
               for member in archive.getmembers():
                   path = PurePosixPath(member.name)
-                  if path == PurePosixPath("anim-0.1.0"):
+                  if path == PurePosixPath("anim-0.1.1"):
                       continue
-                  relative = path.relative_to("anim-0.1.0").as_posix()
+                  relative = path.relative_to("anim-0.1.1").as_posix()
                   source_members.add(relative)
                   if member.isfile():
                       extracted = archive.extractfile(member)
@@ -210,14 +210,14 @@ jobs:
           import hashlib
           from pathlib import Path
 
-          manifest = Path("release/anim-0.1.0-sha256.txt")
+          manifest = Path("release/anim-0.1.1-sha256.txt")
           expected = {}
           for line in manifest.read_text(encoding="utf-8").splitlines():
               digest, filename = line.split("  ", 1)
               expected[filename] = digest
           required = {
-              "anim-0.1.0-py3-none-any.whl",
-              "anim-0.1.0.tar.gz",
+              "anim-0.1.1-py3-none-any.whl",
+              "anim-0.1.1.tar.gz",
           }
           if set(expected) != required:
               raise SystemExit(f"unexpected reviewed artifact manifest: {sorted(expected)!r}")
@@ -232,7 +232,7 @@ jobs:
       - name: Retain exact distributions
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: anim-0.1.0-distributions
+          name: anim-0.1.1-distributions
           path: dist/
           if-no-files-found: error
           retention-days: 14
@@ -259,7 +259,7 @@ jobs:
       - name: Download exact distributions
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: anim-0.1.0-distributions
+          name: anim-0.1.1-distributions
           path: dist
 
       - name: Install and run the public synthetic route
@@ -271,14 +271,14 @@ jobs:
           uv venv "$proof_root/venv" --python 3.12
           uv pip install \
             --python "$proof_root/venv/bin/python" \
-            "$GITHUB_WORKSPACE/dist/anim-0.1.0-py3-none-any.whl"
+            "$GITHUB_WORKSPACE/dist/anim-0.1.1-py3-none-any.whl"
           cd "$proof_root"
           "$proof_root/venv/bin/python" - <<'PY'
           from importlib import metadata
 
-          assert metadata.version("anim") == "0.1.0"
+          assert metadata.version("anim") == "0.1.1"
           import ebm_audit
-          assert ebm_audit.__version__ == "0.1.0"
+          assert ebm_audit.__version__ == "0.1.1"
           PY
           "$proof_root/venv/bin/ebm-audit" doctor
           if [ "$RUNNER_OS" = "Linux" ] && [ ! -x /usr/bin/bwrap ]; then
@@ -335,14 +335,14 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/project/anim/0.1.0/
+      url: https://pypi.org/project/anim/0.1.1/
     permissions:
       id-token: write
     steps:
       - name: Download exact distributions
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: anim-0.1.0-distributions
+          name: anim-0.1.1-distributions
           path: dist
 
       - name: Publish exact distributions
@@ -358,7 +358,7 @@ jobs:
       - name: Download exact distributions
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: anim-0.1.0-distributions
+          name: anim-0.1.1-distributions
           path: dist
 
       - name: Create GitHub Release
@@ -369,4 +369,4 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --verify-tag \
             --generate-notes \
-            --title "Anim 0.1.0"
+            --title "Anim 0.1.1"

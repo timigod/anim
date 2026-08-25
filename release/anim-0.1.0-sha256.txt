@@ -1,2 +1,0 @@
-5c00747a463994b7aa34df30fd4146787b51e920d7f121b2df93bf697bc70dfc  anim-0.1.0-py3-none-any.whl
-86dc81b9c95a7156e1eb74133725a38f7436c2b225a2cfffb91f49eba0cbbacc  anim-0.1.0.tar.gz

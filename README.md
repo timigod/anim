@@ -11,17 +11,17 @@ disease-order signal exists.
 
 ## Installation
 
-Anim 0.1.0 requires CPython 3.12:
+Anim 0.1.1 requires CPython 3.12:
 
 ```sh
 python3.12 -m pip install anim
 ebm-audit doctor
 ```
 
-Anim 0.1.0 installs and runs `doctor` on macOS and Linux. Worker execution uses
+Anim 0.1.1 installs and runs `doctor` on macOS and Linux. Worker execution uses
 the reviewed Seatbelt path on macOS. On Linux, it uses `/usr/bin/bwrap` when
 Bubblewrap is installed and otherwise fails closed with
-`PRIVACY.CONTAINMENT_UNAVAILABLE`. The 0.1.0 release does not claim full Linux
+`PRIVACY.CONTAINMENT_UNAVAILABLE`. The 0.1.1 release does not claim full Linux
 worker-execution support.
 
 For development from a source checkout:
@@ -157,6 +157,6 @@ untested integration, establish a disease-order signal, or authorize
 participant-data use. The exact claim boundary is the normative
 [EBM integration readiness contract](https://github.com/timigod/anim/blob/main/docs/spec/ebm-integration-readiness.md).
 
-See the [0.1.0 changelog](https://github.com/timigod/anim/blob/main/CHANGELOG.md) for the public release scope.
+See the [0.1.1 changelog](https://github.com/timigod/anim/blob/main/CHANGELOG.md) for the public release scope.
 
 Anim is licensed under the [Apache License 2.0](https://github.com/timigod/anim/blob/main/LICENSE).

@@ -1,4 +1,4 @@
-# Third-party notices for Anim 0.1.0
+# Third-party notices for Anim 0.1.1
 
 Status: **RELEASE-CANDIDATE CORE INVENTORY VERIFIED**
 
@@ -7,7 +7,7 @@ Date: 2026-08-25
 This file records technical licence and artifact evidence. It is not legal
 advice and does not replace the licence text shipped by each dependency.
 
-Anim 0.1.0 is licensed under Apache-2.0. The project licence is in `LICENSE`.
+Anim 0.1.1 is licensed under Apache-2.0. The project licence is in `LICENSE`.
 
 ## Distribution boundary
 
@@ -30,7 +30,7 @@ dependencies. The exact CPython 3.12 graph is:
 - `typing-extensions==4.16.0`.
 
 No named EBM backend is part of this core graph. Optional historical backend
-research and its environments are not part of the Anim 0.1.0 PyPI distribution.
+research and its environments are not part of the Anim 0.1.1 PyPI distribution.
 
 ## Exact public artifact inventory
 

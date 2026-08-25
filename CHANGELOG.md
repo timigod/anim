@@ -2,7 +2,7 @@
 
 All notable public changes to Anim are recorded here.
 
-## 0.1.0 - 2026-08-25
+## 0.1.1 - 2026-08-25
 
 Initial public release candidate.
 
@@ -18,5 +18,5 @@ Initial public release candidate.
 - Includes a synthetic-only conformance worker, researcher worker scaffold,
   input guide, offline-kit guide, and private-notebook handoff route.
 
-Anim 0.1.0 does not certify a named EBM, dataset, disease sequence, diagnosis,
+Anim 0.1.1 does not certify a named EBM, dataset, disease sequence, diagnosis,
 prognosis, treatment, causal result, regulatory status, or medical device.

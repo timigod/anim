@@ -11,7 +11,7 @@ README.md
 KIT-IDENTITY.txt
 SHA256SUMS
 wheels/
-  anim-0.1.0-py3-none-any.whl
+  anim-0.1.1-py3-none-any.whl
   <all locked CPython 3.12 destination-platform runtime dependency wheels>
 ```
 
@@ -95,7 +95,7 @@ VENV_ROOT=$PROOF_ROOT/auditor-venv
     --only-binary :all: \
     --find-links . \
     --quiet \
-    'anim==0.1.0'
+    'anim==0.1.1'
 )
 ```
 
@@ -111,7 +111,7 @@ import sys
 distribution = metadata.distribution("anim")
 environment = Path(sys.argv[1]).resolve()
 origin = Path(distribution.locate_file("")).resolve()
-assert distribution.version == "0.1.0"
+assert distribution.version == "0.1.1"
 assert origin.is_relative_to(environment)
 print("distribution=anim")
 print(f"version={distribution.version}")
