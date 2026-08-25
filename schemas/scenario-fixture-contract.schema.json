@@ -1,0 +1,904 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Closed benchmark fixture input and expected-output contracts",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "oracle_algorithm_id",
+    "oracle_enumeration_order",
+    "contracts"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "ebm-audit-benchmark-fixture-contracts/1.0"
+    },
+    "oracle_algorithm_id": {
+      "const": "exact-stage-marginalized-permutation-enumeration/v1"
+    },
+    "oracle_enumeration_order": {
+      "const": "LEXICOGRAPHIC_EVENT_ID_PERMUTATIONS"
+    },
+    "contracts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/OracleFixture"
+          },
+          {
+            "$ref": "#/$defs/FitPairFixture"
+          }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "FixtureId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,127}$"
+    },
+    "NumberArray": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "NumberMatrix": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/NumberArray"
+      }
+    },
+    "EventIdArray": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "synthetic-resolved-configuration.schema.json#/$defs/EventId"
+      },
+      "maxItems": 4
+    },
+    "OracleInput": {
+      "$comment": "The committed hand-fixture arrays are capped separately at four events. The exact runtime oracle ceiling is nine events (362880 permutations); this fixture schema does not lower that runtime ceiling.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "participant_count",
+        "event_ids",
+        "event_directions",
+        "likelihood_orientation",
+        "log_p_not_abnormal",
+        "log_p_abnormal",
+        "stage_prior",
+        "order_prior"
+      ],
+      "properties": {
+        "participant_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "event_ids": {
+          "$ref": "#/$defs/EventIdArray"
+        },
+        "event_directions": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": {
+            "enum": [
+              "higher",
+              "lower"
+            ]
+          }
+        },
+        "likelihood_orientation": {
+          "const": "DIRECTION_ORIENTED_LOG_PROBABILITIES_CONSUME_LITERAL"
+        },
+        "log_p_not_abnormal": {
+          "$ref": "#/$defs/NumberMatrix"
+        },
+        "log_p_abnormal": {
+          "$ref": "#/$defs/NumberMatrix"
+        },
+        "stage_prior": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Probability"
+          }
+        },
+        "order_prior": {
+          "const": "UNIFORM_OVER_ALL_PERMUTATIONS"
+        }
+      }
+    },
+    "OracleExpectedOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_best_order",
+        "best_order_count",
+        "best_order_log_likelihood",
+        "log_evidence_over_orders",
+        "ordered_order_posteriors",
+        "position_probabilities",
+        "pairwise_precedence",
+        "canonical_best_order_stage_posteriors",
+        "absolute_tolerance"
+      ],
+      "properties": {
+        "canonical_best_order": {
+          "$ref": "#/$defs/EventIdArray"
+        },
+        "best_order_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "best_order_log_likelihood": {
+          "type": "number"
+        },
+        "log_evidence_over_orders": {
+          "type": "number"
+        },
+        "position_probabilities": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Probability"
+            }
+          }
+        },
+        "pairwise_precedence": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Probability"
+            }
+          }
+        },
+        "canonical_best_order_stage_posteriors": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Probability"
+            }
+          }
+        },
+        "absolute_tolerance": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "ordered_order_posteriors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OrderPosteriorRow"
+          }
+        }
+      }
+    },
+    "OracleFixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fixture_id",
+        "fixture_kind",
+        "detects",
+        "input",
+        "expected_output"
+      ],
+      "properties": {
+        "fixture_id": {
+          "$ref": "#/$defs/FixtureId"
+        },
+        "fixture_kind": {
+          "const": "EXACT_ORACLE"
+        },
+        "input": {
+          "$ref": "#/$defs/OracleInput"
+        },
+        "expected_output": {
+          "$ref": "#/$defs/OracleExpectedOutput"
+        },
+        "detects": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "STATE_SWAP",
+              "ORDER_DEPENDENT_LIKELIHOOD",
+              "STAGE_PREFIX",
+              "ORDER_POSTERIOR_NORMALIZATION",
+              "EXACT_BEST_ORDER_TIE",
+              "NONUNIFORM_STAGE_PRIOR",
+          "PREORIENTED_LIKELIHOOD_DIRECTION_METADATA_NOT_REAPPLIED",
+              "LOGSUMEXP_EXTREME"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "input": {
+                "properties": {
+                  "event_ids": {
+                    "minItems": 2,
+                    "maxItems": 2
+                  }
+                },
+                "required": [
+                  "event_ids"
+                ]
+              }
+            },
+            "required": [
+              "input"
+            ]
+          },
+          "then": {
+            "properties": {
+              "input": {
+                "properties": {
+                  "event_directions": {
+                    "minItems": 2,
+                    "maxItems": 2
+                  },
+                  "stage_prior": {
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "log_p_not_abnormal": {
+                    "items": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "log_p_abnormal": {
+                    "items": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              },
+              "expected_output": {
+                "properties": {
+                  "canonical_best_order": {
+                    "minItems": 2,
+                    "maxItems": 2
+                  },
+                  "ordered_order_posteriors": {
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": {
+                      "allOf": [
+                        {
+                          "$ref": "#/$defs/OrderPosteriorRow"
+                        },
+                        {
+                          "properties": {
+                            "order": {
+                              "minItems": 2,
+                              "maxItems": 2
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "position_probabilities": {
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": {
+                        "$ref": "#/$defs/Probability"
+                      }
+                    }
+                  },
+                  "pairwise_precedence": {
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": {
+                        "$ref": "#/$defs/Probability"
+                      }
+                    }
+                  },
+                  "canonical_best_order_stage_posteriors": {
+                    "items": {
+                      "type": "array",
+                      "minItems": 3,
+                      "maxItems": 3,
+                      "items": {
+                        "$ref": "#/$defs/Probability"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "input": {
+                "properties": {
+                  "event_ids": {
+                    "minItems": 3,
+                    "maxItems": 3
+                  }
+                },
+                "required": [
+                  "event_ids"
+                ]
+              }
+            },
+            "required": [
+              "input"
+            ]
+          },
+          "then": {
+            "properties": {
+              "input": {
+                "properties": {
+                  "event_directions": {
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "stage_prior": {
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  "log_p_not_abnormal": {
+                    "items": {
+                      "type": "array",
+                      "minItems": 3,
+                      "maxItems": 3,
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "log_p_abnormal": {
+                    "items": {
+                      "type": "array",
+                      "minItems": 3,
+                      "maxItems": 3,
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              },
+              "expected_output": {
+                "properties": {
+                  "canonical_best_order": {
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "ordered_order_posteriors": {
+                    "minItems": 6,
+                    "maxItems": 6,
+                    "items": {
+                      "allOf": [
+                        {
+                          "$ref": "#/$defs/OrderPosteriorRow"
+                        },
+                        {
+                          "properties": {
+                            "order": {
+                              "minItems": 3,
+                              "maxItems": 3
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "position_probabilities": {
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "items": {
+                      "type": "array",
+                      "minItems": 3,
+                      "maxItems": 3,
+                      "items": {
+                        "$ref": "#/$defs/Probability"
+                      }
+                    }
+                  },
+                  "pairwise_precedence": {
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "items": {
+                      "type": "array",
+                      "minItems": 3,
+                      "maxItems": 3,
+                      "items": {
+                        "$ref": "#/$defs/Probability"
+                      }
+                    }
+                  },
+                  "canonical_best_order_stage_posteriors": {
+                    "items": {
+                      "type": "array",
+                      "minItems": 4,
+                      "maxItems": 4,
+                      "items": {
+                        "$ref": "#/$defs/Probability"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "input": {
+                "properties": {
+                  "event_ids": {
+                    "minItems": 4,
+                    "maxItems": 4
+                  }
+                },
+                "required": [
+                  "event_ids"
+                ]
+              }
+            },
+            "required": [
+              "input"
+            ]
+          },
+          "then": {
+            "properties": {
+              "input": {
+                "properties": {
+                  "event_directions": {
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  "stage_prior": {
+                    "minItems": 5,
+                    "maxItems": 5
+                  },
+                  "log_p_not_abnormal": {
+                    "items": {
+                      "type": "array",
+                      "minItems": 4,
+                      "maxItems": 4,
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "log_p_abnormal": {
+                    "items": {
+                      "type": "array",
+                      "minItems": 4,
+                      "maxItems": 4,
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              },
+              "expected_output": {
+                "properties": {
+                  "canonical_best_order": {
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  "ordered_order_posteriors": {
+                    "minItems": 24,
+                    "maxItems": 24,
+                    "items": {
+                      "allOf": [
+                        {
+                          "$ref": "#/$defs/OrderPosteriorRow"
+                        },
+                        {
+                          "properties": {
+                            "order": {
+                              "minItems": 4,
+                              "maxItems": 4
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "position_probabilities": {
+                    "minItems": 4,
+                    "maxItems": 4,
+                    "items": {
+                      "type": "array",
+                      "minItems": 4,
+                      "maxItems": 4,
+                      "items": {
+                        "$ref": "#/$defs/Probability"
+                      }
+                    }
+                  },
+                  "pairwise_precedence": {
+                    "minItems": 4,
+                    "maxItems": 4,
+                    "items": {
+                      "type": "array",
+                      "minItems": 4,
+                      "maxItems": 4,
+                      "items": {
+                        "$ref": "#/$defs/Probability"
+                      }
+                    }
+                  },
+                  "canonical_best_order_stage_posteriors": {
+                    "items": {
+                      "type": "array",
+                      "minItems": 5,
+                      "maxItems": 5,
+                      "items": {
+                        "$ref": "#/$defs/Probability"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "input": {
+                "properties": {
+                  "participant_count": {
+                    "const": 1
+                  }
+                },
+                "required": [
+                  "participant_count"
+                ]
+              }
+            },
+            "required": [
+              "input"
+            ]
+          },
+          "then": {
+            "properties": {
+              "input": {
+                "properties": {
+                  "log_p_not_abnormal": {
+                    "minItems": 1,
+                    "maxItems": 1
+                  },
+                  "log_p_abnormal": {
+                    "minItems": 1,
+                    "maxItems": 1
+                  }
+                }
+              },
+              "expected_output": {
+                "properties": {
+                  "canonical_best_order_stage_posteriors": {
+                    "minItems": 1,
+                    "maxItems": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "input": {
+                "properties": {
+                  "participant_count": {
+                    "const": 2
+                  }
+                },
+                "required": [
+                  "participant_count"
+                ]
+              }
+            },
+            "required": [
+              "input"
+            ]
+          },
+          "then": {
+            "properties": {
+              "input": {
+                "properties": {
+                  "log_p_not_abnormal": {
+                    "minItems": 2,
+                    "maxItems": 2
+                  },
+                  "log_p_abnormal": {
+                    "minItems": 2,
+                    "maxItems": 2
+                  }
+                }
+              },
+              "expected_output": {
+                "properties": {
+                  "canonical_best_order_stage_posteriors": {
+                    "minItems": 2,
+                    "maxItems": 2
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "input": {
+                "properties": {
+                  "participant_count": {
+                    "const": 3
+                  }
+                },
+                "required": [
+                  "participant_count"
+                ]
+              }
+            },
+            "required": [
+              "input"
+            ]
+          },
+          "then": {
+            "properties": {
+              "input": {
+                "properties": {
+                  "log_p_not_abnormal": {
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "log_p_abnormal": {
+                    "minItems": 3,
+                    "maxItems": 3
+                  }
+                }
+              },
+              "expected_output": {
+                "properties": {
+                  "canonical_best_order_stage_posteriors": {
+                    "minItems": 3,
+                    "maxItems": 3
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "SelectedCaseRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "family_id",
+        "variant_index",
+        "replicate_index"
+      ],
+      "properties": {
+        "family_id": {
+          "$ref": "synthetic-resolved-configuration.schema.json#/$defs/ScenarioFamilyId"
+        },
+        "variant_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "replicate_index": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "FitPairInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selected_case",
+        "ordered_execution_roles",
+        "transform",
+        "chain_indexes",
+        "chain_seed_relation",
+        "cache_read_policy"
+      ],
+      "properties": {
+        "selected_case": {
+          "$ref": "#/$defs/SelectedCaseRef"
+        },
+        "ordered_execution_roles": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "first",
+              "second",
+              "serial",
+              "parallel",
+              "canonical_rows",
+              "permuted_rows",
+              "canonical_features",
+              "permuted_features"
+            ]
+          }
+        },
+        "transform": {
+          "enum": [
+            "IDENTITY_REPEAT",
+            "SCHEDULER_ONLY",
+            "ROW_PERMUTATION_WITH_INVERSE",
+            "FEATURE_PERMUTATION_WITH_INVERSE"
+          ]
+        },
+        "chain_indexes": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": 0
+            },
+            {
+              "const": 1
+            },
+            {
+              "const": 2
+            },
+            {
+              "const": 3
+            }
+          ],
+          "items": false,
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "chain_seed_relation": {
+          "const": "EXACT_EQUAL_BY_CHAIN_INDEX"
+        },
+        "cache_read_policy": {
+          "enum": [
+            "DISABLED_BOTH",
+            "UNCHANGED"
+          ]
+        }
+      }
+    },
+    "FitPairExpectedOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "terminal_record_count",
+        "discrete_relation",
+        "float_relation",
+        "inverse_mapping_required",
+        "runtime_fields_ignored",
+        "missing_or_extra_result"
+      ],
+      "properties": {
+        "terminal_record_count": {
+          "const": 2
+        },
+        "discrete_relation": {
+          "enum": [
+            "BYTE_IDENTICAL_CANONICAL_SCIENTIFIC_PAYLOAD",
+            "IDENTICAL_AFTER_INVERSE_ROW_MAPPING",
+            "IDENTICAL_AFTER_INVERSE_FEATURE_MAPPING"
+          ]
+        },
+        "float_relation": {
+          "enum": [
+            "BYTE_IDENTICAL",
+            "FROZEN_NUMERIC_TOLERANCE"
+          ]
+        },
+        "inverse_mapping_required": {
+          "type": "boolean"
+        },
+        "runtime_fields_ignored": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "wall_clock_start",
+              "wall_clock_end",
+              "runtime_seconds",
+              "peak_memory_bytes",
+              "process_id",
+              "temporary_path",
+              "host_name",
+              "scheduler_order"
+            ]
+          }
+        },
+        "missing_or_extra_result": {
+          "const": "HARD_FAILURE"
+        }
+      }
+    },
+    "FitPairFixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fixture_id",
+        "fixture_kind",
+        "input",
+        "expected_output"
+      ],
+      "properties": {
+        "fixture_id": {
+          "$ref": "#/$defs/FixtureId"
+        },
+        "fixture_kind": {
+          "const": "FIT_PAIR"
+        },
+        "input": {
+          "$ref": "#/$defs/FitPairInput"
+        },
+        "expected_output": {
+          "$ref": "#/$defs/FitPairExpectedOutput"
+        }
+      }
+    },
+    "Probability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "OrderPosteriorRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "order",
+        "order_log_likelihood",
+        "posterior_probability"
+      ],
+      "properties": {
+        "order": {
+          "$ref": "#/$defs/EventIdArray"
+        },
+        "order_log_likelihood": {
+          "type": "number"
+        },
+        "posterior_probability": {
+          "$ref": "#/$defs/Probability"
+        }
+      }
+    }
+  }
+}

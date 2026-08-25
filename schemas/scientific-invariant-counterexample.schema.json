@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Closed scientific invariant negative-counterexample registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "counterexamples"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "ebm-audit-scientific-invariant-counterexamples/1.0"
+    },
+    "counterexamples": {
+      "type": "array",
+      "minItems": 46,
+      "maxItems": 46,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "counterexample_id",
+          "invariant_id",
+          "mutation_id",
+          "expected_result"
+        ],
+        "properties": {
+          "counterexample_id": {
+            "type": "string",
+            "pattern": "^counterexample\\.[a-z0-9-]+/v1$"
+          },
+          "invariant_id": {
+            "type": "string",
+            "pattern": "^scientific\\.[a-z0-9-]+/v1$"
+          },
+          "mutation_id": {
+            "enum": [
+              "DECLARED_EVENT_COUNT_DIFFERS_FROM_EVENT_IDS",
+              "PARTICIPANT_INDEX_SEQUENCE_HAS_GAP",
+              "DATA_ROW_WIDTH_DIFFERS_FROM_EVENT_COUNT",
+              "COVARIATE_ROW_COUNT_DIFFERS_FROM_PARTICIPANTS",
+              "COVARIATE_ROW_WIDTH_DIFFERS_FROM_IDS",
+              "TRUTH_PARTICIPANT_COUNT_DIFFERS_FROM_DATA",
+              "STRICT_ORDER_HAS_DUPLICATE_EVENT",
+              "EVENT_DIRECTION_CONFIG_DATA_TRUTH_MISMATCH",
+              "INVALID_NOISE_CORRELATION_MATRIX",
+              "MISSINGNESS_TRUTH_MASK_DIFFERS_FROM_DATA",
+              "PROBABILITY_VECTOR_NOT_NORMALIZED",
+              "TRUTH_SIGNAL_STATE_CONTRADICTS_MECHANISM",
+              "STRICT_OR_PARTIAL_TRUTH_CONTRADICTS_MECHANISM",
+              "MIXTURE_TRUTH_CONTRADICTS_MECHANISM",
+              "NONIDENTIFIABLE_TRUTH_CONTRADICTS_MECHANISM",
+              "PARTIAL_ORDER_TRUTH_CONTRADICTS_MECHANISM",
+              "NONZERO_SIGNAL_MARKED_FPR_ELIGIBLE",
+              "GENERATOR_FIELD_REGISTRY_DUPLICATE",
+              "COMPONENT_PATH_REGISTRY_DUPLICATE",
+              "DEPENDENCY_STAGE_REGISTRY_DUPLICATE",
+              "PARAMETER_DRAW_COUNT_OFF_BY_ONE",
+              "ORACLE_POSTERIOR_ROW_NOT_NORMALIZED",
+              "ORACLE_BEST_ORDER_TIE_COUNT_WRONG",
+              "COMPARATOR_OPERATION_SEQUENCE_DUPLICATE",
+              "COMPARATOR_SEMANTIC_TARGET_UNKNOWN",
+              "NULL_IDENTITY_FIELD_MISMATCH_REUSED",
+              "NULL_IDENTITY_REQUIRED_FIELD_MISSING",
+              "NULL_IDENTITY_NESTED_FIT_MISMATCH",
+              "CANDIDATE_COMPLETE_IDENTITY_DIGEST_MISMATCH",
+              "CANDIDATE_NESTED_SUBJECT_BINDING_MISMATCH",
+              "CANDIDATE_EMPIRICAL_P_OFF_BY_ONE",
+              "CANDIDATE_NULL_EFFECT_INCORRECT",
+              "CANDIDATE_STRONG_STATE_CONTRADICTS_TESTS",
+              "CANDIDATE_FAILED_PRECONDITION_CODES_FABRICATED",
+              "CANDIDATE_NESTED_FIT_PRECONDITION_OMITTED",
+              "CANDIDATE_FORBIDDEN_AUTHORIZATION_INPUT",
+              "FALSE_POSITIVE_COUNT_DIFFERS_FROM_MANIFEST",
+              "FALSE_POSITIVE_RATE_OR_BOUND_INCORRECT",
+              "FPR_OPPORTUNITY_CASE_ID_DUPLICATE",
+              "FPR_CANDIDATE_LINKAGE_MISMATCH",
+              "FPR_INELIGIBLE_OR_UNSEALED_OPPORTUNITY",
+              "FPR_STATE_INCORRECT",
+              "FPR_COMPLETE_SEALED_MANIFEST_DIGEST_MISMATCH",
+              "FPR_COMPLETE_TRUTH_OBJECT_DIGEST_MISMATCH",
+              "FPR_REDUCED_GRAPH_MISSING_COMPLETE_OBJECTS",
+              "FPR_ASSERTED_PASS_WITH_STRONG_CANDIDATE"
+            ]
+          },
+          "expected_result": {
+            "const": "REJECT"
+          }
+        }
+      }
+    }
+  }
+}

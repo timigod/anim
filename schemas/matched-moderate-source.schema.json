@@ -1,0 +1,412 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ebm-audit.local/schemas/matched-moderate-source.schema.json",
+  "title": "Matched moderate synthetic source",
+  "$defs": {
+    "Sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "Sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "ComponentPaths": {
+      "type": "array",
+      "prefixItems": [
+        {"const": "group_assignment"},
+        {"const": "latent_time"},
+        {"const": "covariates"},
+        {"const": "participant_effect"},
+        {"const": "measurement_normal"},
+        {"const": "measurement_scale"},
+        {"const": "measurement_skew"},
+        {"const": "contamination"},
+        {"const": "outliers"},
+        {"const": "missingness"}
+      ],
+      "items": false
+    },
+    "ExcludedPaths": {
+      "type": "array",
+      "prefixItems": [
+        {"const": "parameters"},
+        {"const": "subgroup_assignment"},
+        {"const": "label_permutation"},
+        {"const": "within_group_feature_permutation"}
+      ],
+      "items": false
+    },
+    "Member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["family_id", "variant_id"],
+      "properties": {
+        "family_id": {"type": "string", "minLength": 3},
+        "variant_id": {"type": "string", "minLength": 3}
+      }
+    },
+    "Manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "data_classification",
+        "operation_id",
+        "comparator_id",
+        "authority_resource",
+        "pair_count",
+        "signal_member",
+        "pure_no_signal_member",
+        "reference_order_policy",
+        "shared_component_paths",
+        "excluded_component_paths",
+        "configuration_ledger",
+        "subgroup_policy",
+        "execution_policy",
+        "pairs"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ebm-audit-matched-moderate-source-manifest/1.0"
+        },
+        "data_classification": {"const": "SYNTHETIC_ONLY"},
+        "operation_id": {"const": "open_matched_moderate_pair"},
+        "comparator_id": {"const": "cmp_moderate_signal_vs_pure_no_signal"},
+        "authority_resource": {
+          "const": {
+            "relative_path": "examples/development/matched-moderate-authority.json",
+            "expected_byte_sha256": "656fea0659b8851d7c75fd577308bb9ae9c9b931d4024570d3efd7c344201bb2"
+          }
+        },
+        "pair_count": {"const": 8},
+        "signal_member": {
+          "allOf": [
+            {"$ref": "#/$defs/Member"},
+            {
+              "properties": {
+                "family_id": {"const": "moderate_mina_shape"},
+                "variant_id": {"const": "moderate_57_public"}
+              }
+            }
+          ]
+        },
+        "pure_no_signal_member": {
+          "allOf": [
+            {"$ref": "#/$defs/Member"},
+            {
+              "properties": {
+                "family_id": {"const": "pure_no_signal"},
+                "variant_id": {"const": "null_correlated"}
+              }
+            }
+          ]
+        },
+        "reference_order_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source",
+            "interpretation",
+            "truth_recovery_claim",
+            "pure_no_signal_truth"
+          ],
+          "properties": {
+            "source": {"const": "SIGNAL_STRICT_ORDER_EVENT_IDS"},
+            "interpretation": {"const": "PREDECLARED_DESCRIPTIVE_REFERENCE_ONLY"},
+            "truth_recovery_claim": {"const": false},
+            "pure_no_signal_truth": {"const": "NO_RECOVERABLE_ORDER_OR_STAGE"}
+          }
+        },
+        "shared_component_paths": {"$ref": "#/$defs/ComponentPaths"},
+        "excluded_component_paths": {"$ref": "#/$defs/ExcludedPaths"},
+        "configuration_ledger": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "identity_differences",
+            "no_signal_semantic_differences",
+            "non_scientific_owner_fields",
+            "source_bound_equal_fields"
+          ],
+          "properties": {
+            "identity_differences": {
+              "const": ["/scenario_family_id", "/variant_id"]
+            },
+            "no_signal_semantic_differences": {
+              "const": [
+                "/event_parameters/amplitude",
+                "/event_parameters/covariate_effect",
+                "/event_parameters/group_effect",
+                "/event_parameters/participant_effect_loading",
+                "/latent_sampling",
+                "/scenario_parameters/truth_type"
+              ]
+            },
+            "non_scientific_owner_fields": {
+              "const": [
+                "/schema_version",
+                "/digest_state",
+                "/resolved_generator_configuration_sha256",
+                "/dependency_records"
+              ]
+            },
+            "source_bound_equal_fields": {
+              "const": [
+                "/synthetic_marker",
+                "/replicate_index",
+                "/dimensions",
+                "/event_ids",
+                "/event_directions",
+                "/event_parameters/baseline",
+                "/event_parameters/transition_width",
+                "/event_parameters/event_centers",
+                "/measurement_noise",
+                "/group_generation",
+                "/covariates",
+                "/participant_effect",
+                "/missingness",
+                "/outliers",
+                "/scenario_parameters/pair_mode",
+                "/scenario_parameters/pair_event_ids",
+                "/scenario_parameters/equivalence_block_event_ids",
+                "/scenario_parameters/alternate_inversions",
+                "/scenario_parameters/minority_fraction",
+                "/scenario_parameters/opposing_relation_fraction",
+                "/scenario_parameters/contamination_fraction",
+                "/scenario_parameters/wrong_direction_event_ids",
+                "/scenario_parameters/measurement_noise_sd_levels",
+                "/scenario_parameters/boundary_rule_ids",
+                "/scenario_parameters/boundary_quantile_shifts",
+                "/scenario_parameters/base_quantile_cutoff",
+                "/analysis_configuration"
+              ]
+            }
+          }
+        },
+        "subgroup_policy": {
+          "const": {"mode": "ABSENT_AND_UNCONSUMED", "shared": false}
+        },
+        "execution_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "pair_ordinals",
+            "retry_allowed",
+            "adaptation_allowed",
+            "heldout_allowed",
+            "ordinary_audit_authority",
+            "report_authority",
+            "profile_authority",
+            "selection_authority"
+          ],
+          "properties": {
+            "pair_ordinals": {"const": [0, 1, 2, 3, 4, 5, 6, 7]},
+            "retry_allowed": {"const": false},
+            "adaptation_allowed": {"const": false},
+            "heldout_allowed": {"const": false},
+            "ordinary_audit_authority": {"const": false},
+            "report_authority": {"const": false},
+            "profile_authority": {"const": false},
+            "selection_authority": {"const": false}
+          }
+        },
+        "pairs": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "prefixItems": [
+            {"$ref": "#/$defs/Pair0"},
+            {"$ref": "#/$defs/Pair1"},
+            {"$ref": "#/$defs/Pair2"},
+            {"$ref": "#/$defs/Pair3"},
+            {"$ref": "#/$defs/Pair4"},
+            {"$ref": "#/$defs/Pair5"},
+            {"$ref": "#/$defs/Pair6"},
+            {"$ref": "#/$defs/Pair7"}
+          ],
+          "items": false
+        }
+      }
+    },
+    "PairBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pair_ordinal", "replicate_index", "shared_draw_root"],
+      "properties": {
+        "pair_ordinal": {"type": "integer", "minimum": 0, "maximum": 7},
+        "replicate_index": {"type": "integer", "minimum": 0, "maximum": 7},
+        "shared_draw_root": {"type": "string", "pattern": "^[0-9a-f]{16}$"}
+      }
+    },
+    "Pair0": {"allOf": [{"$ref": "#/$defs/PairBase"}, {"properties": {"pair_ordinal": {"const": 0}, "replicate_index": {"const": 0}}}]},
+    "Pair1": {"allOf": [{"$ref": "#/$defs/PairBase"}, {"properties": {"pair_ordinal": {"const": 1}, "replicate_index": {"const": 1}}}]},
+    "Pair2": {"allOf": [{"$ref": "#/$defs/PairBase"}, {"properties": {"pair_ordinal": {"const": 2}, "replicate_index": {"const": 2}}}]},
+    "Pair3": {"allOf": [{"$ref": "#/$defs/PairBase"}, {"properties": {"pair_ordinal": {"const": 3}, "replicate_index": {"const": 3}}}]},
+    "Pair4": {"allOf": [{"$ref": "#/$defs/PairBase"}, {"properties": {"pair_ordinal": {"const": 4}, "replicate_index": {"const": 4}}}]},
+    "Pair5": {"allOf": [{"$ref": "#/$defs/PairBase"}, {"properties": {"pair_ordinal": {"const": 5}, "replicate_index": {"const": 5}}}]},
+    "Pair6": {"allOf": [{"$ref": "#/$defs/PairBase"}, {"properties": {"pair_ordinal": {"const": 6}, "replicate_index": {"const": 6}}}]},
+    "Pair7": {"allOf": [{"$ref": "#/$defs/PairBase"}, {"properties": {"pair_ordinal": {"const": 7}, "replicate_index": {"const": 7}}}]},
+    "ComponentEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component_path", "root_kind", "component_seed_digest", "shared"],
+      "properties": {
+        "component_path": {"type": "string", "minLength": 1},
+        "root_kind": {"enum": ["CASE_SEED", "SHARED_DRAW_SEED"]},
+        "component_seed_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "shared": {"type": "boolean"}
+      }
+    },
+    "StageEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_index", "stage_id", "output_sha256"],
+      "properties": {
+        "stage_index": {"type": "integer", "minimum": 0},
+        "stage_id": {"type": "string", "minLength": 1},
+        "output_sha256": {"$ref": "#/$defs/Sha256Hex"}
+      }
+    },
+    "MemberEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "case_id",
+        "resolved_configuration_sha256",
+        "field_ledger_sha256",
+        "resolved_parameter_manifest_sha256",
+        "component_seed_manifest_sha256",
+        "source_order_sha256",
+        "components",
+        "stages",
+        "generated_scientific_data_sha256",
+        "truth_object_sha256",
+        "replay"
+      ],
+      "properties": {
+        "role": {"enum": ["SIGNAL", "PURE_NO_SIGNAL"]},
+        "case_id": {"type": "string", "minLength": 3},
+        "resolved_configuration_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "field_ledger_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "resolved_parameter_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "component_seed_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "source_order_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "components": {
+          "type": "array",
+          "minItems": 14,
+          "maxItems": 14,
+          "items": {"$ref": "#/$defs/ComponentEvidence"}
+        },
+        "stages": {
+          "type": "array",
+          "minItems": 14,
+          "maxItems": 14,
+          "items": {"$ref": "#/$defs/StageEvidence"}
+        },
+        "generated_scientific_data_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "truth_object_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "replay": {
+          "const": {
+            "status": "MATCH",
+            "compared_stage_count": 14,
+            "data_match": true,
+            "truth_match": true
+          }
+        }
+      }
+    },
+    "Evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "digest_state",
+        "data_classification",
+        "operation_id",
+        "comparator_id",
+        "pair_ordinal",
+        "replicate_index",
+        "authority_bytes_sha256",
+        "manifest_bytes_sha256",
+        "shared_draw_root_sha256",
+        "shared_component_paths",
+        "excluded_component_paths",
+        "reference_order_event_ids",
+        "reference_order_sha256",
+        "semantic_checks",
+        "signal",
+        "pure_no_signal",
+        "matched_pair_evidence_sha256"
+      ],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-matched-moderate-pair-evidence/1.0"},
+        "digest_state": {"enum": ["DIGEST_PREIMAGE", "PERSISTED"]},
+        "data_classification": {"const": "SYNTHETIC_ONLY"},
+        "operation_id": {"const": "open_matched_moderate_pair"},
+        "comparator_id": {"const": "cmp_moderate_signal_vs_pure_no_signal"},
+        "pair_ordinal": {"type": "integer", "minimum": 0, "maximum": 7},
+        "replicate_index": {"type": "integer", "minimum": 0, "maximum": 7},
+        "authority_bytes_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "manifest_bytes_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "shared_draw_root_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "shared_component_paths": {"$ref": "#/$defs/ComponentPaths"},
+        "excluded_component_paths": {"$ref": "#/$defs/ExcludedPaths"},
+        "reference_order_event_ids": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "reference_order_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "semantic_checks": {
+          "const": {
+            "configuration_ledger_exact": true,
+            "subgroup_absent_and_unconsumed": true,
+            "strict_signal_order_identifiable": true,
+            "pure_no_signal_semantics": true,
+            "pure_no_signal_has_no_recoverable_order_or_stage": true,
+            "shared_component_seeds_match": true,
+            "excluded_components_are_not_shared": true
+          }
+        },
+        "signal": {
+          "allOf": [
+            {"$ref": "#/$defs/MemberEvidence"},
+            {"properties": {"role": {"const": "SIGNAL"}}}
+          ]
+        },
+        "pure_no_signal": {
+          "allOf": [
+            {"$ref": "#/$defs/MemberEvidence"},
+            {"properties": {"role": {"const": "PURE_NO_SIGNAL"}}}
+          ]
+        },
+        "matched_pair_evidence_sha256": {
+          "oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"digest_state": {"const": "PERSISTED"}}},
+          "then": {
+            "properties": {
+              "matched_pair_evidence_sha256": {"$ref": "#/$defs/Sha256Hex"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}},
+          "then": {
+            "properties": {"matched_pair_evidence_sha256": {"type": "null"}}
+          }
+        }
+      ]
+    }
+  },
+  "oneOf": [
+    {"$ref": "#/$defs/Manifest"},
+    {"$ref": "#/$defs/Evidence"}
+  ]
+}

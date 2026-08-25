@@ -1,0 +1,337 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.ebm-audit.invalid/null-evidence.schema.json",
+  "title": "EBM Audit source-scoped null terminal evidence v1",
+  "oneOf": [
+    { "$ref": "#/$defs/NullAttempt" },
+    { "$ref": "#/$defs/NullFamilyAggregate" },
+    { "$ref": "#/$defs/NullLayerEvidence" }
+  ],
+  "$defs": {
+    "Digest": {
+      "$ref": "canonical-records.schema.json#/$defs/Sha256Digest"
+    },
+    "NullableDigest": {
+      "oneOf": [
+        { "$ref": "#/$defs/Digest" },
+        { "type": "null" }
+      ]
+    },
+    "NonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "NonnegativeInteger": {
+      "allOf": [
+        { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        { "minimum": 0 }
+      ]
+    },
+    "PositiveInteger": {
+      "allOf": [
+        { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        { "minimum": 1 }
+      ]
+    },
+    "TerminalStatus": {
+      "enum": [
+        "SUCCESS",
+        "CONVERGENCE_WARN",
+        "INVALID_INPUT",
+        "UNSUPPORTED_CAPABILITY",
+        "INVALID_SPECIFICATION",
+        "BACKEND_ERROR",
+        "TIMEOUT",
+        "CONVERGENCE_FAILED",
+        "CONVERGENCE_NOT_ASSESSABLE",
+        "PRIVACY_VIOLATION",
+        "PROTOCOL_ERROR"
+      ]
+    },
+    "NullMethod": {
+      "enum": [
+        "pure-no-signal-synthetic/1",
+        "label-permutation/1",
+        "featurewise-within-group-participant-permutation/1"
+      ]
+    },
+    "StatusCount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "count"
+      ],
+      "properties": {
+        "status": { "$ref": "#/$defs/TerminalStatus" },
+        "count": { "$ref": "#/$defs/PositiveInteger" }
+      }
+    },
+    "ComponentCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "implementation_status",
+        "reason_code"
+      ],
+      "properties": {
+        "component": {
+          "enum": [
+            "LABEL_PERMUTATION_REFIT",
+            "WITHIN_GROUP_FEATURE_PERMUTATION_REFIT",
+            "PURE_NO_SIGNAL_SYNTHETIC",
+            "NULL_CALIBRATION_AND_HELD_OUT_FPR"
+          ]
+        },
+        "implementation_status": {
+          "enum": [
+            "IMPLEMENTED",
+            "DEVELOPMENT_ONLY_SEPARATE_EVIDENCE",
+            "PENDING_IMPLEMENTATION"
+          ]
+        },
+        "reason_code": {
+          "oneOf": [
+            { "$ref": "#/$defs/NonEmptyString" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "NullAttempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_schema_version",
+        "evidence_rule_id",
+        "plan_digest",
+        "terminal_index_digest",
+        "candidate_ordinal",
+        "candidate_id",
+        "analysis_spec_id",
+        "candidate_record_digest",
+        "result_id",
+        "universe_id",
+        "final_status",
+        "source_analysis_spec_id",
+        "source_candidate_id",
+        "source_candidate_record_digest",
+        "source_result_id",
+        "source_final_status",
+        "source_variant_id",
+        "derived_source_variant_id",
+        "null_family_id",
+        "null_method_id",
+        "transformation",
+        "within_group_spec_id",
+        "replicate_ordinal",
+        "refit_preprocessing",
+        "preserves_group_conditional_event_marginals",
+        "terminal_evidence_state",
+        "calibration_eligible",
+        "held_out_false_positive_rate_eligible",
+        "strong_null_relative_language_eligible",
+        "attempt_digest"
+      ],
+      "properties": {
+        "record_schema_version": {
+          "const": "ebm-audit-null-terminal-attempt/1.0"
+        },
+        "evidence_rule_id": {
+          "const": "source-scoped-null-terminal-roster/1"
+        },
+        "plan_digest": { "$ref": "#/$defs/Digest" },
+        "terminal_index_digest": { "$ref": "#/$defs/Digest" },
+        "candidate_ordinal": { "$ref": "#/$defs/NonnegativeInteger" },
+        "candidate_id": { "$ref": "#/$defs/Digest" },
+        "analysis_spec_id": { "$ref": "#/$defs/Digest" },
+        "candidate_record_digest": { "$ref": "#/$defs/Digest" },
+        "result_id": { "$ref": "#/$defs/Digest" },
+        "universe_id": { "$ref": "#/$defs/NullableDigest" },
+        "final_status": { "$ref": "#/$defs/TerminalStatus" },
+        "source_analysis_spec_id": { "$ref": "#/$defs/Digest" },
+        "source_candidate_id": { "$ref": "#/$defs/Digest" },
+        "source_candidate_record_digest": { "$ref": "#/$defs/Digest" },
+        "source_result_id": { "$ref": "#/$defs/Digest" },
+        "source_final_status": { "$ref": "#/$defs/TerminalStatus" },
+        "source_variant_id": { "$ref": "#/$defs/NonEmptyString" },
+        "derived_source_variant_id": { "$ref": "#/$defs/NonEmptyString" },
+        "null_family_id": { "$ref": "#/$defs/NonEmptyString" },
+        "null_method_id": { "$ref": "#/$defs/NullMethod" },
+        "transformation": {
+          "enum": [
+            "pure-no-signal-synthetic",
+            "label-permutation",
+            "featurewise-participant-permutation"
+          ]
+        },
+        "within_group_spec_id": {
+          "oneOf": [
+            { "$ref": "#/$defs/NonEmptyString" },
+            { "type": "null" }
+          ]
+        },
+        "replicate_ordinal": { "$ref": "#/$defs/NonnegativeInteger" },
+        "refit_preprocessing": { "const": true },
+        "preserves_group_conditional_event_marginals": {
+          "type": "boolean"
+        },
+        "terminal_evidence_state": {
+          "const": "TERMINAL_RETAINED"
+        },
+        "calibration_eligible": { "const": false },
+        "held_out_false_positive_rate_eligible": { "const": false },
+        "strong_null_relative_language_eligible": { "const": false },
+        "attempt_digest": { "$ref": "#/$defs/Digest" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "null_method_id": {
+                "const": "featurewise-within-group-participant-permutation/1"
+              }
+            },
+            "required": ["null_method_id"]
+          },
+          "then": {
+            "properties": {
+              "transformation": {
+                "const": "featurewise-participant-permutation"
+              },
+              "within_group_spec_id": {
+                "$ref": "#/$defs/NonEmptyString"
+              },
+              "preserves_group_conditional_event_marginals": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "within_group_spec_id": { "type": "null" },
+              "preserves_group_conditional_event_marginals": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "NullFamilyAggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_schema_version",
+        "evidence_rule_id",
+        "source_analysis_spec_id",
+        "source_variant_id",
+        "derived_source_variant_id",
+        "null_family_id",
+        "null_method_id",
+        "attempt_count",
+        "terminal_status_counts",
+        "candidate_ids",
+        "calibration_state",
+        "aggregate_digest"
+      ],
+      "properties": {
+        "record_schema_version": {
+          "const": "ebm-audit-null-family-aggregate/1.0"
+        },
+        "evidence_rule_id": {
+          "const": "source-scoped-null-terminal-roster/1"
+        },
+        "source_analysis_spec_id": { "$ref": "#/$defs/Digest" },
+        "source_variant_id": { "$ref": "#/$defs/NonEmptyString" },
+        "derived_source_variant_id": { "$ref": "#/$defs/NonEmptyString" },
+        "null_family_id": { "$ref": "#/$defs/NonEmptyString" },
+        "null_method_id": { "$ref": "#/$defs/NullMethod" },
+        "attempt_count": { "$ref": "#/$defs/PositiveInteger" },
+        "terminal_status_counts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/StatusCount" }
+        },
+        "candidate_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/Digest" }
+        },
+        "calibration_state": { "const": "UNCALIBRATED" },
+        "aggregate_digest": { "$ref": "#/$defs/Digest" }
+      }
+    },
+    "NullLayerEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "layer_schema_version",
+        "evidence_rule_id",
+        "uncertainty_layer",
+        "pooling_policy",
+        "plan_digest",
+        "terminal_index_digest",
+        "component_coverage",
+        "attempt_count",
+        "family_count",
+        "terminal_status_counts",
+        "attempts",
+        "aggregates",
+        "calibration_state",
+        "null_relative_label",
+        "held_out_false_positive_rate_eligible",
+        "strong_null_relative_language_eligible",
+        "classification_status",
+        "layer_digest"
+      ],
+      "properties": {
+        "layer_schema_version": {
+          "const": "ebm-audit-null-layer-evidence/1.0"
+        },
+        "evidence_rule_id": {
+          "const": "source-scoped-null-terminal-roster/1"
+        },
+        "uncertainty_layer": { "const": "NULL" },
+        "pooling_policy": { "const": "NON_POOLABLE" },
+        "plan_digest": { "$ref": "#/$defs/Digest" },
+        "terminal_index_digest": { "$ref": "#/$defs/Digest" },
+        "component_coverage": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/ComponentCoverage" }
+        },
+        "attempt_count": { "$ref": "#/$defs/NonnegativeInteger" },
+        "family_count": { "$ref": "#/$defs/NonnegativeInteger" },
+        "terminal_status_counts": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/StatusCount" }
+        },
+        "attempts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/NullAttempt" }
+        },
+        "aggregates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/NullFamilyAggregate" }
+        },
+        "calibration_state": { "const": "UNCALIBRATED" },
+        "null_relative_label": {
+          "const": "NULL_CALIBRATION_NOT_VALIDATED"
+        },
+        "held_out_false_positive_rate_eligible": { "const": false },
+        "strong_null_relative_language_eligible": { "const": false },
+        "classification_status": {
+          "const": "NO_FROZEN_NULL_CLASSIFICATION"
+        },
+        "layer_digest": { "$ref": "#/$defs/Digest" }
+      }
+    }
+  }
+}

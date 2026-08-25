@@ -1,0 +1,191 @@
+schema_version: "ebm-audit-proportional-benchmark-contract/v4"
+contract_version: "0.3.0"
+contract_status: "FROZEN"
+frozen: true
+proposal_date: "2026-08-24"
+freeze_date: "2026-08-25"
+accepted_decision_date: "2026-08-25"
+contract_sha256: "8b7e794205350fdc89162ddbe7193325ec88a1906758f0e39be95b805539e67d"
+data_classification: "PUBLIC_AND_SYNTHETIC_ONLY"
+participant_data_permitted: false
+
+authority:
+  decision: "docs/adr/ADR-0017-separate-output-coverage-from-fit-cardinality.md"
+  readiness_specification: "docs/spec/ebm-integration-readiness-1.2.0-candidate.md"
+  readiness_specification_sha256: "f0017ff7bb1f7e71d51b48909e6247b7b8605d85f8ba5feaa60bede23408a65e"
+  historical_frozen_contract: "evaluator/proportional_benchmark_contract.yaml"
+  historical_contract_version: "0.2.3"
+  historical_contract_sha256: "2cf53a6006b174d7b2ef574a293f1499cff450491ef0359088a6889b0c288119"
+  acceptance_state: "ACCEPTED_AND_FROZEN"
+
+cardinality:
+  output_inventory_term: "output-obligation inventory"
+  output_obligation_count: 104
+  planned_operation_count: 7
+  attempted_fit_count: 6
+  successful_fit_count: 6
+  failed_fit_count: 0
+  invalid_pre_fit_terminal_count: 1
+  forbidden_readiness_equalities:
+    - "operation_count == meaning_count"
+    - "fit_count == 104"
+
+ordered_fit_roles:
+  - {role: "FULL_BASELINE", capability: "full", participant_count: 57, event_count: 9, change: "paper-shaped public-synthetic baseline"}
+  - {role: "SAMPLING_BOOTSTRAP", capability: "full", source_role: "FULL_BASELINE", change: "participant bootstrap with replacement"}
+  - {role: "PREPROCESSING_TRANSFORMED", capability: "full", source_role: "FULL_BASELINE", change: "fixed public event rescale bound to the exact baseline AnalysisSpec"}
+  - {role: "INFLUENCE_PARTICIPANT_REMOVAL", capability: "full", source_role: "FULL_BASELINE", change: "leave one participant out"}
+  - {role: "NO_SIGNAL_TRANSFORMED", capability: "full", source_role: "FULL_BASELINE", change: "independent pure-no-signal synthetic values"}
+  - {role: "PARTIAL_BASELINE", capability: "partial", change: "paper-shaped public-synthetic baseline"}
+
+invalid_terminal:
+  role: "PREFIT_INVALID_VISIBILITY"
+  fit_attempted: false
+  successful_fit_count_effect: 0
+
+output_obligations:
+  ordered_count: 104
+  inventory_source: "evaluator/scenario_derivation_registry.json"
+  coverage_source: "src/ebm_audit/evaluator/meaning_evidence_bundle.py"
+  branch_matrix: "tests/evaluator/test_grouped_meaning_branch_matrix.py"
+  required_branches: ["positive", "missing_owner", "malformed"]
+  required_typed_states: ["AVAILABLE", "UNAVAILABLE", "NOT_APPLICABLE", "INVALID", "FAILED"]
+
+ordinary_product_path:
+  public_worker: true
+  ordinary_audit: true
+  scientific_capture: true
+  evidence_projection: true
+  grouped_derivation: true
+  audit_result: true
+  json_report: true
+  applicable_csv: true
+  self_contained_html: true
+  exact_artifact_readback: true
+  report_subjects:
+    - "FULL_CAPABILITY_COHORT"
+    - "PARTIAL_CAPABILITY_CASE"
+  expected_subject_meaning_state_counts:
+    FULL_CAPABILITY_COHORT: {AVAILABLE: 0, UNAVAILABLE: 4, NOT_APPLICABLE: 100, INVALID: 0, FAILED: 0}
+    PARTIAL_CAPABILITY_CASE: {AVAILABLE: 0, UNAVAILABLE: 4, NOT_APPLICABLE: 100, INVALID: 0, FAILED: 0}
+  subject_meaning_bundle_hashes_must_be_distinct: true
+  shared_final_report_binding_required: true
+  render_count: 1
+  final_surface_subject: "FULL_CAPABILITY_COHORT"
+  final_surface_rerender_permitted: false
+
+uncertainty_classes:
+  - "within_fit"
+  - "participant_sampling"
+  - "analyst_decision_preprocessing"
+  - "participant_influence"
+  - "no_recoverable_signal"
+
+exact_oracle:
+  materialized_public_max_events: 8
+  materialized_nine_event_rejection_before_enumeration: true
+  compact_summary_max_events: 9
+  algorithm: "exhaustive lexicographic enumeration in bounded NumPy chunks"
+  lower_complexity_claim: false
+  cross_request_cache_permitted: false
+
+live_runtime:
+  supported_host: "iMac-3.local macOS-14.5 arm64 Python 3.12.13"
+  measured_pilot_seconds: 247.2211161670275
+  readiness_limit_seconds: 300
+  evaluated_stretch_target_seconds: 240
+  evaluated_stretch_target_status: "NOT_MET"
+  terminal_timeout_seconds: 300
+  pilot_receipt_file_sha256: "52155961ff295d1802d0c2baea8f00fee0840c96c1f26fd0fad4075657a258fe"
+  pilot_transaction_receipt_sha256: "e2352eb69582b7f3518797ed33f5c6f2d5369b7017aa54119ad237770a35523d"
+  readiness_limit_supported_by_measurement: true
+  stretch_target_supported_by_measurement: false
+  unchanged_retry_permitted: false
+
+combined_no_fit_gate:
+  protocol_and_branch_coverage: true
+  full_partial_28_fit_contract_suite_repeated: false
+  scientific_fit_count: 0
+
+hard_gates:
+  count: 17
+  direct_product_evidence_required: true
+  duplicate_receipt_layers_required: false
+  ordered_gate_ids:
+    - "contract_candidate_plan_frozen"
+    - "researcher_workflow_and_handoff"
+    - "meaning_inventory_complete"
+    - "substantive_scientific_validation"
+    - "full_partial_capability_honesty"
+    - "baseline_truthfulness"
+    - "no_silent_data_change"
+    - "uncertainty_separation"
+    - "provenance"
+    - "privacy"
+    - "offline_operation"
+    - "determinism"
+    - "visible_warnings_and_failures"
+    - "cautious_language"
+    - "no_result_conditioned_tuning"
+    - "independent_review"
+    - "no_unauthorized_external_action"
+  direct_evidence_owners:
+    candidate_source: "exact candidate commit, tree, and source hashes"
+    compact_pilot: "installed six-Fit public-synthetic transaction receipt"
+    combined_no_fit_gate: "exact candidate combined protocol and 104-by-three branch receipt"
+    final_report_readback: "one rendered report's exact five-artifact readback"
+    independent_review: "boundary-clean exact-candidate and artifact review receipt"
+  evidence_bindings:
+    contract_candidate_plan_frozen: ["candidate_source"]
+    researcher_workflow_and_handoff: ["compact_pilot", "final_report_readback"]
+    meaning_inventory_complete: ["compact_pilot", "combined_no_fit_gate"]
+    substantive_scientific_validation: ["compact_pilot"]
+    full_partial_capability_honesty: ["compact_pilot"]
+    baseline_truthfulness: ["candidate_source", "compact_pilot"]
+    no_silent_data_change: ["candidate_source", "compact_pilot", "final_report_readback"]
+    uncertainty_separation: ["candidate_source", "compact_pilot", "final_report_readback"]
+    provenance: ["candidate_source", "compact_pilot", "final_report_readback"]
+    privacy: ["compact_pilot", "independent_review"]
+    offline_operation: ["compact_pilot"]
+    determinism: ["candidate_source", "combined_no_fit_gate"]
+    visible_warnings_and_failures: ["compact_pilot", "final_report_readback"]
+    cautious_language: ["final_report_readback"]
+    no_result_conditioned_tuning: ["candidate_source", "compact_pilot", "independent_review"]
+    independent_review: ["independent_review"]
+    no_unauthorized_external_action: ["independent_review"]
+
+retained_invariants:
+  - "backend neutral subprocess protocol"
+  - "genuine Fit for every scientific change"
+  - "five typed applicability states"
+  - "no missing evidence promotion"
+  - "row and cell accounting"
+  - "complete provenance"
+  - "default artifact privacy"
+  - "offline Seatbelt containment"
+  - "deterministic report language"
+  - "no signal or medical overclaim"
+  - "immutable exact-candidate handoff"
+  - "independent review before acceptance"
+
+optional_research_stress_evidence:
+  historical_contract: "evaluator/proportional_benchmark_contract.yaml"
+  retained_only: true
+  mandatory_for_readiness: false
+  preserved_components:
+    - "104-Fit 23-family plan"
+    - "24 moderate pairs"
+    - "five noise levels"
+    - "six correlated and six duplicate replicates"
+    - "eight influence removals"
+    - "historical immutable challenge receipts"
+
+prohibited_actions:
+  - "participant or protected data access"
+  - "telemetry or network use"
+  - "push"
+  - "publication"
+  - "release"
+  - "upload"
+  - "outreach"
+  - "score change before independent acceptance"

@@ -1,0 +1,943 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ebm-audit.invalid/schemas/report-model.schema.json",
+  "title": "Deterministic public ReportModel",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_model_schema_version",
+    "report_language_rule_id",
+    "audit_status",
+    "terminal_rows",
+    "data_accounting",
+    "coverage",
+    "uncertainty_layers",
+    "provenance",
+    "baseline",
+    "hard_failure_codes"
+  ],
+  "properties": {
+    "report_model_schema_version": {
+      "const": "ebm-audit-report-model/1.0"
+    },
+    "report_language_rule_id": {
+      "const": "report-language/v0.1.0"
+    },
+    "audit_status": {
+      "enum": [
+        "AUDIT_INVALID",
+        "NO_VALID_UNIVERSES",
+        "AUDIT_COMPLETE",
+        "AUDIT_PARTIAL"
+      ]
+    },
+    "terminal_rows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/TerminalRow"
+      }
+    },
+    "data_accounting": {
+      "$ref": "#/$defs/AccountingSummary"
+    },
+    "coverage": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/CoverageSet"
+      }
+    },
+    "uncertainty_layers": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/WithinModelLayer"
+        },
+        {
+          "$ref": "#/$defs/SamplingLayer"
+        },
+        {
+          "$ref": "#/$defs/AnalystDecisionLayer"
+        },
+        {
+          "$ref": "#/$defs/ParticipantInfluenceLayer"
+        },
+        {
+          "$ref": "#/$defs/LackOfSignalLayer"
+        }
+      ],
+      "items": false
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "baseline": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/BaselineSnapshot"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "hard_failure_codes": {
+      "$ref": "#/$defs/ReportableHardFailureCodes"
+    }
+  },
+  "$defs": {
+    "Sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "StableCode": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]*(?:[._-][A-Z0-9]+)*$"
+    },
+    "StableCodes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/StableCode"
+      }
+    },
+    "ReportableLedgerCodes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "CONVERGENCE.RHAT_WARN",
+          "SPEC.EVENT_DIRECTION",
+          "WORKER.CAPABILITY_UNAVAILABLE",
+          "WORKER.EXECUTION_FAILED"
+        ]
+      }
+    },
+    "ReportableHardFailureCodes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "BACKEND_OR_PROTOCOL_FAILURE",
+          "BENCHMARK_FAILED",
+          "INVALID_INPUT_OR_SPECIFICATION",
+          "UNEXPECTED_CORE_ERROR",
+          "WORKER_OR_CAPABILITY_UNAVAILABLE"
+        ]
+      }
+    },
+    "ReportableSummaryReasonCodes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "COMPARISON.SEMANTICALLY_NON_EQUIVALENT",
+          "INFLUENCE.INSUFFICIENT_COMMON_EVENTS",
+          "METRIC.NOT_ASSESSABLE",
+          "NULL.CALIBRATION_NOT_VALIDATED",
+          "STAGING.FIXED_COHORT_UNAVAILABLE",
+          "WORKER.CAPABILITY_UNAVAILABLE"
+        ]
+      }
+    },
+    "ReportableBaselineReasonCodes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "BASELINE.REFERENCE_MISMATCH"
+        ]
+      }
+    },
+    "TerminalRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_ordinal",
+        "candidate_id",
+        "analysis_spec_id",
+        "universe_id",
+        "final_status",
+        "result_id",
+        "failure_codes",
+        "warning_codes"
+      ],
+      "properties": {
+        "candidate_ordinal": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "candidate_id": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "analysis_spec_id": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "universe_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Sha256Digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "final_status": {
+          "enum": [
+            "SUCCESS",
+            "CONVERGENCE_WARN",
+            "INVALID_INPUT",
+            "UNSUPPORTED_CAPABILITY",
+            "INVALID_SPECIFICATION",
+            "BACKEND_ERROR",
+            "TIMEOUT",
+            "CONVERGENCE_FAILED",
+            "CONVERGENCE_NOT_ASSESSABLE",
+            "PRIVACY_VIOLATION",
+            "PROTOCOL_ERROR"
+          ]
+        },
+        "result_id": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "failure_codes": {
+          "$ref": "#/$defs/ReportableLedgerCodes"
+        },
+        "warning_codes": {
+          "$ref": "#/$defs/ReportableLedgerCodes"
+        }
+      }
+    },
+    "AccountingSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_participants",
+        "output_participants",
+        "input_events",
+        "output_events",
+        "input_missing_cells",
+        "output_missing_cells",
+        "flagged_cells",
+        "masked_cells",
+        "transformed_cells",
+        "added_participant_instances",
+        "removed_participants",
+        "removed_events",
+        "operation_count"
+      ],
+      "properties": {
+        "input_participants": {
+          "$ref": "#/$defs/Count"
+        },
+        "output_participants": {
+          "$ref": "#/$defs/Count"
+        },
+        "input_events": {
+          "$ref": "#/$defs/Count"
+        },
+        "output_events": {
+          "$ref": "#/$defs/Count"
+        },
+        "input_missing_cells": {
+          "$ref": "#/$defs/Count"
+        },
+        "output_missing_cells": {
+          "$ref": "#/$defs/Count"
+        },
+        "flagged_cells": {
+          "$ref": "#/$defs/Count"
+        },
+        "masked_cells": {
+          "$ref": "#/$defs/Count"
+        },
+        "transformed_cells": {
+          "$ref": "#/$defs/Count"
+        },
+        "added_participant_instances": {
+          "$ref": "#/$defs/Count"
+        },
+        "removed_participants": {
+          "$ref": "#/$defs/Count"
+        },
+        "removed_events": {
+          "$ref": "#/$defs/Count"
+        },
+        "operation_count": {
+          "$ref": "#/$defs/Count"
+        }
+      }
+    },
+    "Count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "CoverageSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "experiment_set_id_digest",
+        "planned_count",
+        "minimum_valid_count",
+        "valid_count"
+      ],
+      "properties": {
+        "experiment_set_id_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "planned_count": {
+          "$ref": "#/$defs/Count"
+        },
+        "minimum_valid_count": {
+          "$ref": "#/$defs/Count"
+        },
+        "valid_count": {
+          "$ref": "#/$defs/Count"
+        }
+      }
+    },
+    "UncertaintySummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "layer",
+        "component",
+        "summary_id",
+        "metric_id",
+        "status",
+        "comparison_kind",
+        "comparability",
+        "same_event_set",
+        "same_stage_semantics",
+        "value",
+        "unit",
+        "reason_codes"
+      ],
+      "properties": {
+        "layer": {
+          "enum": [
+            "WITHIN_MODEL",
+            "SAMPLING",
+            "ANALYST_DECISION",
+            "PARTICIPANT_INFLUENCE",
+            "LACK_OF_RECOVERABLE_SIGNAL"
+          ]
+        },
+        "component": {
+          "enum": [
+            "WITHIN_FIT",
+            "CHAIN",
+            "SAMPLING",
+            "ANALYST_DECISION",
+            "PAIRWISE_PRECEDENCE",
+            "PARTICIPANT_INFLUENCE",
+            "PARTICIPANT_STAGE",
+            "NULL_COMPARISON"
+          ]
+        },
+        "summary_id": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "metric_id": {
+          "enum": [
+            "position.entropy",
+            "chain.kendall",
+            "bootstrap.kendall",
+            "decision.rank_shift",
+            "pairwise.flip_rate",
+            "influence.kendall",
+            "stage.expected_shift",
+            "null.position_concentration"
+          ]
+        },
+        "status": {
+          "enum": [
+            "ASSESSABLE",
+            "NOT_ASSESSABLE",
+            "NOT_APPLICABLE_BY_CAPABILITY",
+            "NULL_CALIBRATION_NOT_VALIDATED",
+            "STRONGER_THAN_CHOSEN_REFITTED_NULLS"
+          ]
+        },
+        "comparison_kind": {
+          "enum": [
+            "ORDER",
+            "PAIRWISE",
+            "NATIVE_STAGE",
+            "OTHER"
+          ]
+        },
+        "comparability": {
+          "enum": [
+            "COMPARABLE",
+            "SELECTION_COUPLED",
+            "SEMANTICALLY_NON_EQUIVALENT",
+            "NOT_COMPARABLE"
+          ]
+        },
+        "same_event_set": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "same_stage_semantics": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "value": {
+          "type": [
+            "integer",
+            "number",
+            "boolean",
+            "null"
+          ]
+        },
+        "unit": {
+          "enum": [
+            "count",
+            "fraction",
+            "probability",
+            "rank",
+            "stage",
+            null
+          ]
+        },
+        "reason_codes": {
+          "$ref": "#/$defs/ReportableSummaryReasonCodes"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "layer": { "const": "WITHIN_MODEL" },
+            "component": { "const": "WITHIN_FIT" },
+            "metric_id": { "const": "position.entropy" },
+            "comparison_kind": { "const": "ORDER" }
+          }
+        },
+        {
+          "properties": {
+            "layer": { "const": "WITHIN_MODEL" },
+            "component": { "const": "CHAIN" },
+            "metric_id": { "const": "chain.kendall" },
+            "comparison_kind": { "const": "ORDER" }
+          }
+        },
+        {
+          "properties": {
+            "layer": { "const": "SAMPLING" },
+            "component": { "const": "SAMPLING" },
+            "metric_id": { "const": "bootstrap.kendall" },
+            "comparison_kind": { "const": "ORDER" }
+          }
+        },
+        {
+          "properties": {
+            "layer": { "const": "ANALYST_DECISION" },
+            "component": { "const": "ANALYST_DECISION" },
+            "metric_id": { "const": "decision.rank_shift" },
+            "comparison_kind": { "const": "ORDER" }
+          }
+        },
+        {
+          "properties": {
+            "layer": { "const": "ANALYST_DECISION" },
+            "component": { "const": "PAIRWISE_PRECEDENCE" },
+            "metric_id": { "const": "pairwise.flip_rate" },
+            "comparison_kind": { "const": "PAIRWISE" }
+          }
+        },
+        {
+          "properties": {
+            "layer": { "const": "PARTICIPANT_INFLUENCE" },
+            "component": { "const": "PARTICIPANT_INFLUENCE" },
+            "metric_id": { "const": "influence.kendall" },
+            "comparison_kind": { "const": "ORDER" }
+          }
+        },
+        {
+          "properties": {
+            "layer": { "const": "PARTICIPANT_INFLUENCE" },
+            "component": { "const": "PARTICIPANT_STAGE" },
+            "metric_id": { "const": "stage.expected_shift" },
+            "comparison_kind": { "const": "NATIVE_STAGE" }
+          }
+        },
+        {
+          "properties": {
+            "layer": { "const": "LACK_OF_RECOVERABLE_SIGNAL" },
+            "component": { "const": "NULL_COMPARISON" },
+            "metric_id": { "const": "null.position_concentration" },
+            "comparison_kind": { "const": "ORDER" }
+          }
+        }
+      ],
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "status": { "const": "ASSESSABLE" },
+                "value": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "unit": {
+                  "const": "fraction"
+                },
+                "reason_codes": { "maxItems": 0 }
+              }
+            },
+            {
+              "properties": {
+                "status": { "const": "STRONGER_THAN_CHOSEN_REFITTED_NULLS" },
+                "component": { "const": "NULL_COMPARISON" },
+                "value": { "const": true },
+                "unit": { "type": "null" },
+                "comparability": { "const": "COMPARABLE" },
+                "reason_codes": { "maxItems": 0 }
+              }
+            },
+            {
+              "properties": {
+                "status": {
+                  "enum": [
+                    "NOT_ASSESSABLE",
+                    "NOT_APPLICABLE_BY_CAPABILITY",
+                    "NULL_CALIBRATION_NOT_VALIDATED"
+                  ]
+                },
+                "value": { "type": "null" },
+                "unit": { "type": "null" },
+                "reason_codes": { "minItems": 1 }
+              }
+            }
+          ]
+        },
+        {
+          "if": {
+            "properties": {
+              "metric_id": { "const": "stage.expected_shift" }
+            },
+            "required": ["metric_id"]
+          },
+          "then": {
+            "properties": {
+              "comparison_kind": { "const": "NATIVE_STAGE" }
+            },
+            "oneOf": [
+              {
+                "properties": {
+                  "same_event_set": { "const": true },
+                  "same_stage_semantics": { "const": true },
+                  "comparability": {
+                    "enum": [
+                      "COMPARABLE",
+                      "SELECTION_COUPLED",
+                      "NOT_COMPARABLE"
+                    ]
+                  }
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "same_event_set": { "const": false }
+                    },
+                    "required": ["same_event_set"]
+                  },
+                  {
+                    "properties": {
+                      "same_stage_semantics": { "const": false }
+                    },
+                    "required": ["same_stage_semantics"]
+                  }
+                ],
+                "properties": {
+                  "comparability": {
+                    "const": "SEMANTICALLY_NON_EQUIVALENT"
+                  }
+                }
+              }
+            ]
+          },
+          "else": {
+            "properties": {
+              "same_event_set": { "type": "null" },
+              "same_stage_semantics": { "type": "null" }
+            }
+          }
+        }
+      ]
+    },
+    "LayerBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "layer",
+        "summaries"
+      ],
+      "properties": {
+        "layer": {
+          "type": "string"
+        },
+        "summaries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UncertaintySummary"
+          }
+        }
+      }
+    },
+    "WithinModelLayer": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/LayerBase"
+        },
+        {
+          "properties": {
+            "layer": {
+              "const": "WITHIN_MODEL"
+            },
+            "summaries": {
+              "minItems": 2,
+              "maxItems": 2,
+              "allOf": [
+                {
+                  "contains": {
+                    "properties": {
+                      "metric_id": { "const": "position.entropy" }
+                    },
+                    "required": ["metric_id"]
+                  },
+                  "minContains": 1,
+                  "maxContains": 1
+                },
+                {
+                  "contains": {
+                    "properties": {
+                      "metric_id": { "const": "chain.kendall" }
+                    },
+                    "required": ["metric_id"]
+                  },
+                  "minContains": 1,
+                  "maxContains": 1
+                }
+              ],
+              "items": {
+                "allOf": [
+                  { "$ref": "#/$defs/UncertaintySummary" },
+                  {
+                    "properties": {
+                      "layer": { "const": "WITHIN_MODEL" },
+                      "component": { "enum": ["WITHIN_FIT", "CHAIN"] }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "SamplingLayer": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/LayerBase"
+        },
+        {
+          "properties": {
+            "layer": {
+              "const": "SAMPLING"
+            },
+            "summaries": {
+              "minItems": 1,
+              "maxItems": 1,
+              "contains": {
+                "properties": {
+                  "metric_id": { "const": "bootstrap.kendall" }
+                },
+                "required": ["metric_id"]
+              },
+              "minContains": 1,
+              "maxContains": 1,
+              "items": {
+                "allOf": [
+                  { "$ref": "#/$defs/UncertaintySummary" },
+                  {
+                    "properties": {
+                      "layer": { "const": "SAMPLING" },
+                      "component": { "const": "SAMPLING" }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AnalystDecisionLayer": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/LayerBase"
+        },
+        {
+          "properties": {
+            "layer": {
+              "const": "ANALYST_DECISION"
+            },
+            "summaries": {
+              "minItems": 2,
+              "maxItems": 2,
+              "allOf": [
+                {
+                  "contains": {
+                    "properties": {
+                      "metric_id": { "const": "decision.rank_shift" }
+                    },
+                    "required": ["metric_id"]
+                  },
+                  "minContains": 1,
+                  "maxContains": 1
+                },
+                {
+                  "contains": {
+                    "properties": {
+                      "metric_id": { "const": "pairwise.flip_rate" }
+                    },
+                    "required": ["metric_id"]
+                  },
+                  "minContains": 1,
+                  "maxContains": 1
+                }
+              ],
+              "items": {
+                "allOf": [
+                  { "$ref": "#/$defs/UncertaintySummary" },
+                  {
+                    "properties": {
+                      "layer": { "const": "ANALYST_DECISION" },
+                      "component": {
+                        "enum": ["ANALYST_DECISION", "PAIRWISE_PRECEDENCE"]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ParticipantInfluenceLayer": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/LayerBase"
+        },
+        {
+          "properties": {
+            "layer": {
+              "const": "PARTICIPANT_INFLUENCE"
+            },
+            "summaries": {
+              "minItems": 2,
+              "maxItems": 2,
+              "allOf": [
+                {
+                  "contains": {
+                    "properties": {
+                      "metric_id": { "const": "influence.kendall" }
+                    },
+                    "required": ["metric_id"]
+                  },
+                  "minContains": 1,
+                  "maxContains": 1
+                },
+                {
+                  "contains": {
+                    "properties": {
+                      "metric_id": { "const": "stage.expected_shift" }
+                    },
+                    "required": ["metric_id"]
+                  },
+                  "minContains": 1,
+                  "maxContains": 1
+                }
+              ],
+              "items": {
+                "allOf": [
+                  { "$ref": "#/$defs/UncertaintySummary" },
+                  {
+                    "properties": {
+                      "layer": { "const": "PARTICIPANT_INFLUENCE" },
+                      "component": {
+                        "enum": ["PARTICIPANT_INFLUENCE", "PARTICIPANT_STAGE"]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "LackOfSignalLayer": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/LayerBase"
+        },
+        {
+          "properties": {
+            "layer": {
+              "const": "LACK_OF_RECOVERABLE_SIGNAL"
+            },
+            "summaries": {
+              "minItems": 1,
+              "maxItems": 1,
+              "contains": {
+                "properties": {
+                  "metric_id": { "const": "null.position_concentration" }
+                },
+                "required": ["metric_id"]
+              },
+              "minContains": 1,
+              "maxContains": 1,
+              "items": {
+                "allOf": [
+                  { "$ref": "#/$defs/UncertaintySummary" },
+                  {
+                    "properties": {
+                      "layer": { "const": "LACK_OF_RECOVERABLE_SIGNAL" },
+                      "component": { "const": "NULL_COMPARISON" }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "dataset_digest",
+        "config_digest",
+        "core_code_digest",
+        "protocol_version",
+        "backend_identity_digest",
+        "environment_digest",
+        "benchmark_contract_version",
+        "benchmark_contract_digest",
+        "null_calibration_status",
+        "null_calibration_identity_digest",
+        "seeds",
+        "chain_count"
+      ],
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "dataset_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "config_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "core_code_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "protocol_version": {
+          "const": "ebm-audit-worker/v2"
+        },
+        "backend_identity_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "environment_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "benchmark_contract_version": {
+          "const": "benchmark/0.1"
+        },
+        "benchmark_contract_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "null_calibration_status": {
+          "enum": [
+            "MATCHED_PASSED",
+            "NOT_VALIDATED",
+            "MISMATCHED",
+            "INCOMPLETE"
+          ]
+        },
+        "null_calibration_identity_digest": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Sha256Digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "seeds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{16}$"
+          }
+        },
+        "chain_count": {
+          "$ref": "#/$defs/Count"
+        }
+      }
+    },
+    "BaselineSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "baseline_reproduction_id",
+        "derived_status",
+        "validated_language_eligibility",
+        "verification_receipt_digest",
+        "reason_codes"
+      ],
+      "properties": {
+        "baseline_reproduction_id": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "derived_status": {
+          "enum": [
+            "BASELINE_REPRODUCED",
+            "BASELINE_PARTIALLY_REPRODUCED",
+            "BASELINE_NOT_REPRODUCED",
+            "BASELINE_REFERENCE_NOT_SUPPLIED"
+          ]
+        },
+        "validated_language_eligibility": {
+          "type": "boolean"
+        },
+        "verification_receipt_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "reason_codes": {
+          "$ref": "#/$defs/ReportableBaselineReasonCodes"
+        }
+      }
+    }
+  }
+}

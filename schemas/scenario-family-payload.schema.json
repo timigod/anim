@@ -1,0 +1,750 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Shared substantive and fixture scenario family payloads",
+  "$defs": {
+    "RuleState": {
+      "enum": [
+        "PASS",
+        "WARN",
+        "FAIL",
+        "NOT_ASSESSABLE"
+      ]
+    },
+    "FloatVector": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "number"
+      }
+    },
+    "ProbabilityVector": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "BoolVector": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "boolean"
+      }
+    },
+    "UIntVector": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "RuleStateVector": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/RuleState"
+      }
+    },
+    "UniqueMachineIdVector": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"
+      }
+    },
+    "FamilyPayload": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/EasyKnownTruthEvidence"
+        },
+        {
+          "$ref": "#/$defs/ModerateEvidence"
+        },
+        {
+          "$ref": "#/$defs/SmallSampleEvidence"
+        },
+        {
+          "$ref": "#/$defs/NoiseEvidence"
+        },
+        {
+          "$ref": "#/$defs/WeakSeparationEvidence"
+        },
+        {
+          "$ref": "#/$defs/IncompleteCoverageEvidence"
+        },
+        {
+          "$ref": "#/$defs/TightlySpacedEvidence"
+        },
+        {
+          "$ref": "#/$defs/SlowTransitionEvidence"
+        },
+        {
+          "$ref": "#/$defs/OutlierEvidence"
+        },
+        {
+          "$ref": "#/$defs/McarEvidence"
+        },
+        {
+          "$ref": "#/$defs/MarEvidence"
+        },
+        {
+          "$ref": "#/$defs/CorrelatedDuplicateEvidence"
+        },
+        {
+          "$ref": "#/$defs/MinorityAlternateEvidence"
+        },
+        {
+          "$ref": "#/$defs/OpposingEvidence"
+        },
+        {
+          "$ref": "#/$defs/NearSimultaneousEvidence"
+        },
+        {
+          "$ref": "#/$defs/CovariateEvidence"
+        },
+        {
+          "$ref": "#/$defs/GroupBoundaryEvidence"
+        },
+        {
+          "$ref": "#/$defs/ControlContaminationEvidence"
+        },
+        {
+          "$ref": "#/$defs/HeavyTailEvidence"
+        },
+        {
+          "$ref": "#/$defs/WrongDirectionEvidence"
+        },
+        {
+          "$ref": "#/$defs/PureNoSignalEvidence"
+        },
+        {
+          "$ref": "#/$defs/LabelPermutationEvidence"
+        },
+        {
+          "$ref": "#/$defs/FeaturePermutationEvidence"
+        }
+      ]
+    },
+    "EasyKnownTruthEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "order_rule_states",
+        "stage_rule_states",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "order_rule_states": {
+          "$ref": "#/$defs/RuleStateVector"
+        },
+        "stage_rule_states": {
+          "$ref": "#/$defs/RuleStateVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "ModerateEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "moderate_rule_states",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "moderate_rule_states": {
+          "$ref": "#/$defs/RuleStateVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "SmallSampleEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entropy_delta_small_minus_large",
+        "cross_chain_delta_small_minus_large",
+        "forced_precision_flags",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "entropy_delta_small_minus_large": {
+          "$ref": "#/$defs/FloatVector"
+        },
+        "cross_chain_delta_small_minus_large": {
+          "$ref": "#/$defs/FloatVector"
+        },
+        "forced_precision_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "NoiseEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "noise_ladder_rule_states",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "noise_ladder_rule_states": {
+          "$ref": "#/$defs/RuleStateVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "WeakSeparationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entropy_delta_weak_minus_moderate",
+        "kendall_distance_delta_weak_minus_moderate",
+        "ineligible_strong_flags",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "entropy_delta_weak_minus_moderate": {
+          "$ref": "#/$defs/FloatVector"
+        },
+        "kendall_distance_delta_weak_minus_moderate": {
+          "$ref": "#/$defs/FloatVector"
+        },
+        "ineligible_strong_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "IncompleteCoverageEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "affected_tail_entropy_delta",
+        "coverage_limitation_reported",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "affected_tail_entropy_delta": {
+          "$ref": "#/$defs/FloatVector"
+        },
+        "coverage_limitation_reported": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "TightlySpacedEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_pair_precedence",
+        "arbitrary_within_pair_truth_claims",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "target_pair_precedence": {
+          "$ref": "#/$defs/ProbabilityVector"
+        },
+        "arbitrary_within_pair_truth_claims": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "SlowTransitionEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entropy_delta_slow_minus_narrow",
+        "kendall_distance_delta_slow_minus_narrow",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "entropy_delta_slow_minus_narrow": {
+          "$ref": "#/$defs/FloatVector"
+        },
+        "kendall_distance_delta_slow_minus_narrow": {
+          "$ref": "#/$defs/FloatVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "OutlierEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "influence_rule_states",
+        "bad_or_wrong_data_claim_flags",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "influence_rule_states": {
+          "$ref": "#/$defs/RuleStateVector"
+        },
+        "bad_or_wrong_data_claim_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "McarEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mask_digest_equal",
+        "missing_counts_equal",
+        "prebackend_terminal_correct",
+        "predicted_removed_rows",
+        "actual_removed_rows",
+        "preprocessing_refit_equal",
+        "backend_nan_flags",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "mask_digest_equal": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "missing_counts_equal": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "prebackend_terminal_correct": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "predicted_removed_rows": {
+          "$ref": "#/$defs/UIntVector"
+        },
+        "actual_removed_rows": {
+          "$ref": "#/$defs/UIntVector"
+        },
+        "preprocessing_refit_equal": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "backend_nan_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "MarEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mask_digest_equal",
+        "missing_counts_equal",
+        "terminal_contract_equal",
+        "training_row_manifest_equal",
+        "silent_loss_flags",
+        "hidden_imputation_flags",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "mask_digest_equal": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "missing_counts_equal": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "terminal_contract_equal": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "training_row_manifest_equal": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "silent_loss_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "hidden_imputation_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "CorrelatedDuplicateEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "correlated",
+        "exact_duplicate_post_noise"
+      ],
+      "properties": {
+        "correlated": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "case_ids",
+            "target_pair_precedence",
+            "arbitrary_within_pair_truth_claims",
+            "truth_scoring_mode"
+          ],
+          "properties": {
+            "case_ids": {
+              "$ref": "#/$defs/UniqueMachineIdVector"
+            },
+            "target_pair_precedence": {
+              "$ref": "#/$defs/ProbabilityVector"
+            },
+            "arbitrary_within_pair_truth_claims": {
+              "$ref": "#/$defs/BoolVector"
+            },
+            "truth_scoring_mode": {
+              "const": "STRICT_TOTAL_ORDER"
+            }
+          }
+        },
+        "exact_duplicate_post_noise": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "case_ids",
+            "target_pair_precedence",
+            "partial_truth_scored_without_tiebreak",
+            "arbitrary_within_pair_truth_claims",
+            "truth_scoring_mode"
+          ],
+          "properties": {
+            "case_ids": {
+              "$ref": "#/$defs/UniqueMachineIdVector"
+            },
+            "target_pair_precedence": {
+              "$ref": "#/$defs/ProbabilityVector"
+            },
+            "partial_truth_scored_without_tiebreak": {
+              "$ref": "#/$defs/BoolVector"
+            },
+            "arbitrary_within_pair_truth_claims": {
+              "$ref": "#/$defs/BoolVector"
+            },
+            "truth_scoring_mode": {
+              "const": "PARTIAL_ORDER_EQUIVALENCE"
+            }
+          }
+        }
+      }
+    },
+    "MinorityAlternateEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "single_sequence_limitation_reported",
+        "entropy_delta_mixture_minus_single",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "single_sequence_limitation_reported": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "entropy_delta_mixture_minus_single": {
+          "$ref": "#/$defs/FloatVector"
+        },
+        "truth_scoring_mode": {
+          "const": "MIXTURE_NON_IDENTIFIABLE"
+        }
+      }
+    },
+    "OpposingEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "opposing_pair_absolute_precedence_from_half",
+        "internally_concentrated_flags",
+        "stronger_than_null_flags",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "opposing_pair_absolute_precedence_from_half": {
+          "$ref": "#/$defs/ProbabilityVector"
+        },
+        "internally_concentrated_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "stronger_than_null_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "truth_scoring_mode": {
+          "const": "MIXTURE_NON_IDENTIFIABLE"
+        }
+      }
+    },
+    "NearSimultaneousEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "block_pair_precedence",
+        "block_aware_scoring",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "block_pair_precedence": {
+          "$ref": "#/$defs/ProbabilityVector"
+        },
+        "block_aware_scoring": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "truth_scoring_mode": {
+          "const": "PARTIAL_ORDER_EQUIVALENCE"
+        }
+      }
+    },
+    "CovariateEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adjusted_minus_unadjusted_kendall_agreement",
+        "reference_only_fit_flags",
+        "resample_leakage_count",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "adjusted_minus_unadjusted_kendall_agreement": {
+          "$ref": "#/$defs/FloatVector"
+        },
+        "reference_only_fit_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "resample_leakage_count": {
+          "$ref": "#/$defs/UIntVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "GroupBoundaryEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ordered_rule_ids",
+        "group_count_accounting_equal",
+        "decision_attribution",
+        "selected_threshold_flags",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "ordered_rule_ids": {
+          "const": [
+            "boundary_q50",
+            "boundary_q35",
+            "boundary_q65"
+          ]
+        },
+        "group_count_accounting_equal": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "decision_attribution": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "const": "DESCRIPTIVE_ASSOCIATION"
+          }
+        },
+        "selected_threshold_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "ControlContaminationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contamination_fraction",
+        "kendall_agreement",
+        "position_entropy",
+        "label_manifest_equal",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "contamination_fraction": {
+          "$ref": "#/$defs/ProbabilityVector"
+        },
+        "kendall_agreement": {
+          "$ref": "#/$defs/ProbabilityVector"
+        },
+        "position_entropy": {
+          "$ref": "#/$defs/ProbabilityVector"
+        },
+        "label_manifest_equal": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "HeavyTailEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hidden_modification_flags",
+        "suppressed_warning_flags",
+        "nonfinite_admitted_flags",
+        "visible_terminal_flags",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "hidden_modification_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "suppressed_warning_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "nonfinite_admitted_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "visible_terminal_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "WrongDirectionEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "correct_minus_wrong_kendall_agreement",
+        "direction_sensitivity_reported",
+        "direction_validity_claims",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "correct_minus_wrong_kendall_agreement": {
+          "$ref": "#/$defs/FloatVector"
+        },
+        "direction_sensitivity_reported": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "direction_validity_claims": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "truth_scoring_mode": {
+          "const": "STRICT_TOTAL_ORDER"
+        }
+      }
+    },
+    "PureNoSignalEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fpr_evidence",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "fpr_evidence": {
+          "$ref": "scientific-invariant.schema.json#/$defs/FalsePositiveEvidenceBundle"
+        },
+        "truth_scoring_mode": {
+          "const": "NO_RECOVERABLE_SIGNAL"
+        }
+      }
+    },
+    "LabelPermutationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "group_counts_preserved",
+        "preprocessing_refit_equal",
+        "source_binding_equal",
+        "calibration_diagnostic_reported",
+        "excluded_from_pure_no_signal_fpr_denominator",
+        "ineligible_strong_flags",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "group_counts_preserved": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "preprocessing_refit_equal": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "source_binding_equal": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "calibration_diagnostic_reported": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "excluded_from_pure_no_signal_fpr_denominator": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "ineligible_strong_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "truth_scoring_mode": {
+          "const": "REFITTED_NULL_TRANSFORMATION"
+        }
+      }
+    },
+    "FeaturePermutationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "group_marginals_preserved",
+        "missing_counts_preserved",
+        "participant_event_alignment_changed",
+        "preprocessing_refit_equal",
+        "source_binding_equal",
+        "calibration_diagnostic_reported",
+        "excluded_from_pure_no_signal_fpr_denominator",
+        "ineligible_strong_flags",
+        "truth_scoring_mode"
+      ],
+      "properties": {
+        "group_marginals_preserved": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "missing_counts_preserved": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "participant_event_alignment_changed": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "preprocessing_refit_equal": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "source_binding_equal": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "calibration_diagnostic_reported": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "excluded_from_pure_no_signal_fpr_denominator": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "ineligible_strong_flags": {
+          "$ref": "#/$defs/BoolVector"
+        },
+        "truth_scoring_mode": {
+          "const": "REFITTED_NULL_TRANSFORMATION"
+        }
+      }
+    }
+  }
+}

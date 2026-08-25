@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "baseline-reference-bundle.schema.json",
+  "title": "EBM Audit canonical baseline reference bundle manifest v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "bundle_schema_version",
+    "reference_result",
+    "files"
+  ],
+  "properties": {
+    "bundle_schema_version": {
+      "const": "ebm-audit-baseline-reference-bundle/1.0"
+    },
+    "reference_result": {
+      "$ref": "canonical-records.schema.json#/$defs/CanonicalReferenceResult"
+    },
+    "files": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "arrays.npz",
+        "private-alignment.json"
+      ],
+      "properties": {
+        "arrays.npz": {
+          "$ref": "#/$defs/FileRecord"
+        },
+        "private-alignment.json": {
+          "$ref": "#/$defs/FileRecord"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "FileRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "byte_length",
+        "sha256"
+      ],
+      "properties": {
+        "byte_length": {
+          "$ref": "canonical-records.schema.json#/$defs/SafeInteger"
+        },
+        "sha256": {
+          "$ref": "canonical-records.schema.json#/$defs/Sha256Digest"
+        }
+      }
+    }
+  }
+}

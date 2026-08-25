@@ -1,0 +1,2973 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "canonical-records.schema.json",
+  "title": "EBM Audit canonical records 1.0",
+  "oneOf": [
+    { "$ref": "#/$defs/AuditDatasetCatalog" },
+    { "$ref": "#/$defs/AuditDataset" },
+    { "$ref": "#/$defs/LosslessAuditTableDigestPreimage" },
+    { "$ref": "#/$defs/SourceAdmissionTableDigestPreimage" },
+    { "$ref": "#/$defs/SourceAdmissionDigestPreimage" },
+    { "$ref": "#/$defs/CanonicalSourceTableDigestPreimage" },
+    { "$ref": "#/$defs/SelectedRowManifestDigestPreimage" },
+    { "$ref": "#/$defs/OperationParticipantInstanceManifestDigestPreimage" },
+    { "$ref": "#/$defs/CanonicalIngestionBinding" },
+    { "$ref": "#/$defs/CanonicalDatasetView" },
+    { "$ref": "#/$defs/DataVariant" },
+    { "$ref": "#/$defs/EventSpec" },
+    { "$ref": "#/$defs/ScientificDataDigestPreimage" },
+    { "$ref": "#/$defs/CanonicalScientificPayload" },
+    { "$ref": "#/$defs/ResultRecord" },
+    { "$ref": "#/$defs/ResultRecordDigestPreimage" },
+    { "$ref": "#/$defs/CanonicalReferenceResult" },
+    { "$ref": "#/$defs/BaselineReproductionRecord" },
+    { "$ref": "#/$defs/BaselineAssessmentRecord" },
+    { "$ref": "#/$defs/PrivateReferenceAlignmentArtifact" },
+    { "$ref": "#/$defs/InfluenceRecord" },
+    { "$ref": "#/$defs/ComparisonRecord" },
+    { "$ref": "#/$defs/DataAccounting" },
+    { "$ref": "#/$defs/GroupSpec" },
+    { "$ref": "#/$defs/CovariateSpec" },
+    { "$ref": "#/$defs/EnvironmentIdentity" }
+  ],
+  "$defs": {
+    "Sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "UInt64Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{16}$"
+    },
+    "MachineId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{0,63}$"
+    },
+    "StableCode": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]*(?:\\.[A-Z0-9_]+)+$"
+    },
+    "NonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "SafeInteger": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "PositiveSafeInteger": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "SyntheticProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "classification", "generator_id", "generator_version", "generator_record_sha256", "generated_input_sha256", "complete_truth_sha256", "complete_truth_record_id", "scenario_id", "replicate", "seed", "source_kind", "participant_data_present", "external_source_present", "participant_count", "event_count", "event_ids"],
+      "properties": {
+        "schema_version": { "const": "ebm-audit-synthetic-provenance/1.0" },
+        "classification": { "const": "SYNTHETIC-ONLY" },
+        "generator_id": { "$ref": "#/$defs/MachineId" },
+        "generator_version": { "$ref": "#/$defs/NonEmptyString" },
+        "generator_record_sha256": { "$ref": "#/$defs/Sha256Digest" },
+        "generated_input_sha256": { "$ref": "#/$defs/Sha256Digest" },
+        "complete_truth_sha256": { "$ref": "#/$defs/Sha256Digest" },
+        "complete_truth_record_id": { "$ref": "#/$defs/MachineId" },
+        "scenario_id": { "$ref": "#/$defs/MachineId" },
+        "replicate": { "$ref": "#/$defs/SafeInteger" },
+        "seed": { "$ref": "#/$defs/UInt64Hex" },
+        "source_kind": { "const": "PROJECT_OWNED_DETERMINISTIC_GENERATOR" },
+        "participant_data_present": { "const": false },
+        "external_source_present": { "const": false },
+        "participant_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "event_count": { "type": "integer", "minimum": 2, "maximum": 9007199254740991 },
+        "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "project_candidate": { "$ref": "worker-protocol.schema.json#/$defs/ProjectSyntheticCandidateProvenance" }
+      }
+    },
+    "SignedSafeInteger": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "NfcString": {
+      "type": "string",
+      "format": "unicode-nfc",
+      "$comment": "The required format assertion validates that the supplied string is already Unicode NFC. Validators MUST reject rather than normalize."
+    },
+    "ParticipantPrivateIdString": {
+      "type": "string",
+      "minLength": 1,
+      "format": "participant-private-id-text",
+      "$comment": "A private participant ID string contains visible non-whitespace text, is already Unicode NFC and valid scalar UTF-8 text, and contains no Unicode control, format, or surrogate character. Internal ordinary spaces are allowed. Validators MUST reject rather than normalize or trim."
+    },
+    "SourceColumnName": {
+      "allOf": [
+        { "$ref": "#/$defs/NonEmptyString" },
+        { "$ref": "#/$defs/NfcString" }
+      ]
+    },
+    "FixedCohortStageComponentApplicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["output_id", "status", "value", "reason_code"],
+      "properties": {
+        "output_id": {
+          "enum": [
+            "evaluation_stage_posterior",
+            "evaluation_hard_stages",
+            "evaluation_expected_stage"
+          ]
+        },
+        "status": { "const": "NOT_APPLICABLE_BY_CAPABILITY" },
+        "value": { "type": "null" },
+        "reason_code": { "const": "STAGING.FIXED_COHORT_UNAVAILABLE" }
+      }
+    },
+    "FixedCohortStageComponentApplicabilitySet": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/FixedCohortStageComponentApplicability" }
+    },
+    "StageSemanticsDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_semantics_schema_version", "stage_model_availability", "stage_axis_id", "unavailable_reason_code"],
+      "properties": {
+        "stage_semantics_schema_version": { "const": "ebm-audit-stage-semantics/1.0" },
+        "stage_model_availability": { "enum": ["AVAILABLE", "UNAVAILABLE"] },
+        "stage_axis_id": { "const": "strict-prefix-count-v1" },
+        "unavailable_reason_code": { "oneOf": [{ "$ref": "#/$defs/StableCode" }, { "type": "null" }] },
+        "reference_selection_method_id": { "$ref": "#/$defs/MachineId" },
+        "fitted_distribution_method_id": { "$ref": "#/$defs/MachineId" },
+        "stage_prior_method_id": { "$ref": "#/$defs/MachineId" },
+        "stage_prior_max_iterations": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "final_prior_residual_method_id": { "$ref": "#/$defs/MachineId" },
+        "final_prior_residual_tolerance": { "type": "number", "exclusiveMinimum": 0 },
+        "final_prior_residual_comparison_rule_id": { "const": "strictly-less-than-v1" },
+        "final_prior_residual_failure_status": { "const": "BACKEND_ERROR" },
+        "final_prior_residual_failure_code": { "$ref": "#/$defs/StableCode" },
+        "posterior_method_id": { "$ref": "#/$defs/MachineId" },
+        "staging_rng_rule_id": { "$ref": "#/$defs/MachineId" },
+        "map_rule_id": { "$ref": "#/$defs/MachineId" },
+        "expected_stage_rule_id": { "$ref": "#/$defs/MachineId" },
+        "fixed_evaluation_rule_id": { "$ref": "#/$defs/MachineId" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "stage_model_availability": { "const": "AVAILABLE" } } },
+          "then": {
+            "required": ["reference_selection_method_id", "fitted_distribution_method_id", "stage_prior_method_id", "stage_prior_max_iterations", "final_prior_residual_method_id", "final_prior_residual_tolerance", "final_prior_residual_comparison_rule_id", "final_prior_residual_failure_status", "final_prior_residual_failure_code", "posterior_method_id", "staging_rng_rule_id", "map_rule_id", "expected_stage_rule_id", "fixed_evaluation_rule_id"],
+            "properties": { "unavailable_reason_code": { "type": "null" } }
+          },
+          "else": {
+            "properties": {
+              "stage_model_availability": { "const": "UNAVAILABLE" },
+              "unavailable_reason_code": { "$ref": "#/$defs/StableCode" }
+            },
+            "not": {
+              "anyOf": [
+                { "required": ["reference_selection_method_id"] },
+                { "required": ["fitted_distribution_method_id"] },
+                { "required": ["stage_prior_method_id"] },
+                { "required": ["stage_prior_max_iterations"] },
+                { "required": ["final_prior_residual_method_id"] },
+                { "required": ["final_prior_residual_tolerance"] },
+                { "required": ["final_prior_residual_comparison_rule_id"] },
+                { "required": ["final_prior_residual_failure_status"] },
+                { "required": ["final_prior_residual_failure_code"] },
+                { "required": ["posterior_method_id"] },
+                { "required": ["staging_rng_rule_id"] },
+                { "required": ["map_rule_id"] },
+                { "required": ["expected_stage_rule_id"] },
+                { "required": ["fixed_evaluation_rule_id"] }
+              ]
+            }
+          }
+        }
+      ],
+      "$comment": "Complete digest preimage for one algorithm's staging semantics. The reference-selection rule is deliberately independent of the headline central-order rule."
+    },
+    "PrivateArrayBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["member_name", "array_digest"],
+      "properties": {
+        "member_name": { "type": "string", "pattern": "^backend\\.[a-z][a-z0-9._-]{0,63}\\.[a-z][a-z0-9._-]{0,63}$" },
+        "array_digest": { "$ref": "#/$defs/Sha256Digest" }
+      }
+    },
+    "StageModelReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_model_reference_schema_version", "stage_model_reference_digest", "event_ids", "selection_method_id", "reference_order_permutation", "reference_order_binding", "fitted_distribution_bindings", "final_stage_prior_binding", "final_stage_prior_fixed_point_l1_residual", "stage_semantics_digest"],
+      "properties": {
+        "stage_model_reference_schema_version": { "const": "ebm-audit-stage-model-reference/1.0" },
+        "stage_model_reference_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "selection_method_id": { "$ref": "#/$defs/MachineId" },
+        "reference_order_permutation": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/SafeInteger" } },
+        "reference_order_binding": { "$ref": "#/$defs/PrivateArrayBinding" },
+        "fitted_distribution_bindings": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/PrivateArrayBinding" } },
+        "final_stage_prior_binding": { "$ref": "#/$defs/PrivateArrayBinding" },
+        "final_stage_prior_fixed_point_l1_residual": { "type": "number", "minimum": 0 },
+        "stage_semantics_digest": { "$ref": "#/$defs/Sha256Digest" }
+      },
+      "$comment": "One per-chain fitted staging model. It binds the native selected order to its matched fitted distributions and final full stage-prior vector. Training and fixed-evaluation stage outputs for the chain share this one reference."
+    },
+    "CanonicalStageModelReferenceBinding": {
+      "type": "object",
+      "required": ["arrays", "stage_model_reference"],
+      "if": {
+        "properties": {
+          "arrays": {
+            "anyOf": [
+              { "required": ["training_stage_posterior"] },
+              { "required": ["training_map_stage"] },
+              { "required": ["training_map_tie_mask"] },
+              { "required": ["training_expected_stage"] },
+              { "required": ["evaluation_stage_posterior"] },
+              { "required": ["evaluation_map_stage"] },
+              { "required": ["evaluation_map_tie_mask"] },
+              { "required": ["evaluation_expected_stage"] }
+            ]
+          }
+        }
+      },
+      "then": { "properties": { "stage_model_reference": { "$ref": "#/$defs/StageModelReference" } } },
+      "else": { "properties": { "stage_model_reference": { "type": "null" } } }
+    },
+    "CanonicalFixedCohortStageArrayExclusion": {
+      "type": "object",
+      "allOf": [
+        {
+          "if": {
+            "required": ["component_applicability"],
+            "properties": {
+              "component_applicability": {
+                "contains": {
+                  "type": "object",
+                  "required": ["output_id"],
+                  "properties": { "output_id": { "const": "evaluation_stage_posterior" } }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "arrays": {
+                "not": {
+                  "anyOf": [
+                    { "required": ["evaluation_row_indexes"] },
+                    { "required": ["evaluation_stage_posterior"] }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["component_applicability"],
+            "properties": {
+              "component_applicability": {
+                "contains": {
+                  "type": "object",
+                  "required": ["output_id"],
+                  "properties": { "output_id": { "const": "evaluation_hard_stages" } }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "arrays": {
+                "not": {
+                  "anyOf": [
+                    { "required": ["evaluation_row_indexes"] },
+                    { "required": ["evaluation_map_stage"] },
+                    { "required": ["evaluation_map_tie_mask"] }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["component_applicability"],
+            "properties": {
+              "component_applicability": {
+                "contains": {
+                  "type": "object",
+                  "required": ["output_id"],
+                  "properties": { "output_id": { "const": "evaluation_expected_stage" } }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "arrays": {
+                "not": {
+                  "anyOf": [
+                    { "required": ["evaluation_row_indexes"] },
+                    { "required": ["evaluation_expected_stage"] }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "GitSha1Oid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "GitSha256Oid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "GitObjectId": {
+      "oneOf": [
+        { "$ref": "#/$defs/GitSha1Oid" },
+        { "$ref": "#/$defs/GitSha256Oid" }
+      ]
+    },
+    "FiniteNumber": {
+      "type": "number",
+      "format": "finite-number"
+    },
+    "Probability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "RelativePosixPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+    },
+    "TypedScalar": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": { "type": { "const": "string" }, "value": { "$ref": "#/$defs/NfcString" } } },
+        { "type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": { "type": { "const": "integer" }, "value": { "$ref": "#/$defs/SignedSafeInteger" } } },
+        { "type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": { "type": { "const": "boolean" }, "value": { "type": "boolean" } } }
+      ]
+    },
+    "StringDigestMap": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/MachineId" },
+      "additionalProperties": { "$ref": "#/$defs/Sha256Digest" }
+    },
+    "EvidenceReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "digest", "note"],
+      "properties": {
+        "kind": { "$ref": "#/$defs/MachineId" },
+        "digest": { "$ref": "#/$defs/Sha256Digest" },
+        "note": { "type": "string", "maxLength": 1000 }
+      }
+    },
+    "SafeDetails": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["counts", "internal_indexes", "approved_event_ids", "digests"],
+      "properties": {
+        "counts": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/MachineId" },
+          "additionalProperties": { "$ref": "#/$defs/SafeInteger" }
+        },
+        "internal_indexes": {
+          "type": "array",
+          "maxItems": 10000,
+          "items": { "$ref": "#/$defs/SafeInteger" }
+        },
+        "approved_event_ids": {
+          "type": "array",
+          "maxItems": 10000,
+          "items": { "$ref": "#/$defs/MachineId" }
+        },
+        "digests": { "$ref": "#/$defs/StringDigestMap" }
+      }
+    },
+    "WarningRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "severity", "safe_message", "details"],
+      "properties": {
+        "code": { "$ref": "#/$defs/StableCode" },
+        "severity": { "enum": ["INFO", "WARNING", "SEVERE"] },
+        "safe_message": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "details": { "$ref": "#/$defs/SafeDetails" }
+      }
+    },
+    "ValidationIssue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "code", "safe_message", "details"],
+      "properties": {
+        "severity": { "enum": ["ERROR", "WARNING", "REQUIRES_CONFIRMATION"] },
+        "code": { "$ref": "#/$defs/StableCode" },
+        "safe_message": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "details": { "$ref": "#/$defs/SafeDetails" }
+      }
+    },
+    "CallbackFailure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exception_class_id", "callback_source_id", "callback_line"],
+      "properties": {
+        "exception_class_id": {
+          "enum": ["BUILTINS_ASSERTION_ERROR", "BUILTINS_KEY_ERROR", "BUILTINS_MEMORY_ERROR", "BUILTINS_OS_ERROR", "BUILTINS_RUNTIME_ERROR", "BUILTINS_TYPE_ERROR", "BUILTINS_VALUE_ERROR", "UNLISTED_EXCEPTION"]
+        },
+        "callback_source_id": {
+          "enum": ["EBM_AUDIT_WORKERS_STRUCTURAL", "KDE_EBM_MODEL", "UNLISTED_CALLBACK_SOURCE"]
+        },
+        "callback_line": { "type": "integer", "minimum": 0, "maximum": 1000000 }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "callback_source_id": { "const": "UNLISTED_CALLBACK_SOURCE" } },
+            "required": ["callback_source_id"]
+          },
+          "then": { "properties": { "callback_line": { "const": 0 } } },
+          "else": { "properties": { "callback_line": { "minimum": 1 } } }
+        }
+      ]
+    },
+    "FitPayloadFinalizationFailure": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["stage_id"],
+          "properties": {
+            "stage_id": {
+              "enum": [
+                "FIT_PAYLOAD_FINALIZATION_COPY",
+                "FIT_PAYLOAD_FINALIZATION_SCHEMA_RESOURCE_OR_VALIDATOR",
+                "FIT_PAYLOAD_FINALIZATION_CANONICALIZATION",
+                "FIT_PAYLOAD_FINALIZATION_DIGEST"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["stage_id", "schema_id", "validator_keyword", "safe_field_path"],
+          "properties": {
+            "stage_id": { "const": "FIT_PAYLOAD_FINALIZATION_SCHEMA_VIOLATION" },
+            "schema_id": { "const": "worker-protocol.schema.json#/$defs/WorkerFitPayloadDigestPreimage" },
+            "validator_keyword": {
+              "type": "string",
+              "pattern": "^(?:\\$[A-Za-z]|[A-Za-z])[A-Za-z0-9_-]{0,63}$"
+            },
+            "safe_field_path": {
+              "type": "string",
+              "maxLength": 1000,
+              "pattern": "^\\$(?:\\.[A-Za-z][A-Za-z0-9_-]{0,63}|\\[\\])*$"
+            }
+          }
+        }
+      ]
+    },
+    "NegativeResponseError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "category", "safe_message", "phase", "retryable_identical_request", "issues", "details"],
+      "properties": {
+        "code": { "$ref": "#/$defs/StableCode" },
+        "category": {
+          "enum": ["INVALID_INPUT", "UNSUPPORTED_CAPABILITY", "INVALID_SPECIFICATION", "BACKEND_ERROR", "TIMEOUT", "PRIVACY_VIOLATION", "PROTOCOL_ERROR", "CONVERGENCE_FAILED", "CONVERGENCE_NOT_ASSESSABLE"]
+        },
+        "safe_message": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "phase": { "$ref": "#/$defs/MachineId" },
+        "retryable_identical_request": { "type": "boolean" },
+        "issues": { "type": "array", "items": { "$ref": "#/$defs/ValidationIssue" } },
+        "details": { "$ref": "#/$defs/SafeDetails" },
+        "callback_failure": { "$ref": "#/$defs/CallbackFailure" },
+        "payload_finalization_failure": { "$ref": "#/$defs/FitPayloadFinalizationFailure" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "code": { "const": "BACKEND.CALLBACK_FAILED" } },
+            "required": ["code"]
+          },
+          "then": { "required": ["callback_failure"] },
+          "else": { "not": { "required": ["callback_failure"] } }
+        },
+        {
+          "if": {
+            "properties": { "code": { "const": "BACKEND.FIT_PAYLOAD_FINALIZATION_FAILED" } },
+            "required": ["code"]
+          },
+          "then": { "required": ["payload_finalization_failure"] },
+          "else": { "not": { "required": ["payload_finalization_failure"] } }
+        }
+      ]
+    },
+    "ResourceSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["peak_resident_bytes", "cpu_seconds", "worker_process_count", "effective_thread_limits"],
+      "properties": {
+        "peak_resident_bytes": { "oneOf": [{ "$ref": "#/$defs/SafeInteger" }, { "type": "null" }] },
+        "cpu_seconds": { "oneOf": [{ "type": "number", "minimum": 0 }, { "type": "null" }] },
+        "worker_process_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "effective_thread_limits": {
+          "type": "object",
+          "propertyNames": { "enum": ["blas", "openblas", "mkl", "omp", "numexpr", "veclib"] },
+          "additionalProperties": { "$ref": "#/$defs/PositiveSafeInteger" }
+        }
+      }
+    },
+    "EnvironmentDistribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "acquisition_digest", "direct_file_inventory_digest"],
+      "properties": {
+        "name": { "$ref": "#/$defs/MachineId" },
+        "version": { "$ref": "#/$defs/NonEmptyString" },
+        "acquisition_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "direct_file_inventory_digest": { "$ref": "#/$defs/Sha256Digest" }
+      }
+    },
+    "EnvironmentNativeLibrary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "file_inventory_digest"],
+      "properties": {
+        "name": { "$ref": "#/$defs/MachineId" },
+        "version": { "oneOf": [{ "$ref": "#/$defs/NonEmptyString" }, { "type": "null" }] },
+        "file_inventory_digest": { "$ref": "#/$defs/Sha256Digest" }
+      }
+    },
+    "EnvironmentIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["environment_schema_version", "runtime", "platform", "lock_digest", "installed_distributions", "native_libraries"],
+      "properties": {
+        "environment_schema_version": { "const": "ebm-audit-environment/1.0" },
+        "runtime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["implementation", "version", "executable_digest", "launch_manifest_digest"],
+          "properties": {
+            "implementation": { "$ref": "#/$defs/MachineId" },
+            "version": { "$ref": "#/$defs/NonEmptyString" },
+            "executable_digest": { "$ref": "#/$defs/Sha256Digest" },
+            "launch_manifest_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] }
+          }
+        },
+        "platform": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["os", "architecture", "abi"],
+          "properties": {
+            "os": { "$ref": "#/$defs/MachineId" },
+            "architecture": { "$ref": "#/$defs/MachineId" },
+            "abi": { "$ref": "#/$defs/NonEmptyString" }
+          }
+        },
+        "lock_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "installed_distributions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EnvironmentDistribution" }
+        },
+        "native_libraries": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EnvironmentNativeLibrary" }
+        }
+      }
+    },
+    "DataVariant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["variant_schema_version", "variant_id", "label", "source_digest", "source_digest_method", "provenance_note", "created_by", "synthetic_truth_digest", "is_synthetic", "externally_completed_or_transformed"],
+      "properties": {
+        "variant_schema_version": { "const": "ebm-audit-data-variant/2.0" },
+        "variant_id": { "$ref": "#/$defs/MachineId" },
+        "label": { "$ref": "#/$defs/NonEmptyString" },
+        "source_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "source_digest_method": { "enum": ["exact-file/1", "canonical-table/1"] },
+        "provenance_note": { "$ref": "#/$defs/NonEmptyString" },
+        "created_by": { "enum": ["researcher", "auditor-synthetic-generator"] },
+        "synthetic_truth_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "is_synthetic": { "type": "boolean" },
+        "externally_completed_or_transformed": { "type": "boolean" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "created_by": { "const": "auditor-synthetic-generator" } }, "required": ["created_by"] },
+          "then": { "properties": { "is_synthetic": { "const": true }, "synthetic_truth_digest": { "$ref": "#/$defs/Sha256Digest" } } },
+          "else": { "properties": { "created_by": { "const": "researcher" }, "synthetic_truth_digest": { "type": "null" } } }
+        }
+      ],
+      "$comment": "The complete physical dataset-variant owner used by AuditConfig input.variant and copied exactly into canonical prepared-data evidence. AnalysisSpec/3 never embeds this object; it carries only the row-free DatasetVariantIntent projection. Researcher-owned data may be real or synthetic but never asserts auditor-held truth. Auditor-generator ownership always means synthetic data with a bound truth digest."
+    },
+    "EventSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "event_id", "display_name", "source_column", "category", "unit", "abnormal_direction", "permitted_transformations", "missingness_declaration", "feature_sensitivity_eligible", "identifier_risk_reviewed", "public_source_note", "privacy_sensitive_display_override"],
+      "properties": {
+        "schema_version": { "const": "ebm-audit-event/1.0" },
+        "event_id": { "$ref": "#/$defs/MachineId" },
+        "display_name": { "$ref": "#/$defs/NonEmptyString" },
+        "source_column": { "$ref": "#/$defs/SourceColumnName" },
+        "category": { "$ref": "#/$defs/MachineId" },
+        "unit": { "oneOf": [{ "$ref": "#/$defs/NonEmptyString" }, { "type": "null" }] },
+        "abnormal_direction": { "enum": ["higher", "lower", "REQUIRES_CONFIRMATION"] },
+        "permitted_transformations": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "missingness_declaration": { "enum": ["error", "complete-case", "external-variant"] },
+        "feature_sensitivity_eligible": { "type": "boolean" },
+        "identifier_risk_reviewed": { "type": "boolean" },
+        "public_source_note": { "oneOf": [{ "$ref": "#/$defs/NonEmptyString" }, { "type": "null" }] },
+        "privacy_sensitive_display_override": { "oneOf": [{ "$ref": "#/$defs/NonEmptyString" }, { "type": "null" }] }
+      }
+    },
+    "IgnoredColumn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_column", "reason"],
+      "properties": {
+        "source_column": { "$ref": "#/$defs/SourceColumnName" },
+        "reason": { "$ref": "#/$defs/NonEmptyString" }
+      }
+    },
+    "MetadataSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metadata_id", "source_column", "kind", "missingness"],
+      "properties": {
+        "metadata_id": { "$ref": "#/$defs/MachineId" },
+        "source_column": { "$ref": "#/$defs/SourceColumnName" },
+        "kind": { "enum": ["continuous", "integer", "boolean"] },
+        "missingness": { "enum": ["error", "allow-nan"] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "enum": ["integer", "boolean"] } }, "required": ["kind"] },
+          "then": { "properties": { "missingness": { "const": "error" } } }
+        }
+      ]
+    },
+    "SourceAdmissionColumnCatalogEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["column_index", "physical_type", "row_count", "missing_count", "content_digest"],
+      "properties": {
+        "column_index": { "$ref": "#/$defs/SafeInteger" },
+        "physical_type": { "enum": ["string", "integer", "float64", "boolean"] },
+        "row_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "missing_count": { "$ref": "#/$defs/SafeInteger" },
+        "content_digest": { "$ref": "#/$defs/Sha256Digest" }
+      }
+    },
+    "SourceAdmissionTableDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["table_preimage_schema_version", "parser_version", "input_format_digest", "row_count", "column_count", "ordered_columns"],
+      "properties": {
+        "table_preimage_schema_version": { "const": "ebm-audit-source-admission-table/2.0" },
+        "parser_version": { "const": "strict-utf8-csv-source-admission/2" },
+        "input_format_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "row_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "column_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "ordered_columns": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/SourceAdmissionColumnCatalogEntry" } }
+      },
+      "$comment": "Role-neutral parsed-table identity. Runtime enforces exact contiguous column indexes, catalog length equal to column_count, every catalog row_count equal to the table row_count, exact missing counts, and physical scalar types before hashing. Each content_digest uses the independently specified length-framed ebm-audit/source-admission-column/2 byte grammar rather than a JSON per-cell preimage."
+    },
+    "SourceAdmissionDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["admission_preimage_schema_version", "parser_version", "byte_digest", "byte_length", "input_format_digest", "parsed_table_digest", "row_count", "column_count"],
+      "properties": {
+        "admission_preimage_schema_version": { "const": "ebm-audit-source-admission/2.0" },
+        "parser_version": { "const": "strict-utf8-csv-source-admission/2" },
+        "byte_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "byte_length": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "input_format_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "parsed_table_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "row_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "column_count": { "$ref": "#/$defs/PositiveSafeInteger" }
+      },
+      "$comment": "Public aggregate digest preimage for one exact-byte admission. It binds exact bytes and length, the complete physical input format, parser semantics, the role-neutral parsed table, and counts without retaining source names or values."
+    },
+    "SourceScalar": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": { "type": { "const": "string" }, "value": { "$ref": "#/$defs/NfcString" } } },
+        { "type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": { "type": { "const": "integer" }, "value": { "$ref": "#/$defs/SignedSafeInteger" } } },
+        { "type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": { "type": { "const": "boolean" }, "value": { "type": "boolean" } } },
+        { "type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": { "type": { "const": "float64" }, "value": { "$ref": "#/$defs/FiniteNumber" } } },
+        { "type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": { "type": { "const": "missing" }, "value": { "type": "null" } } }
+      ]
+    },
+    "CanonicalSourceColumnDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["column_preimage_schema_version", "source_column", "ordered_values"],
+      "properties": {
+        "column_preimage_schema_version": { "const": "ebm-audit-canonical-source-column/1.0" },
+        "source_column": { "$ref": "#/$defs/SourceColumnName" },
+        "ordered_values": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/SourceScalar" } }
+      },
+      "$comment": "Private replay input retained only inside the ephemeral in-memory canonical ingestion binding. It never enters logs, reports, caches, or default artifacts."
+    },
+    "CanonicalSourceColumnCatalogEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_column", "declared_role", "logical_type", "encoding_method", "row_count", "missing_count", "content_digest"],
+      "properties": {
+        "source_column": { "$ref": "#/$defs/SourceColumnName" },
+        "declared_role": { "enum": ["participant-private-id", "event", "group", "covariate", "metadata", "ignored"] },
+        "logical_type": { "enum": ["string", "integer", "boolean", "float64", "mixed-source-scalar"] },
+        "encoding_method": { "const": "typed-scalar-vector/1" },
+        "row_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "missing_count": { "$ref": "#/$defs/SafeInteger" },
+        "content_digest": { "$ref": "#/$defs/Sha256Digest" }
+      }
+    },
+    "CanonicalSourceTableDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["table_preimage_schema_version", "row_count", "ordered_columns"],
+      "properties": {
+        "table_preimage_schema_version": { "const": "ebm-audit-canonical-source-table/1.0" },
+        "row_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "ordered_columns": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/CanonicalSourceColumnCatalogEntry" } }
+      },
+      "$comment": "The runtime requires unique exact source names, one entry per declared source column in source order, and matching row counts."
+    },
+    "ExactFileAdmissionProof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proof_schema_version", "method_id", "source_admission_id", "source_admission", "exact_file_digest", "canonical_source_table_digest", "namespace_key_id_digest", "proof_mac"],
+      "properties": {
+        "proof_schema_version": { "const": "ebm-audit-exact-file-admission-proof/2.0" },
+        "method_id": { "const": "hmac-sha256-private-namespace-key/1" },
+        "source_admission_id": { "$ref": "#/$defs/Sha256Digest" },
+        "source_admission": { "$ref": "#/$defs/SourceAdmissionDigestPreimage" },
+        "exact_file_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "canonical_source_table_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "namespace_key_id_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "proof_mac": { "type": "string", "pattern": "^hmac-sha256:[0-9a-f]{64}$" }
+      },
+      "$comment": "Private keyed admission seal binding the complete role-neutral source-admission digest preimage and recomputed identity, exact-file digest, independently canonicalized role-bound source table, and opaque run namespace key. Runtime requires the admission byte digest and shape to equal the exact-file variant and dataset descriptor while keeping parsed_table_digest distinct from canonical_source_table_digest. It contains no source bytes and is excluded from default artifacts."
+    },
+    "SelectedRowManifestDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["row_manifest_schema_version", "variant_id", "source_row_count", "ordered_internal_row_indexes", "source_row_index_by_internal_index"],
+      "properties": {
+        "row_manifest_schema_version": { "const": "ebm-audit-selected-row-manifest/1.0" },
+        "variant_id": { "$ref": "#/$defs/MachineId" },
+        "source_row_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "ordered_internal_row_indexes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/SafeInteger" } },
+        "source_row_index_by_internal_index": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/SafeInteger" } }
+      },
+      "$comment": "Private digest preimage. Runtime requires exact 0..P-1 internal indexes, equal axis lengths, and source indexes below source_row_count."
+    },
+    "OperationParticipantInstance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["participant_token", "internal_row_index", "role", "draw_ordinal", "occurrence_ordinal"],
+      "properties": {
+        "participant_token": { "type": "string", "pattern": "^hmac-sha256:[0-9a-f]{64}$" },
+        "internal_row_index": { "$ref": "#/$defs/SafeInteger" },
+        "role": { "enum": ["reference", "at_risk"] },
+        "draw_ordinal": { "$ref": "#/$defs/SafeInteger" },
+        "occurrence_ordinal": { "$ref": "#/$defs/SafeInteger" }
+      }
+    },
+    "OperationUniqueMembership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["participant_token", "internal_row_index", "role"],
+      "properties": {
+        "participant_token": { "type": "string", "pattern": "^hmac-sha256:[0-9a-f]{64}$" },
+        "internal_row_index": { "$ref": "#/$defs/SafeInteger" },
+        "role": { "enum": ["reference", "at_risk"] }
+      }
+    },
+    "OperationParticipantInstanceManifestDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest_schema_version", "source_selected_row_manifest_digest", "ordered_participant_instances", "ordered_unique_membership"],
+      "properties": {
+        "manifest_schema_version": { "const": "ebm-audit-operation-participant-instance-manifest/1.0" },
+        "source_selected_row_manifest_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "ordered_participant_instances": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/OperationParticipantInstance" } },
+        "ordered_unique_membership": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/OperationUniqueMembership" } }
+      },
+      "$comment": "Private operation-replay owner. draw_ordinal is exact 0..Oi-1; occurrence_ordinal is exact per-participant 0..k-1; ordered_unique_membership equals first-occurrence membership exactly. It is distinct from the ingestion SelectedRowManifest, whose source rows remain unique."
+    },
+    "CategoricalCodebookDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["codebook_schema_version", "array_name", "ordered_levels"],
+      "properties": {
+        "codebook_schema_version": { "const": "ebm-audit-categorical-codebook/1.0" },
+        "array_name": { "type": "string", "pattern": "^covariate\\.[a-z][a-z0-9._-]{0,63}$" },
+        "ordered_levels": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/TypedScalar" } }
+      },
+      "$comment": "Ephemeral private digest input; runtime requires exact typed uniqueness and retains only its digest in public projections."
+    },
+    "AuxiliaryColumnBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["array_name", "role", "kind", "missingness", "codebook_digest"],
+      "properties": {
+        "array_name": { "type": "string" },
+        "role": { "enum": ["covariate", "metadata"] },
+        "kind": { "enum": ["continuous", "categorical", "integer", "boolean"] },
+        "missingness": { "enum": ["error", "complete-case", "external-variant", "allow-nan"] },
+        "codebook_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "role": { "const": "covariate" } }, "required": ["role"] },
+          "then": {
+            "properties": {
+              "array_name": { "pattern": "^covariate\\.[a-z][a-z0-9._-]{0,63}$" },
+              "kind": { "enum": ["continuous", "categorical"] },
+              "missingness": { "enum": ["error", "complete-case", "external-variant"] }
+            }
+          },
+          "else": {
+            "properties": {
+              "array_name": { "pattern": "^metadata\\.[a-z][a-z0-9._-]{0,63}$" },
+              "kind": { "enum": ["continuous", "integer", "boolean"] },
+              "missingness": { "enum": ["error", "allow-nan"] }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "categorical" } }, "required": ["kind"] },
+          "then": { "properties": { "role": { "const": "covariate" }, "codebook_digest": { "$ref": "#/$defs/Sha256Digest" } } },
+          "else": { "properties": { "codebook_digest": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "enum": ["integer", "boolean"] } }, "required": ["kind"] },
+          "then": { "properties": { "role": { "const": "metadata" }, "missingness": { "const": "error" } } }
+        }
+      ]
+    },
+    "DatasetPhysicalColumnCatalogEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["column_index", "source_column", "physical_type", "declared_role"],
+      "properties": {
+        "column_index": { "$ref": "#/$defs/SafeInteger" },
+        "source_column": { "$ref": "#/$defs/SourceColumnName" },
+        "physical_type": { "enum": ["string", "integer", "float64", "boolean"] },
+        "declared_role": { "enum": ["participant-private-id", "event", "group", "covariate", "metadata", "ignored"] }
+      }
+    },
+    "LosslessAuditTableDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preimage_schema_version", "source_admission_id", "exact_byte_digest", "input_format_digest", "column_roles_digest", "row_count", "column_count", "ordered_physical_columns"],
+      "properties": {
+        "preimage_schema_version": { "const": "ebm-audit-lossless-audit-table/1.0" },
+        "source_admission_id": { "$ref": "#/$defs/Sha256Digest" },
+        "exact_byte_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "input_format_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "column_roles_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "row_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "column_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "ordered_physical_columns": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/DatasetPhysicalColumnCatalogEntry" } }
+      },
+      "$comment": "Private digest owner. Runtime requires exact contiguous column indexes, exact source-admission shape and identities, and complete one-family role coverage before hashing. The source admission identity already binds every parsed cell, including missing cells."
+    },
+    "AuditDatasetCatalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["catalog_schema_version", "variant", "participant_private_id_column", "event_specs", "group_specs", "covariate_specs", "metadata_specs", "ignored_columns", "physical_columns", "source_table_row_count", "lossless_table_digest"],
+      "properties": {
+        "catalog_schema_version": { "const": "ebm-audit-dataset-catalog/1.0" },
+        "variant": { "$ref": "#/$defs/DataVariant" },
+        "participant_private_id_column": { "$ref": "#/$defs/SourceColumnName" },
+        "event_specs": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/EventSpec" } },
+        "group_specs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/GroupSpec" } },
+        "covariate_specs": { "type": "array", "items": { "$ref": "#/$defs/CovariateSpec" } },
+        "metadata_specs": { "type": "array", "items": { "$ref": "#/$defs/MetadataSpec" } },
+        "ignored_columns": { "type": "array", "items": { "$ref": "#/$defs/IgnoredColumn" } },
+        "physical_columns": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/DatasetPhysicalColumnCatalogEntry" } },
+        "source_table_row_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "lossless_table_digest": { "$ref": "#/$defs/Sha256Digest" }
+      },
+      "$comment": "Lossless pre-plan catalog and complete owner for ebm-audit/audit-dataset/1. It contains every declared event, group alternative, covariate, metadata field, ignored field, and physical source column but no selected cohort, missingness policy, row subset, preprocessing, namespace key, or fit result. Runtime enforces exact role closure and source order."
+    },
+    "AuditDataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "variant", "participant_private_id_column", "event_specs", "group_spec", "covariate_specs", "metadata_specs", "ignored_columns", "missingness_policy", "source_table_content_digest", "source_table_row_count", "source_column_names"],
+      "properties": {
+        "schema_version": { "const": "ebm-audit-dataset/1.0" },
+        "variant": { "$ref": "#/$defs/DataVariant" },
+        "participant_private_id_column": { "$ref": "#/$defs/SourceColumnName" },
+        "event_specs": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/EventSpec" } },
+        "group_spec": { "$ref": "#/$defs/GroupSpec" },
+        "covariate_specs": { "type": "array", "items": { "$ref": "#/$defs/CovariateSpec" } },
+        "metadata_specs": { "type": "array", "items": { "$ref": "#/$defs/MetadataSpec" } },
+        "ignored_columns": { "type": "array", "items": { "$ref": "#/$defs/IgnoredColumn" } },
+        "missingness_policy": { "enum": ["error", "complete-case", "external-variant"] },
+        "source_table_content_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "source_table_row_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "source_column_names": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/SourceColumnName" } }
+      }
+    },
+    "CanonicalDatasetViewArrayCatalog": {
+      "type": "object",
+      "required": ["participant_internal_indexes", "event_values", "missingness_mask", "group_role_codes"],
+      "propertyNames": {
+        "oneOf": [
+          { "enum": ["participant_internal_indexes", "event_values", "missingness_mask", "group_role_codes"] },
+          { "pattern": "^covariate\\.[a-z][a-z0-9._-]{0,63}$" },
+          { "pattern": "^metadata\\.[a-z][a-z0-9._-]{0,63}$" }
+        ]
+      },
+      "additionalProperties": { "$ref": "#/$defs/ArrayCatalogEntry" }
+    },
+    "CanonicalDatasetView": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["view_schema_version", "variant_id", "participant_count", "event_count", "participant_internal_indexes", "participant_aliases", "event_ids", "event_directions", "required_covariate_array_names", "required_metadata_array_names", "auxiliary_columns", "array_catalog", "source_row_manifest_digest", "data_accounting"],
+      "properties": {
+        "view_schema_version": { "const": "ebm-audit-canonical-dataset-view/1.0" },
+        "variant_id": { "$ref": "#/$defs/MachineId" },
+        "participant_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "event_count": { "type": "integer", "minimum": 2, "maximum": 9007199254740991 },
+        "participant_internal_indexes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/SafeInteger" } },
+        "participant_aliases": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^P-[0-9]{3,}$" } },
+        "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "event_directions": { "type": "array", "minItems": 2, "items": { "enum": ["higher", "lower"] } },
+        "required_covariate_array_names": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^covariate\\.[a-z][a-z0-9._-]{0,63}$" } },
+        "required_metadata_array_names": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^metadata\\.[a-z][a-z0-9._-]{0,63}$" } },
+        "auxiliary_columns": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/AuxiliaryColumnBinding" } },
+        "array_catalog": { "$ref": "#/$defs/CanonicalDatasetViewArrayCatalog" },
+        "source_row_manifest_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "data_accounting": { "$ref": "#/$defs/DataAccounting" }
+      },
+      "x-ebm-invariants": [
+        "canonical-view-participant-axis-lengths-exact/1",
+        "canonical-view-event-axis-lengths-exact/1",
+        "canonical-view-array-catalog-shapes-exact/1",
+        "canonical-view-data-accounting-exact/1"
+      ]
+    },
+    "ScientificDataDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scientific_data_preimage_schema_version", "dataset_schema_version", "view_schema_version", "variant_id", "source_digest", "alias_namespace_method_version", "participant_token_method_version", "ordered_participant_tokens", "ordered_internal_row_indexes", "selected_row_manifest_digest", "event_ids", "event_directions", "required_covariate_array_names", "required_metadata_array_names", "auxiliary_columns", "array_catalog", "preprocessing_digest", "missingness_digest", "outlier_digest", "cohort_digest", "covariate_adjustment_digest", "data_accounting_digest", "participant_count", "event_count", "cell_count"],
+      "properties": {
+        "scientific_data_preimage_schema_version": { "const": "ebm-audit-scientific-data-preimage/1.0" },
+        "dataset_schema_version": { "const": "ebm-audit-dataset/1.0" },
+        "view_schema_version": { "const": "ebm-audit-canonical-dataset-view/1.0" },
+        "variant_id": { "$ref": "#/$defs/MachineId" },
+        "source_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "alias_namespace_method_version": { "$ref": "#/$defs/MachineId" },
+        "participant_token_method_version": { "const": "hmac-sha256-typed-private-id/1" },
+        "ordered_participant_tokens": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^hmac-sha256:[0-9a-f]{64}$" } },
+        "ordered_internal_row_indexes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/SafeInteger" } },
+        "selected_row_manifest_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "event_directions": { "type": "array", "minItems": 2, "items": { "enum": ["higher", "lower"] } },
+        "required_covariate_array_names": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^covariate\\.[a-z][a-z0-9._-]{0,63}$" } },
+        "required_metadata_array_names": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^metadata\\.[a-z][a-z0-9._-]{0,63}$" } },
+        "auxiliary_columns": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/AuxiliaryColumnBinding" } },
+        "array_catalog": { "$ref": "#/$defs/CanonicalDatasetViewArrayCatalog" },
+        "preprocessing_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "missingness_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "outlier_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "cohort_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "covariate_adjustment_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "data_accounting_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "participant_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "event_count": { "type": "integer", "minimum": 2, "maximum": 9007199254740991 },
+        "cell_count": { "$ref": "#/$defs/PositiveSafeInteger" }
+      },
+      "x-ebm-invariants": [
+        "scientific-data-participant-axis-lengths-exact/1",
+        "scientific-data-event-axis-lengths-exact/1",
+        "scientific-data-cell-count-product-exact/1",
+        "scientific-data-array-catalog-shapes-exact/1"
+      ],
+      "$comment": "Canonical auditor-input digest preimage only. It is not the raw synthetic generator output object and MUST NOT be hashed under a raw generated-scientific-data domain."
+    },
+    "CanonicalIngestionBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding_schema_version", "audit_dataset", "canonical_source_columns", "canonical_source_table", "selected_row_manifest", "categorical_codebooks", "exact_file_admission_proof", "canonical_view", "scientific_data_preimage", "scientific_data_digest"],
+      "properties": {
+        "binding_schema_version": { "const": "ebm-audit-canonical-ingestion-binding/2.0" },
+        "audit_dataset": { "$ref": "#/$defs/AuditDataset" },
+        "canonical_source_columns": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/CanonicalSourceColumnDigestPreimage" } },
+        "canonical_source_table": { "$ref": "#/$defs/CanonicalSourceTableDigestPreimage" },
+        "selected_row_manifest": { "$ref": "#/$defs/SelectedRowManifestDigestPreimage" },
+        "categorical_codebooks": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/CategoricalCodebookDigestPreimage" } },
+        "exact_file_admission_proof": { "oneOf": [{ "$ref": "#/$defs/ExactFileAdmissionProof" }, { "type": "null" }] },
+        "canonical_view": { "$ref": "#/$defs/CanonicalDatasetView" },
+        "scientific_data_preimage": { "$ref": "#/$defs/ScientificDataDigestPreimage" },
+        "scientific_data_digest": { "$ref": "#/$defs/Sha256Digest" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "audit_dataset": {
+                "properties": {
+                  "variant": {
+                    "properties": { "source_digest_method": { "const": "exact-file/1" } },
+                    "required": ["source_digest_method"]
+                  }
+                },
+                "required": ["variant"]
+              }
+            },
+            "required": ["audit_dataset"]
+          },
+          "then": { "properties": { "exact_file_admission_proof": { "$ref": "#/$defs/ExactFileAdmissionProof" } } },
+          "else": { "properties": { "exact_file_admission_proof": { "type": "null" } } }
+        }
+      ],
+      "$comment": "Ephemeral private cross-owner object accepted only after the production ingestion validator replays source-to-canonical derivation and recomputes every owned digest, role/key set, axis, dtype, and accounting relation. It contains typed source values plus any digest-only exact-file admission proof and is excluded from logs, reports, caches, and default artifacts. Generic JSON Schema success alone is insufficient."
+    },
+    "CanonicalChainScientificProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [{ "$ref": "#/$defs/CanonicalFixedCohortStageArrayExclusion" }, { "$ref": "#/$defs/CanonicalStageModelReferenceBinding" }],
+      "required": ["chain_execution_id", "attempt_id", "seed", "chain_id", "fit_evaluator_worker_response_binding_sha256", "event_ids", "central_order_event_ids", "central_order_permutation", "central_order_method", "raw_iteration_count", "burn_in_count", "thinning_interval", "postburn_unthinned_state_count", "retained_state_count", "likelihood_indexing", "actual_transition_count", "actual_transition_fraction", "arrays", "field_origins", "participant_event_manifest", "preprocessing_manifest_digest", "stage_semantics_digest", "stage_model_reference", "component_applicability"],
+      "properties": {
+        "chain_execution_id": { "$ref": "#/$defs/Sha256Digest" },
+        "attempt_id": { "$ref": "#/$defs/Sha256Digest" },
+        "seed": { "$ref": "#/$defs/UInt64Hex" },
+        "chain_id": { "$ref": "#/$defs/NonEmptyString" },
+        "fit_evaluator_worker_response_binding_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "central_order_event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "central_order_permutation": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/SafeInteger" } },
+        "central_order_method": { "$ref": "#/$defs/CentralOrderMethod" },
+        "raw_iteration_count": { "oneOf": [{ "$ref": "#/$defs/PositiveSafeInteger" }, { "type": "null" }] },
+        "burn_in_count": { "oneOf": [{ "$ref": "#/$defs/SafeInteger" }, { "type": "null" }] },
+        "thinning_interval": { "oneOf": [{ "$ref": "#/$defs/PositiveSafeInteger" }, { "type": "null" }] },
+        "postburn_unthinned_state_count": { "oneOf": [{ "$ref": "#/$defs/PositiveSafeInteger" }, { "type": "null" }] },
+        "retained_state_count": { "oneOf": [{ "$ref": "#/$defs/PositiveSafeInteger" }, { "type": "null" }] },
+        "likelihood_indexing": { "enum": ["post-proposal-state/1", null] },
+        "actual_transition_count": { "oneOf": [{ "$ref": "#/$defs/SafeInteger" }, { "type": "null" }] },
+        "actual_transition_fraction": { "oneOf": [{ "$ref": "#/$defs/Probability" }, { "type": "null" }] },
+        "arrays": { "$ref": "#/$defs/ArrayCatalog" },
+        "field_origins": { "type": "object", "additionalProperties": { "$ref": "#/$defs/FieldProvenance" } },
+        "participant_event_manifest": { "$ref": "#/$defs/ParticipantEventManifest" },
+        "preprocessing_manifest_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "stage_semantics_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "stage_model_reference": { "oneOf": [{ "$ref": "#/$defs/StageModelReference" }, { "type": "null" }] },
+        "component_applicability": { "$ref": "#/$defs/FixedCohortStageComponentApplicabilitySet" }
+      },
+      "x-ebm-invariants": ["canonical-scientific-payload-digest-recomputed/1"]
+    },
+    "CanonicalScientificPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scientific_payload_schema_version", "benchmark_subject_digest", "operation_instance_id", "analysis_spec_id", "universe_id", "core_final_status", "event_ids", "ordered_chain_payloads", "convergence"],
+      "properties": {
+        "scientific_payload_schema_version": { "const": "ebm-audit-canonical-scientific-payload/1.0" },
+        "benchmark_subject_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "operation_instance_id": { "$ref": "#/$defs/Sha256Digest" },
+        "analysis_spec_id": { "$ref": "#/$defs/Sha256Digest" },
+        "universe_id": { "$ref": "#/$defs/Sha256Digest" },
+        "core_final_status": { "enum": ["SUCCESS", "CONVERGENCE_WARN", "CONVERGENCE_FAILED", "CONVERGENCE_NOT_ASSESSABLE"] },
+        "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "ordered_chain_payloads": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/CanonicalChainScientificProjection" } },
+        "convergence": { "$ref": "#/$defs/ConvergenceRecord" }
+      },
+      "$comment": "Deterministic scientific-output projection only. Excludes UUIDs, timestamps, runtimes, paths, file ordering, logs, aliases, private namespace material, resource summaries, backend artifact paths, and transport hashes. Chain payloads follow declared plan order and contain exactly one final attempt per chain execution."
+    },
+    "BackendIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapter_id", "adapter_version", "worker_executable_digest", "worker_code_digest", "backend_name", "backend_version", "backend_source_commit", "backend_source_digest", "environment_digest", "algorithm_id", "identity_evidence"],
+      "properties": {
+        "adapter_id": { "$ref": "#/$defs/MachineId" },
+        "adapter_version": { "$ref": "#/$defs/NonEmptyString" },
+        "worker_executable_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "worker_code_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "backend_name": { "$ref": "#/$defs/MachineId" },
+        "backend_version": { "oneOf": [{ "$ref": "#/$defs/NonEmptyString" }, { "type": "null" }] },
+        "backend_source_commit": { "oneOf": [{ "$ref": "#/$defs/GitObjectId" }, { "type": "null" }] },
+        "backend_source_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "environment_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "algorithm_id": { "oneOf": [{ "$ref": "#/$defs/MachineId" }, { "type": "null" }] },
+        "identity_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/EvidenceReference" }
+        }
+      }
+    },
+    "TaggedScalar": {
+      "$ref": "#/$defs/TypedScalar"
+    },
+    "ColumnGroupSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "source_column"],
+      "properties": {
+        "kind": { "const": "column" },
+        "source_column": { "$ref": "#/$defs/SourceColumnName" }
+      }
+    },
+    "FiniteComparisonScalar": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": { "type": { "const": "integer" }, "value": { "$ref": "#/$defs/SignedSafeInteger" } } },
+        { "type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": { "type": { "const": "float64" }, "value": { "$ref": "#/$defs/FiniteNumber" } } }
+      ]
+    },
+    "ComparisonScalar": {
+      "oneOf": [
+        { "$ref": "#/$defs/TypedScalar" },
+        { "type": "object", "additionalProperties": false, "required": ["type", "value"], "properties": { "type": { "const": "float64" }, "value": { "$ref": "#/$defs/FiniteNumber" } } }
+      ]
+    },
+    "DeclarativeGroupEqualityClause": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_column", "operator", "value"],
+      "properties": {
+        "source_column": { "$ref": "#/$defs/SourceColumnName" },
+        "operator": { "const": "eq" },
+        "value": { "$ref": "#/$defs/ComparisonScalar" }
+      }
+    },
+    "DeclarativeGroupOrderedClause": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_column", "operator", "value"],
+      "properties": {
+        "source_column": { "$ref": "#/$defs/SourceColumnName" },
+        "operator": { "enum": ["lt", "lte", "gt", "gte"] },
+        "value": { "$ref": "#/$defs/FiniteComparisonScalar" }
+      }
+    },
+    "DeclarativeGroupClause": {
+      "oneOf": [
+        { "$ref": "#/$defs/DeclarativeGroupEqualityClause" },
+        { "$ref": "#/$defs/DeclarativeGroupOrderedClause" }
+      ]
+    },
+    "DeclarativeGroupRoleRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "match", "clauses"],
+      "properties": {
+        "role": { "enum": ["reference", "at_risk"] },
+        "match": { "const": "all" },
+        "clauses": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/DeclarativeGroupClause" } }
+      }
+    },
+    "DeclarativeGroupSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "rule_id", "source_columns", "role_rules"],
+      "properties": {
+        "kind": { "const": "declarative_rule" },
+        "rule_id": { "$ref": "#/$defs/MachineId" },
+        "source_columns": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/SourceColumnName" } },
+        "role_rules": { "type": "array", "minItems": 1, "maxItems": 2, "items": { "$ref": "#/$defs/DeclarativeGroupRoleRule" } }
+      }
+    },
+    "TypedGroupLabelRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "role"],
+      "properties": {
+        "label": { "$ref": "#/$defs/TaggedScalar" },
+        "role": { "enum": ["reference", "at_risk"] }
+      }
+    },
+    "GroupSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["group_spec_id", "source", "source_column_or_rule", "label_to_role", "required_roles", "rationale"],
+      "properties": {
+        "group_spec_id": { "$ref": "#/$defs/MachineId" },
+        "source": { "enum": ["column", "declarative_rule"] },
+        "source_column_or_rule": { "oneOf": [{ "$ref": "#/$defs/ColumnGroupSource" }, { "$ref": "#/$defs/DeclarativeGroupSource" }] },
+        "label_to_role": { "type": "array", "items": { "$ref": "#/$defs/TypedGroupLabelRole" } },
+        "required_roles": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["reference", "at_risk"] } },
+        "rationale": { "$ref": "#/$defs/NonEmptyString" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "source": { "const": "column" } }, "required": ["source"] },
+          "then": {
+            "properties": {
+              "source_column_or_rule": { "$ref": "#/$defs/ColumnGroupSource" },
+              "label_to_role": { "type": "array", "minItems": 1 }
+            }
+          },
+          "else": {
+            "properties": {
+              "source_column_or_rule": { "$ref": "#/$defs/DeclarativeGroupSource" },
+              "label_to_role": { "type": "array", "maxItems": 0 }
+            }
+          }
+        }
+      ]
+    },
+    "CovariateSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["covariate_id", "source_column", "kind", "level_order", "missingness"],
+      "properties": {
+        "covariate_id": { "$ref": "#/$defs/MachineId" },
+        "source_column": { "$ref": "#/$defs/SourceColumnName" },
+        "kind": { "enum": ["continuous", "categorical"] },
+        "level_order": { "oneOf": [{ "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/TaggedScalar" } }, { "type": "null" }] },
+        "missingness": { "enum": ["error", "complete-case", "external-variant"] }
+      },
+      "allOf": [
+        { "if": { "properties": { "kind": { "const": "continuous" } } }, "then": { "properties": { "level_order": { "type": "null" } } }, "else": { "properties": { "level_order": { "type": "array", "minItems": 1 } } } }
+      ]
+    },
+    "AccountingOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation_id", "method_id", "universe_decision_id", "reason_code", "rationale", "participant_count", "event_count", "cell_count", "affected_event_ids", "affected_auxiliary_array_names", "parameter_digest", "input_digest", "output_digest"],
+      "properties": {
+        "operation_id": { "$ref": "#/$defs/MachineId" },
+        "method_id": { "$ref": "#/$defs/MachineId" },
+        "universe_decision_id": { "$ref": "#/$defs/Sha256Digest" },
+        "reason_code": { "$ref": "#/$defs/StableCode" },
+        "rationale": { "$ref": "#/$defs/NonEmptyString" },
+        "participant_count": { "$ref": "#/$defs/SafeInteger" },
+        "event_count": { "$ref": "#/$defs/SafeInteger" },
+        "cell_count": { "$ref": "#/$defs/SafeInteger" },
+        "affected_event_ids": { "type": "array", "items": { "$ref": "#/$defs/MachineId" } },
+        "affected_auxiliary_array_names": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^(?:covariate|metadata)\\.[a-z][a-z0-9._-]{0,63}$" } },
+        "parameter_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "input_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "output_digest": { "$ref": "#/$defs/Sha256Digest" }
+      }
+    },
+    "DataAccounting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accounting_schema_version", "input_participants", "output_participants", "input_events", "output_events", "input_missing_cells", "output_missing_cells", "flagged_cells", "masked_cells", "transformed_cells", "added_participant_instances", "removed_participants", "removed_events", "operations"],
+      "properties": {
+        "accounting_schema_version": { "const": "ebm-audit-data-accounting/2.0" },
+        "input_participants": { "$ref": "#/$defs/SafeInteger" },
+        "output_participants": { "$ref": "#/$defs/SafeInteger" },
+        "input_events": { "$ref": "#/$defs/SafeInteger" },
+        "output_events": { "$ref": "#/$defs/SafeInteger" },
+        "input_missing_cells": { "$ref": "#/$defs/SafeInteger" },
+        "output_missing_cells": { "$ref": "#/$defs/SafeInteger" },
+        "flagged_cells": { "$ref": "#/$defs/SafeInteger" },
+        "masked_cells": { "$ref": "#/$defs/SafeInteger" },
+        "transformed_cells": { "$ref": "#/$defs/SafeInteger" },
+        "added_participant_instances": { "$ref": "#/$defs/SafeInteger" },
+        "removed_participants": { "$ref": "#/$defs/SafeInteger" },
+        "removed_events": { "$ref": "#/$defs/SafeInteger" },
+        "operations": { "type": "array", "items": { "$ref": "#/$defs/AccountingOperation" } }
+      }
+    },
+    "ArrayCatalogEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["member_name", "dtype", "shape", "semantic_version", "byte_length", "array_digest"],
+      "properties": {
+        "member_name": { "type": "string", "pattern": "^[a-z][a-z0-9._-]{0,127}$" },
+        "dtype": { "enum": ["bool", "int32", "int64", "float64"] },
+        "shape": { "type": "array", "minItems": 1, "maxItems": 3, "items": { "$ref": "#/$defs/SafeInteger" } },
+        "semantic_version": { "$ref": "#/$defs/NonEmptyString" },
+        "byte_length": { "$ref": "#/$defs/SafeInteger" },
+        "array_digest": { "$ref": "#/$defs/Sha256Digest" }
+      }
+    },
+    "ArrayCatalog": {
+      "type": "object",
+      "propertyNames": {
+        "oneOf": [
+          { "enum": ["central_order_permutation", "postburn_order_state_chain", "postburn_likelihood_trace", "order_state_chain", "likelihood_trace", "postburn_state_change_mask", "position_probabilities", "pairwise_precedence", "training_row_indexes", "training_stage_posterior", "training_map_stage", "training_map_tie_mask", "training_expected_stage", "evaluation_row_indexes", "evaluation_stage_posterior", "evaluation_map_stage", "evaluation_map_tie_mask", "evaluation_expected_stage", "stage_row_indexes", "stage_posterior", "stage_map_stage", "stage_map_tie_mask", "stage_expected_stage"] },
+          { "pattern": "^backend\\.[a-z][a-z0-9._-]{0,63}\\.[a-z][a-z0-9._-]{0,63}$" }
+        ]
+      },
+      "additionalProperties": { "$ref": "#/$defs/ArrayCatalogEntry" }
+    },
+    "ReferenceArrayCatalog": {
+      "type": "object",
+      "propertyNames": { "enum": ["postburn_order_state_chain", "order_state_chain", "position_probabilities", "pairwise_precedence", "training_row_indexes", "training_stage_posterior", "training_map_stage", "training_map_tie_mask", "training_expected_stage", "evaluation_row_indexes", "evaluation_stage_posterior", "evaluation_map_stage", "evaluation_map_tie_mask", "evaluation_expected_stage"] },
+      "additionalProperties": { "$ref": "#/$defs/ArrayCatalogEntry" }
+    },
+    "FieldProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "method_id", "source_fields", "source_hashes"],
+      "properties": {
+        "origin": { "enum": ["BACKEND_NATIVE", "WORKER_DERIVED", "CORE_DERIVED"] },
+        "method_id": { "oneOf": [{ "$ref": "#/$defs/MachineId" }, { "type": "null" }] },
+        "source_fields": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "source_hashes": { "type": "array", "items": { "$ref": "#/$defs/Sha256Digest" } }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "origin": { "const": "BACKEND_NATIVE" } } },
+          "then": { "properties": { "method_id": { "type": "null" }, "source_fields": { "maxItems": 0 }, "source_hashes": { "maxItems": 0 } } },
+          "else": { "properties": { "method_id": { "$ref": "#/$defs/MachineId" }, "source_fields": { "minItems": 1 }, "source_hashes": { "minItems": 1 } } }
+        }
+      ]
+    },
+    "ParticipantEventManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["request_training_participants", "returned_training_participants", "training_row_indexes_digest", "request_evaluation_participants", "returned_evaluation_participants", "evaluation_row_indexes_digest", "request_events", "returned_events", "worker_removed_participants", "worker_removed_events", "worker_modified_cells", "core_data_accounting_digest"],
+      "properties": {
+        "request_training_participants": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "returned_training_participants": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "training_row_indexes_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "request_evaluation_participants": { "$ref": "#/$defs/SafeInteger" },
+        "returned_evaluation_participants": { "$ref": "#/$defs/SafeInteger" },
+        "evaluation_row_indexes_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "request_events": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "returned_events": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "worker_removed_participants": { "type": "array", "maxItems": 0 },
+        "worker_removed_events": { "type": "array", "maxItems": 0 },
+        "worker_modified_cells": { "type": "array", "maxItems": 0 },
+        "core_data_accounting_digest": { "$ref": "#/$defs/Sha256Digest" }
+      }
+    },
+    "CentralOrderMethod": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method_id", "candidate_source", "objective_id", "tie_break_rule"],
+      "properties": {
+        "method_id": { "enum": ["retained-state-mode/1", "backend-objective-maximum/1"] },
+        "candidate_source": { "enum": ["retained_order_state_chain", "backend_explored_order_set"] },
+        "objective_id": { "oneOf": [{ "$ref": "#/$defs/MachineId" }, { "type": "null" }] },
+        "tie_break_rule": { "const": "lexicographically-smallest-event-id-sequence/1" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "method_id": { "const": "retained-state-mode/1" } }, "required": ["method_id"] },
+          "then": { "properties": { "candidate_source": { "const": "retained_order_state_chain" }, "objective_id": { "type": "null" } } },
+          "else": { "properties": { "candidate_source": { "const": "backend_explored_order_set" }, "objective_id": { "$ref": "#/$defs/MachineId" } } }
+        }
+      ]
+    },
+    "ArtifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "relative_path", "media_type", "byte_length", "sha256", "creating_chain_execution_id", "creating_scientific_request_digest", "adapter_id", "algorithm_id", "worker_executable_digest", "worker_code_digest", "backend_source_digest", "environment_digest", "settings_digest", "event_ids", "stage_semantics_digest", "contains_private_data"],
+      "properties": {
+        "artifact_id": { "$ref": "#/$defs/MachineId" },
+        "relative_path": { "$ref": "#/$defs/RelativePosixPath" },
+        "media_type": { "$ref": "#/$defs/NonEmptyString" },
+        "byte_length": { "$ref": "#/$defs/SafeInteger" },
+        "sha256": { "$ref": "#/$defs/Sha256Digest" },
+        "creating_chain_execution_id": { "$ref": "#/$defs/Sha256Digest" },
+        "creating_scientific_request_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "adapter_id": { "$ref": "#/$defs/MachineId" },
+        "algorithm_id": { "$ref": "#/$defs/MachineId" },
+        "worker_executable_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "worker_code_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "backend_source_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "environment_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "settings_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "stage_semantics_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "contains_private_data": { "type": "boolean" }
+      }
+    },
+    "ChainMetricValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chain_execution_id", "value"],
+      "properties": {
+        "chain_execution_id": { "$ref": "#/$defs/Sha256Digest" },
+        "value": { "oneOf": [{ "$ref": "#/$defs/FiniteNumber" }, { "type": "null" }] }
+      }
+    },
+    "ConvergenceSamplingAccounting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chain_execution_id", "order_state_status", "thinning_interval", "postburn_unthinned_state_count", "retained_state_count"],
+      "properties": {
+        "chain_execution_id": { "$ref": "#/$defs/Sha256Digest" },
+        "order_state_status": { "enum": ["VALID", "MISSING", "INVALID"] },
+        "thinning_interval": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "postburn_unthinned_state_count": { "oneOf": [{ "$ref": "#/$defs/SafeInteger" }, { "type": "null" }] },
+        "retained_state_count": { "oneOf": [{ "$ref": "#/$defs/SafeInteger" }, { "type": "null" }] }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "order_state_status": { "const": "VALID" },
+            "postburn_unthinned_state_count": { "$ref": "#/$defs/SafeInteger" },
+            "retained_state_count": { "$ref": "#/$defs/SafeInteger" }
+          }
+        },
+        {
+          "properties": {
+            "order_state_status": { "enum": ["MISSING", "INVALID"] },
+            "postburn_unthinned_state_count": { "type": "null" },
+            "retained_state_count": { "type": "null" }
+          }
+        }
+      ],
+      "x-ebm-invariants": ["convergence-sampling-accounting-exact/1"]
+    },
+    "LikelihoodChainReasonCode": {
+      "enum": ["ZERO_SCALE_UNEQUAL_HALVES", "INSUFFICIENT_TRACE_LENGTH", "NONFINITE_RAW_LIKELIHOOD"]
+    },
+    "LikelihoodTraceUnavailableReasonCode": {
+      "const": "LIKELIHOOD_TRACE_UNAVAILABLE"
+    },
+    "LikelihoodChainMetricResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chain_execution_id", "trace_length", "status", "value", "reason_code"],
+      "properties": {
+        "chain_execution_id": { "$ref": "#/$defs/Sha256Digest" },
+        "trace_length": { "$ref": "#/$defs/SafeInteger" },
+        "status": { "enum": ["ASSESSABLE", "NOT_ASSESSABLE"] },
+        "value": { "oneOf": [{ "$ref": "#/$defs/FiniteNumber" }, { "type": "null" }] },
+        "reason_code": { "oneOf": [{ "$ref": "#/$defs/LikelihoodChainReasonCode" }, { "type": "null" }] }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "trace_length": { "allOf": [{ "$ref": "#/$defs/SafeInteger" }, { "minimum": 4 }] },
+            "status": { "const": "ASSESSABLE" },
+            "value": { "$ref": "#/$defs/FiniteNumber" },
+            "reason_code": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "trace_length": { "allOf": [{ "$ref": "#/$defs/SafeInteger" }, { "maximum": 3 }] },
+            "status": { "const": "NOT_ASSESSABLE" },
+            "value": { "type": "null" },
+            "reason_code": { "const": "INSUFFICIENT_TRACE_LENGTH" }
+          }
+        },
+        {
+          "properties": {
+            "trace_length": { "allOf": [{ "$ref": "#/$defs/SafeInteger" }, { "minimum": 4 }] },
+            "status": { "const": "NOT_ASSESSABLE" },
+            "value": { "type": "null" },
+            "reason_code": { "const": "ZERO_SCALE_UNEQUAL_HALVES" }
+          }
+        },
+        {
+          "properties": {
+            "trace_length": { "allOf": [{ "$ref": "#/$defs/SafeInteger" }, { "minimum": 1 }] },
+            "status": { "const": "NOT_ASSESSABLE" },
+            "value": { "type": "null" },
+            "reason_code": { "const": "NONFINITE_RAW_LIKELIHOOD" }
+          }
+        }
+      ]
+    },
+    "ChainPairDistance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["left_chain_execution_id", "right_chain_execution_id", "distance"],
+      "properties": {
+        "left_chain_execution_id": { "$ref": "#/$defs/Sha256Digest" },
+        "right_chain_execution_id": { "$ref": "#/$defs/Sha256Digest" },
+        "distance": { "$ref": "#/$defs/Probability" }
+      }
+    },
+    "PairwiseDistanceSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric_id", "pairs", "median_distance", "maximum_distance"],
+      "properties": {
+        "metric_id": { "enum": ["central-order-kendall/1", "position-matrix/1", "pairwise-precedence-matrix/1"] },
+        "pairs": { "type": "array", "items": { "$ref": "#/$defs/ChainPairDistance" } },
+        "median_distance": { "oneOf": [{ "$ref": "#/$defs/Probability" }, { "type": "null" }] },
+        "maximum_distance": { "oneOf": [{ "$ref": "#/$defs/Probability" }, { "type": "null" }] }
+      }
+    },
+    "RepeatedStateRunSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maximum_run_length_by_chain", "max_repeated_state_fraction_by_chain", "transition_count_by_chain", "transition_fraction_by_chain", "endpoint_order_by_chain", "distinct_zero_transition_endpoint_count"],
+      "properties": {
+        "maximum_run_length_by_chain": { "type": "array", "items": { "$ref": "#/$defs/ChainMetricValue" } },
+        "max_repeated_state_fraction_by_chain": { "type": "array", "items": { "$ref": "#/$defs/ChainMetricValue" } },
+        "transition_count_by_chain": { "type": "array", "items": { "$ref": "#/$defs/ChainMetricValue" } },
+        "transition_fraction_by_chain": { "type": "array", "items": { "$ref": "#/$defs/ChainMetricValue" } },
+        "endpoint_order_by_chain": { "type": "array", "items": { "$ref": "#/$defs/ChainEndpointEvidence" } },
+        "distinct_zero_transition_endpoint_count": { "$ref": "#/$defs/SafeInteger" }
+      }
+    },
+    "ChainEndpointEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chain_execution_id", "transition_count", "endpoint_event_ids"],
+      "properties": {
+        "chain_execution_id": { "$ref": "#/$defs/Sha256Digest" },
+        "transition_count": { "$ref": "#/$defs/SafeInteger" },
+        "endpoint_event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } }
+      }
+    },
+    "LikelihoodTraceSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "value", "reason_code", "split_half_drift_by_chain"],
+      "properties": {
+        "status": { "enum": ["AVAILABLE", "NOT_APPLICABLE_BY_CAPABILITY"] },
+        "value": { "type": "null" },
+        "reason_code": { "oneOf": [{ "$ref": "#/$defs/LikelihoodTraceUnavailableReasonCode" }, { "type": "null" }] },
+        "split_half_drift_by_chain": { "type": "array", "items": { "$ref": "#/$defs/LikelihoodChainMetricResult" } }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "AVAILABLE" } }, "required": ["status"] },
+          "then": { "properties": { "reason_code": { "type": "null" }, "split_half_drift_by_chain": { "minItems": 1 } } },
+          "else": { "properties": { "reason_code": { "$ref": "#/$defs/LikelihoodTraceUnavailableReasonCode" }, "split_half_drift_by_chain": { "maxItems": 0 } } }
+        }
+      ]
+    },
+    "BudgetStabilitySummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "profile_id", "evidence_digest"],
+      "properties": {
+        "status": { "enum": ["BUDGET_QUALIFIED", "BUDGET_QUALIFICATION_WARN", "BUDGET_QUALIFICATION_FAIL", "NOT_EVALUATED"] },
+        "profile_id": { "$ref": "#/$defs/MachineId" },
+        "evidence_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] }
+      }
+    },
+    "ConvergenceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assessment", "rule_set_version", "sampling_accounting_by_chain", "actual_transition_fraction_by_chain", "unique_state_count_by_chain", "unique_state_fraction_by_chain", "repeated_state_run_summary", "likelihood_trace_summary", "central_order_chain_distances", "position_matrix_chain_distances", "precedence_matrix_chain_distances", "budget_stability_summary", "reasons"],
+      "properties": {
+        "assessment": { "enum": ["NOT_APPLICABLE", "CONVERGENCE_PASS", "CONVERGENCE_WARN", "CONVERGENCE_FAIL", "CONVERGENCE_NOT_ASSESSABLE"] },
+        "rule_set_version": { "$ref": "#/$defs/NonEmptyString" },
+        "sampling_accounting_by_chain": { "type": "array", "items": { "$ref": "#/$defs/ConvergenceSamplingAccounting" } },
+        "actual_transition_fraction_by_chain": { "type": "array", "items": { "$ref": "#/$defs/ChainMetricValue" } },
+        "unique_state_count_by_chain": { "type": "array", "items": { "$ref": "#/$defs/ChainMetricValue" } },
+        "unique_state_fraction_by_chain": { "type": "array", "items": { "$ref": "#/$defs/ChainMetricValue" } },
+        "repeated_state_run_summary": { "oneOf": [{ "$ref": "#/$defs/RepeatedStateRunSummary" }, { "type": "null" }] },
+        "likelihood_trace_summary": { "oneOf": [{ "$ref": "#/$defs/LikelihoodTraceSummary" }, { "type": "null" }] },
+        "central_order_chain_distances": { "oneOf": [{ "$ref": "#/$defs/PairwiseDistanceSummary" }, { "type": "null" }] },
+        "position_matrix_chain_distances": { "oneOf": [{ "$ref": "#/$defs/PairwiseDistanceSummary" }, { "type": "null" }] },
+        "precedence_matrix_chain_distances": { "oneOf": [{ "$ref": "#/$defs/PairwiseDistanceSummary" }, { "type": "null" }] },
+        "budget_stability_summary": { "oneOf": [{ "$ref": "#/$defs/BudgetStabilitySummary" }, { "type": "null" }] },
+        "reasons": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/StableCode" } }
+      }
+    },
+    "WorkerExecutionEvidenceReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_reference_schema_version", "command", "status", "chain_plan_position", "chain_execution_id", "authenticated_request_evidence_digest", "authenticated_execution_evidence_digest", "core_observed_failure", "core_observed_failure_digest", "core_failure_class", "core_failure_code", "command_evidence_digest", "request_metadata_digest", "scientific_request_digest", "response_metadata_digest", "attempt_id", "attempt_ordinal", "retry_equivalence_digest"],
+      "properties": {
+        "evidence_reference_schema_version": { "const": "ebm-audit-worker-execution-evidence-reference/2.0" },
+        "command": { "enum": ["validate", "fit"] },
+        "status": { "enum": ["SUCCESS", "INVALID_INPUT", "UNSUPPORTED_CAPABILITY", "INVALID_SPECIFICATION", "BACKEND_ERROR", "TIMEOUT", "PRIVACY_VIOLATION", "PROTOCOL_ERROR"] },
+        "chain_plan_position": { "oneOf": [{ "$ref": "#/$defs/SafeInteger" }, { "type": "null" }] },
+        "chain_execution_id": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "authenticated_request_evidence_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "authenticated_execution_evidence_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "core_observed_failure": { "oneOf": [{ "$ref": "worker-protocol.schema.json#/$defs/CoreObservedFailureDigestPreimage" }, { "type": "null" }] },
+        "core_observed_failure_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "core_failure_class": { "enum": ["TIMEOUT", "PRIVACY_VIOLATION", "PROCESS_FAILURE", "RESPONSE_MISSING", "RESPONSE_INVALID", "PROTOCOL_FAILURE", "UNEXPECTED_CORE_ERROR", null] },
+        "core_failure_code": { "oneOf": [{ "$ref": "#/$defs/StableCode" }, { "type": "null" }] },
+        "command_evidence_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "request_metadata_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "scientific_request_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "response_metadata_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "attempt_id": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "attempt_ordinal": { "enum": [0, 1, null] },
+        "retry_equivalence_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "command": { "const": "validate" } }, "required": ["command"] },
+          "then": { "properties": { "chain_plan_position": { "type": "null" }, "chain_execution_id": { "type": "null" }, "attempt_id": { "type": "null" }, "attempt_ordinal": { "type": "null" }, "retry_equivalence_digest": { "type": "null" } } },
+          "else": { "properties": { "chain_plan_position": { "$ref": "#/$defs/SafeInteger" }, "chain_execution_id": { "$ref": "#/$defs/Sha256Digest" }, "attempt_id": { "$ref": "#/$defs/Sha256Digest" }, "attempt_ordinal": { "enum": [0, 1] }, "retry_equivalence_digest": { "$ref": "#/$defs/Sha256Digest" } } }
+        },
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "authenticated_execution_evidence_digest": { "$ref": "#/$defs/Sha256Digest" },
+                "core_observed_failure": { "type": "null" },
+                "core_observed_failure_digest": { "type": "null" },
+                "core_failure_class": { "type": "null" },
+                "core_failure_code": { "type": "null" },
+                "command_evidence_digest": { "$ref": "#/$defs/Sha256Digest" },
+                "response_metadata_digest": { "$ref": "#/$defs/Sha256Digest" }
+              }
+            },
+            {
+              "properties": {
+                "status": { "enum": ["BACKEND_ERROR", "TIMEOUT", "PRIVACY_VIOLATION", "PROTOCOL_ERROR"] },
+                "authenticated_execution_evidence_digest": { "type": "null" },
+                "core_observed_failure": { "$ref": "worker-protocol.schema.json#/$defs/CoreObservedFailureDigestPreimage" },
+                "core_observed_failure_digest": { "$ref": "#/$defs/Sha256Digest" },
+                "core_failure_class": { "enum": ["TIMEOUT", "PRIVACY_VIOLATION", "PROCESS_FAILURE", "RESPONSE_MISSING", "RESPONSE_INVALID", "PROTOCOL_FAILURE", "UNEXPECTED_CORE_ERROR"] },
+                "core_failure_code": { "$ref": "#/$defs/StableCode" },
+                "command_evidence_digest": { "type": "null" },
+                "response_metadata_digest": { "type": "null" }
+              },
+              "oneOf": [
+                { "properties": { "core_failure_class": { "const": "TIMEOUT" }, "status": { "const": "TIMEOUT" } } },
+                { "properties": { "core_failure_class": { "const": "PRIVACY_VIOLATION" }, "status": { "const": "PRIVACY_VIOLATION" } } },
+                { "properties": { "core_failure_class": { "const": "PROCESS_FAILURE" }, "core_failure_code": { "enum": ["BACKEND.WORKER_START_FAILED", "BACKEND.WORKER_PROCESS_FAILED"] }, "status": { "const": "BACKEND_ERROR" } } },
+                { "properties": { "core_failure_class": { "enum": ["RESPONSE_MISSING", "RESPONSE_INVALID", "PROTOCOL_FAILURE", "UNEXPECTED_CORE_ERROR"] }, "status": { "const": "PROTOCOL_ERROR" } } }
+              ]
+            }
+          ]
+        }
+      ],
+      "$comment": "One exact retained validate or fit attempt. Fit evidence binds its chain position and execution identity. A framed worker response binds authenticated execution, command evidence, and response metadata. A core-observed failure binds its digest, class, and code to the exact final-status mapping and cannot invent response evidence; the result-finalization semantic validator resolves and recomputes that failure preimage."
+    },
+    "ProfileFitUnobservedCoreFailureReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_reference_schema_version", "kind", "command", "status", "runtime_position", "runtime_profile_position", "profile_id", "candidate_ordinal", "chain_plan_position", "universe_id", "chain_id", "chain_execution_id", "attempt_id", "attempt_ordinal", "failure_code"],
+      "properties": {
+        "evidence_reference_schema_version": { "const": "ebm-audit-profile-fit-unobserved-core-failure-reference/1.0" },
+        "kind": { "const": "PROFILE_UNOBSERVED_CORE_FAILURE" },
+        "command": { "const": "fit" },
+        "status": { "const": "PROTOCOL_ERROR" },
+        "runtime_position": { "$ref": "#/$defs/SafeInteger" },
+        "runtime_profile_position": { "$ref": "#/$defs/SafeInteger" },
+        "profile_id": { "$ref": "#/$defs/MachineId" },
+        "candidate_ordinal": { "$ref": "#/$defs/SafeInteger" },
+        "chain_plan_position": { "$ref": "#/$defs/SafeInteger" },
+        "universe_id": { "$ref": "#/$defs/Sha256Digest" },
+        "chain_id": { "$ref": "#/$defs/MachineId" },
+        "chain_execution_id": { "$ref": "#/$defs/Sha256Digest" },
+        "attempt_id": { "$ref": "#/$defs/Sha256Digest" },
+        "attempt_ordinal": { "const": 0 },
+        "failure_code": { "const": "PROFILE_FIT.UNOBSERVED_CORE_FAILURE" }
+      },
+      "$comment": "A profile-only fixed core terminal. It binds the exact predeclared slot and attempt without claiming that a worker request, response, timestamp, exception, or authenticated observation exists."
+    },
+    "ProfileNoReadNoWriteObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observation_schema_version", "resource", "policy", "candidate_ordinal", "candidate_id", "analysis_spec_id", "universe_id", "covered_chain_execution_ids", "covered_attempt_ids", "read_count", "write_count", "execution_policy_digest", "guard_receipt_digest", "observation_digest"],
+      "properties": {
+        "observation_schema_version": { "const": "ebm-audit-profile-storage-observation/1.0" },
+        "resource": { "enum": ["CACHE", "CHECKPOINT"] },
+        "policy": { "const": "NO_READ_NO_WRITE" },
+        "candidate_ordinal": { "$ref": "#/$defs/SafeInteger" },
+        "candidate_id": { "$ref": "#/$defs/Sha256Digest" },
+        "analysis_spec_id": { "$ref": "#/$defs/Sha256Digest" },
+        "universe_id": { "$ref": "#/$defs/Sha256Digest" },
+        "covered_chain_execution_ids": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/Sha256Digest" }
+        },
+        "covered_attempt_ids": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/Sha256Digest" }
+        },
+        "read_count": { "const": 0 },
+        "write_count": { "const": 0 },
+        "execution_policy_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "guard_receipt_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "observation_digest": { "$ref": "#/$defs/Sha256Digest" }
+      },
+      "$comment": "Candidate-bound runtime evidence from the dedicated profile path. It is neither a cache MISS nor HIT and cannot enter ordinary cache lineage."
+    },
+    "FinalChainScientificPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [{ "$ref": "#/$defs/CanonicalStageModelReferenceBinding" }],
+      "required": ["chain_payload_schema_version", "chain_payload_digest", "chain_plan_position", "chain_execution_id", "final_attempt_id", "seed", "chain_id", "event_ids", "central_order_event_ids", "central_order_permutation", "central_order_method", "raw_iteration_count", "burn_in_count", "thinning_interval", "postburn_unthinned_state_count", "retained_state_count", "likelihood_indexing", "actual_transition_count", "actual_transition_fraction", "arrays", "field_origins", "participant_event_manifest", "preprocessing_manifest_digest", "stage_semantics_digest", "stage_model_reference", "component_applicability", "resource_summary", "backend_artifacts"],
+      "properties": {
+        "chain_payload_schema_version": { "const": "ebm-audit-final-chain-payload/1.0" },
+        "chain_payload_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "chain_plan_position": { "$ref": "#/$defs/SafeInteger" },
+        "chain_execution_id": { "$ref": "#/$defs/Sha256Digest" },
+        "final_attempt_id": { "$ref": "#/$defs/Sha256Digest" },
+        "seed": { "$ref": "#/$defs/UInt64Hex" },
+        "chain_id": { "$ref": "#/$defs/NonEmptyString" },
+        "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "central_order_event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "central_order_permutation": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/SafeInteger" } },
+        "central_order_method": { "$ref": "#/$defs/CentralOrderMethod" },
+        "raw_iteration_count": { "oneOf": [{ "$ref": "#/$defs/PositiveSafeInteger" }, { "type": "null" }] },
+        "burn_in_count": { "oneOf": [{ "$ref": "#/$defs/SafeInteger" }, { "type": "null" }] },
+        "thinning_interval": { "oneOf": [{ "$ref": "#/$defs/PositiveSafeInteger" }, { "type": "null" }] },
+        "postburn_unthinned_state_count": { "oneOf": [{ "$ref": "#/$defs/PositiveSafeInteger" }, { "type": "null" }] },
+        "retained_state_count": { "oneOf": [{ "$ref": "#/$defs/PositiveSafeInteger" }, { "type": "null" }] },
+        "likelihood_indexing": { "enum": ["post-proposal-state/1", null] },
+        "actual_transition_count": { "oneOf": [{ "$ref": "#/$defs/SafeInteger" }, { "type": "null" }] },
+        "actual_transition_fraction": { "oneOf": [{ "$ref": "#/$defs/Probability" }, { "type": "null" }] },
+        "arrays": { "$ref": "#/$defs/ArrayCatalog" },
+        "field_origins": { "type": "object", "additionalProperties": { "$ref": "#/$defs/FieldProvenance" } },
+        "participant_event_manifest": { "$ref": "#/$defs/ParticipantEventManifest" },
+        "preprocessing_manifest_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "stage_semantics_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "stage_model_reference": { "oneOf": [{ "$ref": "#/$defs/StageModelReference" }, { "type": "null" }] },
+        "component_applicability": { "$ref": "#/$defs/FixedCohortStageComponentApplicabilitySet" },
+        "resource_summary": { "$ref": "#/$defs/ResourceSummary" },
+        "backend_artifacts": { "type": "array", "items": { "$ref": "#/$defs/ArtifactReference" } }
+      },
+      "x-ebm-invariants": ["canonical-scientific-payload-digest-recomputed/1"]
+    },
+    "ReferenceChainSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule_id", "chain_plan_position", "chain_execution_id", "final_attempt_id", "chain_payload_digest"],
+      "properties": {
+        "rule_id": { "const": "lowest-chain-plan-position/1" },
+        "chain_plan_position": { "const": 0 },
+        "chain_execution_id": { "$ref": "#/$defs/Sha256Digest" },
+        "final_attempt_id": { "$ref": "#/$defs/Sha256Digest" },
+        "chain_payload_digest": { "$ref": "#/$defs/Sha256Digest" }
+      }
+    },
+    "CacheLineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cache_disposition", "universe_cache_key", "chain_cache_keys", "source_result_id", "cache_verification_digest"],
+      "properties": {
+        "cache_disposition": { "enum": ["MISS", "HIT"] },
+        "universe_cache_key": { "$ref": "#/$defs/Sha256Digest" },
+        "chain_cache_keys": { "type": "array", "items": { "$ref": "#/$defs/Sha256Digest" } },
+        "source_result_id": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "cache_verification_digest": { "$ref": "#/$defs/Sha256Digest" }
+      },
+      "oneOf": [
+        { "properties": { "cache_disposition": { "const": "MISS" }, "source_result_id": { "type": "null" } } },
+        { "properties": { "cache_disposition": { "const": "HIT" }, "source_result_id": { "$ref": "#/$defs/Sha256Digest" } } }
+      ],
+      "$comment": "A cache miss never self-references the ResultRecord being created. A hit names the independently verified earlier result that supplied the immutable cache content."
+    },
+    "CandidateResultCore": {
+      "type": "object",
+      "required": ["record_kind", "plan_schema_version", "plan_digest", "candidate_ordinal", "candidate_id", "analysis_spec_id", "universe_id", "status", "input_digest", "config_digest", "core_code_digest", "started_at_utc", "ended_at_utc", "runtime_seconds", "warnings", "output_hashes"],
+      "properties": {
+        "record_kind": { "enum": ["UNPREPARED", "EXECUTION_NON_SUCCESS", "CONVERGENCE_NON_SUCCESS", "COMPLETED"] },
+        "plan_schema_version": { "const": "ebm-audit-analysis-plan/3.0" },
+        "plan_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "candidate_ordinal": { "$ref": "#/$defs/SafeInteger" },
+        "candidate_id": { "$ref": "#/$defs/Sha256Digest" },
+        "analysis_spec_id": { "$ref": "#/$defs/Sha256Digest" },
+        "universe_id": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "status": { "enum": ["SUCCESS", "CONVERGENCE_WARN", "INVALID_INPUT", "UNSUPPORTED_CAPABILITY", "INVALID_SPECIFICATION", "BACKEND_ERROR", "TIMEOUT", "CONVERGENCE_FAILED", "CONVERGENCE_NOT_ASSESSABLE", "PRIVACY_VIOLATION", "PROTOCOL_ERROR"] },
+        "input_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "config_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "core_code_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "started_at_utc": { "$ref": "#/$defs/Timestamp" },
+        "ended_at_utc": { "$ref": "#/$defs/Timestamp" },
+        "runtime_seconds": { "type": "number", "minimum": 0 },
+        "warnings": { "type": "array", "items": { "$ref": "#/$defs/WarningRecord" } },
+        "output_hashes": { "type": "object", "propertyNames": { "$ref": "#/$defs/RelativePosixPath" }, "additionalProperties": { "$ref": "#/$defs/Sha256Digest" } }
+      }
+    },
+    "PreparedResultCore": {
+      "type": "object",
+      "required": ["preparation_state", "protocol_version", "backend_identity", "backend_identity_digest", "backend_acceptance", "capabilities_digest", "worker_executable_digest", "worker_code_digest", "backend_source_digest", "environment_digest", "settings_digest", "validation_evidence", "fit_attempt_evidence", "cache_lineage"],
+      "properties": {
+        "preparation_state": { "const": "PREPARED" },
+        "input_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "synthetic_provenance": { "$ref": "#/$defs/SyntheticProvenance" },
+        "protocol_version": { "const": "ebm-audit-worker/v2" },
+        "backend_identity": { "$ref": "#/$defs/BackendIdentity" },
+        "backend_identity_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "backend_acceptance": { "enum": ["NOT_EVALUATED", "EXPERIMENTAL", "ACCEPTANCE_CANDIDATE", "ACCEPTED", "REJECTED"] },
+        "capabilities_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "worker_executable_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "worker_code_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "backend_source_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "environment_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "settings_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "validation_evidence": {
+          "allOf": [
+            { "$ref": "#/$defs/WorkerExecutionEvidenceReference" },
+            { "properties": { "command": { "const": "validate" } } }
+          ]
+        },
+        "fit_attempt_evidence": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "allOf": [
+                  { "$ref": "#/$defs/WorkerExecutionEvidenceReference" },
+                  { "properties": { "command": { "const": "fit" } } }
+                ]
+              },
+              { "$ref": "#/$defs/ProfileFitUnobservedCoreFailureReference" }
+            ]
+          }
+        },
+        "cache_lineage": { "oneOf": [{ "$ref": "#/$defs/CacheLineage" }, { "type": "null" }] },
+        "execution_origin": { "const": "PROFILE" },
+        "profile_storage_observations": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": { "$ref": "#/$defs/ProfileNoReadNoWriteObservation" }
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "not": {
+                "anyOf": [
+                  { "required": ["execution_origin"] },
+                  { "required": ["profile_storage_observations"] }
+                ]
+              },
+              "properties": {
+                "fit_attempt_evidence": {
+                  "items": {
+                    "allOf": [
+                      { "$ref": "#/$defs/WorkerExecutionEvidenceReference" },
+                      { "properties": { "command": { "const": "fit" } } }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "required": ["execution_origin", "profile_storage_observations"],
+              "properties": {
+                "execution_origin": { "const": "PROFILE" },
+                "cache_lineage": { "type": "null" },
+                "fit_attempt_evidence": {
+                  "minItems": 3,
+                  "maxItems": 3
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "UnpreparedResultBody": {
+      "allOf": [
+        { "$ref": "#/$defs/CandidateResultCore" },
+        {
+          "type": "object",
+          "required": ["preparation_state", "operation_seed", "preparation_reasons", "error", "diagnostic_references"],
+          "properties": {
+            "record_kind": { "const": "UNPREPARED" },
+            "universe_id": { "type": "null" },
+            "preparation_state": { "enum": ["PLAN_INELIGIBLE", "PREPARATION_INVALID", "PREPARATION_UNSUPPORTED"] },
+            "operation_seed": { "oneOf": [{ "$ref": "#/$defs/UInt64Hex" }, { "type": "null" }] },
+            "preparation_reasons": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "analysis-universe.schema.json#/$defs/PreparationReason" } },
+            "status": { "enum": ["INVALID_SPECIFICATION", "UNSUPPORTED_CAPABILITY"] },
+            "error": { "$ref": "#/$defs/NegativeResponseError" },
+            "diagnostic_references": { "type": "array", "items": { "$ref": "#/$defs/EvidenceReference" } }
+          }
+        },
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "preparation_state": { "const": "PREPARATION_INVALID" },
+                "status": { "const": "INVALID_SPECIFICATION" },
+                "input_digest": { "type": "null" }
+              }
+            },
+            {
+              "properties": {
+                "preparation_state": { "const": "PREPARATION_UNSUPPORTED" },
+                "status": { "const": "UNSUPPORTED_CAPABILITY" },
+                "input_digest": { "$ref": "#/$defs/Sha256Digest" }
+              }
+            },
+            {
+              "properties": {
+                "preparation_state": { "const": "PLAN_INELIGIBLE" },
+                "status": { "const": "UNSUPPORTED_CAPABILITY" },
+                "input_digest": { "$ref": "#/$defs/Sha256Digest" },
+                "operation_seed": { "type": "null" },
+                "preparation_reasons": {
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["reason_code", "rule_id"],
+                    "properties": {
+                      "reason_code": { "const": "PLAN.MCMC_UNAVAILABLE_FOR_MVP" },
+                      "rule_id": { "const": "planning.mcmc-availability/1" }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "preparation_state": { "const": "PLAN_INELIGIBLE" },
+                "status": { "const": "INVALID_SPECIFICATION" },
+                "input_digest": { "type": "null" },
+                "operation_seed": { "type": "null" },
+                "preparation_reasons": {
+                  "items": { "$ref": "analysis-universe.schema.json#/$defs/StaticPlanningReason" },
+                  "contains": {
+                    "type": "object",
+                    "properties": { "reason_code": { "enum": ["PLAN.EVENT_COUNT_BELOW_TWO", "PLAN.EVENT_DIRECTIONS_UNRESOLVED"] } },
+                    "required": ["reason_code"]
+                  },
+                  "minContains": 1
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "unevaluatedProperties": false,
+      "$comment": "No worker, backend, chain, convergence, or cache field is admitted. input_digest is the canonical scientific-data/1 digest for the two valid unsupported branches; it is null only when event-count/direction planning invalidity or PREPARATION_INVALID prevents a truthful canonical ScientificDataDigestPreimage. Invalid planning reasons win over an MCMC-unavailable reason while the complete ordered reason set remains retained."
+    },
+    "ExecutionNonSuccessResultBody": {
+      "allOf": [
+        { "$ref": "#/$defs/CandidateResultCore" },
+        { "$ref": "#/$defs/PreparedResultCore" },
+        {
+          "type": "object",
+          "required": ["failed_command", "error", "diagnostic_references", "side_effects_reference"],
+          "properties": {
+            "record_kind": { "const": "EXECUTION_NON_SUCCESS" },
+            "universe_id": { "$ref": "#/$defs/Sha256Digest" },
+            "status": { "enum": ["INVALID_INPUT", "UNSUPPORTED_CAPABILITY", "INVALID_SPECIFICATION", "BACKEND_ERROR", "TIMEOUT", "PRIVACY_VIOLATION", "PROTOCOL_ERROR"] },
+            "failed_command": { "enum": ["validate", "fit"] },
+            "error": { "$ref": "#/$defs/NegativeResponseError" },
+            "diagnostic_references": { "type": "array", "items": { "$ref": "#/$defs/EvidenceReference" } },
+            "side_effects_reference": { "oneOf": [{ "$ref": "#/$defs/EvidenceReference" }, { "type": "null" }] }
+          }
+        },
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "failed_command": { "const": "validate" },
+                "validation_evidence": { "properties": { "status": { "not": { "const": "SUCCESS" } } } },
+                "fit_attempt_evidence": { "maxItems": 0 },
+                "cache_lineage": { "type": "null" }
+              }
+            },
+            {
+              "properties": {
+                "failed_command": { "const": "fit" },
+                "validation_evidence": { "properties": { "status": { "const": "SUCCESS" } } },
+                "fit_attempt_evidence": { "minItems": 1 }
+              }
+            }
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "ConvergenceNonSuccessResultBody": {
+      "allOf": [
+        { "$ref": "#/$defs/CandidateResultCore" },
+        { "$ref": "#/$defs/PreparedResultCore" },
+        {
+          "type": "object",
+          "required": ["event_ids", "chain_results", "reference_chain", "convergence", "error", "diagnostic_references"],
+          "properties": {
+            "record_kind": { "const": "CONVERGENCE_NON_SUCCESS" },
+            "universe_id": { "$ref": "#/$defs/Sha256Digest" },
+            "status": { "enum": ["CONVERGENCE_FAILED", "CONVERGENCE_NOT_ASSESSABLE"] },
+            "validation_evidence": { "properties": { "status": { "const": "SUCCESS" } } },
+            "fit_attempt_evidence": { "minItems": 1 },
+            "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+            "chain_results": { "type": "array", "items": { "$ref": "#/$defs/FinalChainScientificPayload" } },
+            "reference_chain": { "oneOf": [{ "$ref": "#/$defs/ReferenceChainSelection" }, { "type": "null" }] },
+            "convergence": { "$ref": "#/$defs/ConvergenceRecord" },
+            "error": { "$ref": "#/$defs/NegativeResponseError" },
+            "diagnostic_references": { "type": "array", "items": { "$ref": "#/$defs/EvidenceReference" } }
+          }
+        },
+        {
+          "oneOf": [
+            { "properties": { "status": { "const": "CONVERGENCE_FAILED" }, "convergence": { "properties": { "assessment": { "const": "CONVERGENCE_FAIL" } } } } },
+            { "properties": { "status": { "const": "CONVERGENCE_NOT_ASSESSABLE" }, "convergence": { "properties": { "assessment": { "const": "CONVERGENCE_NOT_ASSESSABLE" } } } } }
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "CompletedFitResultBody": {
+      "allOf": [
+        { "$ref": "#/$defs/CandidateResultCore" },
+        { "$ref": "#/$defs/PreparedResultCore" },
+        {
+          "type": "object",
+          "required": ["event_ids", "chain_results", "reference_chain", "convergence"],
+          "properties": {
+            "record_kind": { "const": "COMPLETED" },
+            "universe_id": { "$ref": "#/$defs/Sha256Digest" },
+            "status": { "enum": ["SUCCESS", "CONVERGENCE_WARN"] },
+            "validation_evidence": { "properties": { "status": { "const": "SUCCESS" } } },
+            "fit_attempt_evidence": { "minItems": 1 },
+            "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+            "chain_results": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/FinalChainScientificPayload" } },
+            "reference_chain": { "$ref": "#/$defs/ReferenceChainSelection" },
+            "convergence": { "$ref": "#/$defs/ConvergenceRecord" }
+          }
+        },
+        {
+          "oneOf": [
+            { "properties": { "status": { "const": "SUCCESS" }, "convergence": { "properties": { "assessment": { "enum": ["NOT_APPLICABLE", "CONVERGENCE_PASS"] } } } } },
+            { "properties": { "status": { "const": "CONVERGENCE_WARN" }, "convergence": { "properties": { "assessment": { "const": "CONVERGENCE_WARN" } } } } }
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "ResultRecordBody": {
+      "oneOf": [
+        { "$ref": "#/$defs/UnpreparedResultBody" },
+        { "$ref": "#/$defs/ExecutionNonSuccessResultBody" },
+        { "$ref": "#/$defs/ConvergenceNonSuccessResultBody" },
+        { "$ref": "#/$defs/CompletedFitResultBody" }
+      ]
+    },
+    "ResultRecordDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result_schema_version", "body"],
+      "properties": {
+        "result_schema_version": { "const": "ebm-audit-fit-result/2.0" },
+        "body": { "$ref": "#/$defs/ResultRecordBody" }
+      },
+      "$comment": "The complete ebm-audit/result-record/2 preimage. result_id is absent, not null."
+    },
+    "ResultRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result_schema_version", "result_id", "body"],
+      "properties": {
+        "result_schema_version": { "const": "ebm-audit-fit-result/2.0" },
+        "result_id": { "$ref": "#/$defs/Sha256Digest" },
+        "body": { "$ref": "#/$defs/ResultRecordBody" }
+      },
+      "x-ebm-result-finalization-invariants": ["result-record-finalization-evidence-exact/1"],
+      "$comment": "Exactly one immutable result for every ordered AnalysisPlan/3 candidate. The envelope identity is domain-separated from the exact serialized artifact digest recorded by CandidateTerminal. Schema validation is necessary but not sufficient: the named result-finalization semantic validator is required before identity issuance, persistence, cache admission, or CandidateTerminal construction."
+    },
+    "TypedPrivateId": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "value"],
+          "properties": { "type": { "const": "string" }, "value": { "$ref": "#/$defs/ParticipantPrivateIdString" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "value"],
+          "properties": { "type": { "const": "integer" }, "value": { "$ref": "#/$defs/SignedSafeInteger" } }
+        }
+      ]
+    },
+    "ParticipantTokenParameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method_id", "key_generation_method", "minimum_key_bytes", "key_byte_length", "key_id_digest", "message_framing", "token_encoding"],
+      "properties": {
+        "method_id": { "const": "hmac-sha256-typed-private-id/1" },
+        "key_generation_method": { "const": "os-csprng/1" },
+        "minimum_key_bytes": { "const": 32 },
+        "key_byte_length": { "const": 32 },
+        "key_id_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "message_framing": { "const": "domain-nul-type-nul-u64be-length-value/1" },
+        "token_encoding": { "const": "hmac-sha256:<64-lowercase-hex>" }
+      }
+    },
+    "PrivateSourceIdAlignmentRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reference_row_index", "participant_private_id"],
+      "properties": {
+        "reference_row_index": { "$ref": "#/$defs/SafeInteger" },
+        "participant_private_id": { "$ref": "#/$defs/TypedPrivateId" }
+      }
+    },
+    "PrivateTokenAlignmentRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reference_row_index", "participant_private_token"],
+      "properties": {
+        "reference_row_index": { "$ref": "#/$defs/SafeInteger" },
+        "participant_private_token": { "type": "string", "pattern": "^hmac-sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "ReferenceRowOrderDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alignment_method", "participant_count", "ordered_reference_row_bindings"],
+      "properties": {
+        "alignment_method": { "enum": ["private-source-id-to-run-token/1", "shared-private-namespace/1"] },
+        "participant_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "ordered_reference_row_bindings": { "type": "array", "minItems": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "alignment_method": { "const": "private-source-id-to-run-token/1" } }, "required": ["alignment_method"] },
+          "then": { "properties": { "ordered_reference_row_bindings": { "items": { "$ref": "#/$defs/PrivateSourceIdAlignmentRow" } } } },
+          "else": { "properties": { "ordered_reference_row_bindings": { "items": { "$ref": "#/$defs/PrivateTokenAlignmentRow" } } } }
+        }
+      ],
+      "x-ebm-invariants": [
+        "reference-row-order-count-matches-bindings/1",
+        "reference-row-order-indexes-contiguous/1",
+        "reference-row-order-bindings-unique/1",
+        "reference-row-order-alignment-method-matches-row-type/1"
+      ],
+      "$comment": "alignment_method is part of the hashed preimage. The named runtime invariants additionally require contiguous reference_row_index values 0..participant_count-1, exact array length equality, typed-value uniqueness, and Unicode NFC/safe-integer validation before hashing."
+    },
+    "PrivateReferenceAlignmentArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alignment_schema_version", "alignment_method", "scientific_data_digest", "participant_count", "reference_row_order_digest", "token_parameters", "rows"],
+      "properties": {
+        "alignment_schema_version": { "const": "ebm-audit-private-reference-alignment/1.0" },
+        "alignment_method": { "enum": ["private-source-id-to-run-token/1", "shared-private-namespace/1"] },
+        "scientific_data_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "participant_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "reference_row_order_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "token_parameters": { "$ref": "#/$defs/ParticipantTokenParameters" },
+        "rows": { "type": "array", "minItems": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "alignment_method": { "const": "private-source-id-to-run-token/1" } } },
+          "then": { "properties": { "rows": { "items": { "$ref": "#/$defs/PrivateSourceIdAlignmentRow" } } } },
+          "else": { "properties": { "rows": { "items": { "$ref": "#/$defs/PrivateTokenAlignmentRow" } } } }
+        }
+      ]
+    },
+    "ReferenceParticipantEventManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest_schema_version", "participant_count", "event_count", "event_ids", "reference_row_indexes_digest", "reference_row_order_digest", "core_data_accounting_digest"],
+      "properties": {
+        "manifest_schema_version": { "const": "ebm-audit-reference-participant-event-manifest/1.0" },
+        "participant_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "event_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "event_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "reference_row_indexes_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "reference_row_order_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "core_data_accounting_digest": { "$ref": "#/$defs/Sha256Digest" }
+      }
+    },
+    "ReferenceExporterProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exporter_id", "exporter_version", "exporter_code_digest", "exporter_environment_digest", "export_command_id"],
+      "properties": {
+        "exporter_id": { "$ref": "#/$defs/MachineId" },
+        "exporter_version": { "$ref": "#/$defs/NonEmptyString" },
+        "exporter_code_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "exporter_environment_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "export_command_id": { "$ref": "#/$defs/MachineId" }
+      }
+    },
+    "ReferenceImplementationProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["implementation_id", "implementation_version", "implementation_code_or_artifact_digest", "algorithm_id", "settings_digest", "environment_digest", "seed_chain_policy_digest", "source_commit_or_version", "evidence"],
+      "properties": {
+        "implementation_id": { "$ref": "#/$defs/MachineId" },
+        "implementation_version": { "oneOf": [{ "$ref": "#/$defs/NonEmptyString" }, { "type": "null" }] },
+        "implementation_code_or_artifact_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "algorithm_id": { "$ref": "#/$defs/MachineId" },
+        "settings_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "environment_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "seed_chain_policy_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "source_commit_or_version": { "oneOf": [{ "$ref": "#/$defs/NonEmptyString" }, { "type": "null" }] },
+        "evidence": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/EvidenceReference" } }
+      }
+    },
+    "ReferenceDatasetBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scientific_data_digest", "participant_count", "event_count", "participant_alignment_method", "private_alignment_artifact_digest", "reference_row_order_digest", "token_parameters"],
+      "properties": {
+        "scientific_data_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "participant_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "event_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "participant_alignment_method": { "enum": ["private-source-id-to-run-token/1", "shared-private-namespace/1"] },
+        "private_alignment_artifact_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "reference_row_order_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "token_parameters": { "$ref": "#/$defs/ParticipantTokenParameters" }
+      }
+    },
+    "ReferenceScientificContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_ids", "event_labels", "event_directions", "preprocessing_digest", "missingness_digest", "inclusion_digest", "stage_semantics_digest"],
+      "properties": {
+        "event_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "event_labels": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/NonEmptyString" } },
+        "event_directions": { "type": "array", "minItems": 1, "items": { "enum": ["higher", "lower", "REQUIRES_CONFIRMATION"] } },
+        "preprocessing_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "missingness_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "inclusion_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "stage_semantics_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] }
+      }
+    },
+    "BaselineInclusionDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inclusion_schema_version", "dataset_variant_id", "scientific_data_digest", "participant_count", "event_count", "event_ids", "selected_row_manifest_digest", "data_accounting_digest", "universe_decision_id"],
+      "properties": {
+        "inclusion_schema_version": { "const": "ebm-audit-baseline-inclusion/1.0" },
+        "dataset_variant_id": { "$ref": "#/$defs/MachineId" },
+        "scientific_data_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "participant_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "event_count": { "$ref": "#/$defs/PositiveSafeInteger" },
+        "event_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "selected_row_manifest_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "data_accounting_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "universe_decision_id": { "$ref": "#/$defs/Sha256Digest" }
+      },
+      "$comment": "Private canonical ingestion owns this exact participant/event inclusion preimage. Public baseline artifacts retain only its digest."
+    },
+    "BaselineStatisticalDiagnosticsDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["diagnostics_schema_version", "convergence"],
+      "properties": {
+        "diagnostics_schema_version": { "const": "ebm-audit-baseline-statistical-diagnostics/1.0" },
+        "convergence": { "$ref": "#/$defs/ConvergenceRecord" }
+      },
+      "$comment": "Every diagnostic chain identity is replaced by its deterministic plan-position surrogate before this public preimage is validated and hashed."
+    },
+    "ReferenceOutputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["central_order_permutation", "arrays", "participant_event_manifest", "statistical_diagnostics_digest"],
+      "properties": {
+        "central_order_permutation": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/SafeInteger" } },
+        "arrays": { "$ref": "#/$defs/ReferenceArrayCatalog" },
+        "participant_event_manifest": { "$ref": "#/$defs/ReferenceParticipantEventManifest" },
+        "statistical_diagnostics_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] }
+      }
+    },
+    "ReferenceFieldProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "source_field", "method_id", "source_digest"],
+      "properties": {
+        "origin": { "const": "USER_SUPPLIED_REFERENCE" },
+        "source_field": { "$ref": "#/$defs/NonEmptyString" },
+        "method_id": { "$ref": "#/$defs/MachineId" },
+        "source_digest": { "$ref": "#/$defs/Sha256Digest" }
+      }
+    },
+    "ReferenceExportReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["created_at_utc", "exporter_input_manifest_digest", "private_alignment_artifact_digest", "warnings"],
+      "properties": {
+        "created_at_utc": { "$ref": "#/$defs/Timestamp" },
+        "exporter_input_manifest_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "private_alignment_artifact_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "warnings": { "type": "array", "items": { "$ref": "#/$defs/WarningRecord" } }
+      }
+    },
+    "CanonicalReferenceResultBody": {
+      "type": "object",
+      "required": ["reference_schema_version", "exporter", "implementation", "dataset", "scientific_contract", "outputs", "field_origins", "export_receipt"],
+      "properties": {
+        "reference_schema_version": { "const": "ebm-audit-canonical-reference/2.0" },
+        "exporter": { "$ref": "#/$defs/ReferenceExporterProvenance" },
+        "implementation": { "$ref": "#/$defs/ReferenceImplementationProvenance" },
+        "dataset": { "$ref": "#/$defs/ReferenceDatasetBinding" },
+        "scientific_contract": { "$ref": "#/$defs/ReferenceScientificContract" },
+        "outputs": { "$ref": "#/$defs/ReferenceOutputs" },
+        "field_origins": { "type": "object", "additionalProperties": { "$ref": "#/$defs/ReferenceFieldProvenance" } },
+        "export_receipt": { "$ref": "#/$defs/ReferenceExportReceipt" }
+      }
+    },
+    "CanonicalReferenceResult": {
+      "allOf": [
+        { "$ref": "#/$defs/CanonicalReferenceResultBody" },
+        { "type": "object", "required": ["reference_id"], "properties": { "reference_id": { "$ref": "#/$defs/Sha256Digest" } } }
+      ],
+      "unevaluatedProperties": false
+    },
+    "CanonicalReferenceResultDigestPreimage": {
+      "allOf": [
+        { "$ref": "#/$defs/CanonicalReferenceResultBody" },
+        { "type": "object", "required": ["reference_id"], "properties": { "reference_id": { "type": "null" } } }
+      ],
+      "unevaluatedProperties": false
+    },
+    "BaselineToleranceContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tolerance_schema_version", "categorical_rule", "integer_rule", "array_shape_rule", "array_value_rule", "absolute_float_tolerance", "relative_float_tolerance", "missing_required_comparison_rule", "missing_optional_comparison_rule"],
+      "properties": {
+        "tolerance_schema_version": { "const": "ebm-audit-baseline-tolerance/1.0" },
+        "categorical_rule": { "const": "EXACT_RFC8785_VALUE" },
+        "integer_rule": { "const": "EXACT_INTEGER" },
+        "array_shape_rule": { "const": "EXACT_SHAPE" },
+        "array_value_rule": { "const": "EXACT_CANONICAL_ARRAY_DIGEST" },
+        "absolute_float_tolerance": { "const": 0 },
+        "relative_float_tolerance": { "const": 0 },
+        "missing_required_comparison_rule": { "const": "BASELINE_NOT_REPRODUCED" },
+        "missing_optional_comparison_rule": { "const": "BASELINE_PARTIALLY_REPRODUCED" }
+      }
+    },
+    "VerifiedReferenceAlignmentOwnerDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner_schema_version", "source_result_id", "source_plan_digest", "source_candidate_id", "source_config_digest", "source_scientific_data_digest", "reference_id", "private_alignment_artifact_digest", "reference_row_order_digest", "current_identity_key_id_digest", "current_identity_row_digest"],
+      "properties": {
+        "owner_schema_version": { "const": "ebm-audit-verified-reference-alignment-owner/1.0" },
+        "source_result_id": { "$ref": "#/$defs/Sha256Digest" },
+        "source_plan_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "source_candidate_id": { "$ref": "#/$defs/Sha256Digest" },
+        "source_config_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "source_scientific_data_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "reference_id": { "$ref": "#/$defs/Sha256Digest" },
+        "private_alignment_artifact_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "reference_row_order_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "current_identity_key_id_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "current_identity_row_digest": { "$ref": "#/$defs/Sha256Digest" }
+      }
+    },
+    "CurrentIdentityRowDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity_schema_version", "dataset_variant_id", "key_id_digest", "ordered_internal_token_rows"],
+      "properties": {
+        "identity_schema_version": { "const": "ebm-audit-current-identity-row-digest/1.0" },
+        "dataset_variant_id": { "$ref": "#/$defs/MachineId" },
+        "key_id_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "ordered_internal_token_rows": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["participant_internal_index", "participant_private_token"],
+            "properties": {
+              "participant_internal_index": { "$ref": "#/$defs/SafeInteger" },
+              "participant_private_token": { "type": "string", "pattern": "^hmac-sha256:[0-9a-f]{64}$" }
+            }
+          }
+        }
+      },
+      "$comment": "The preimage is private. Only its digest is retained in the verified-reference owner identity."
+    },
+    "BaselineSourceBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding_schema_version", "source_result_id", "source_plan_digest", "source_candidate_id", "source_analysis_spec_id", "source_universe_id", "source_config_digest", "source_scientific_data_digest", "source_execution_input_projection_digest", "reference_alignment_owner_id"],
+      "properties": {
+        "binding_schema_version": { "const": "ebm-audit-baseline-source-binding/1.0" },
+        "source_result_id": { "$ref": "#/$defs/Sha256Digest" },
+        "source_plan_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "source_candidate_id": { "$ref": "#/$defs/Sha256Digest" },
+        "source_analysis_spec_id": { "$ref": "#/$defs/Sha256Digest" },
+        "source_universe_id": { "$ref": "#/$defs/Sha256Digest" },
+        "source_config_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "source_scientific_data_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "source_execution_input_projection_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "reference_alignment_owner_id": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] }
+      }
+    },
+    "BaselineSeedChainPolicyDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy_schema_version", "ordered_chains", "reference_chain_rule_id"],
+      "properties": {
+        "policy_schema_version": { "const": "ebm-audit-baseline-seed-chain-policy/1.0" },
+        "ordered_chains": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["chain_plan_position", "chain_id", "seed"],
+            "properties": {
+              "chain_plan_position": { "$ref": "#/$defs/SafeInteger" },
+              "chain_id": { "$ref": "#/$defs/NonEmptyString" },
+              "seed": { "$ref": "#/$defs/UInt64Hex" }
+            }
+          }
+        },
+        "reference_chain_rule_id": { "const": "lowest-chain-plan-position/1" }
+      }
+    },
+    "BaselineConnectedResultBody": {
+      "type": "object",
+      "required": ["projection_schema_version", "benchmark_subject_digest", "source_binding", "implementation", "dataset", "scientific_contract", "outputs"],
+      "properties": {
+        "projection_schema_version": { "const": "ebm-audit-baseline-connected-result/3.0" },
+        "benchmark_subject_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "source_binding": { "$ref": "#/$defs/BaselineSourceBinding" },
+        "implementation": { "$ref": "#/$defs/ReferenceImplementationProvenance" },
+        "dataset": { "$ref": "#/$defs/ReferenceDatasetBinding" },
+        "scientific_contract": { "$ref": "#/$defs/ReferenceScientificContract" },
+        "outputs": { "$ref": "#/$defs/ReferenceOutputs" }
+      }
+    },
+    "BaselineConnectedResultProjection": {
+      "allOf": [
+        { "$ref": "#/$defs/BaselineConnectedResultBody" },
+        { "type": "object", "required": ["result_id"], "properties": { "result_id": { "$ref": "#/$defs/Sha256Digest" } } }
+      ],
+      "unevaluatedProperties": false
+    },
+    "BaselineConnectedResultDigestPreimage": {
+      "allOf": [
+        { "$ref": "#/$defs/BaselineConnectedResultBody" },
+        { "type": "object", "required": ["result_id"], "properties": { "result_id": { "type": "null" } } }
+      ],
+      "unevaluatedProperties": false
+    },
+    "BaselineComparisonResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["comparison_id", "availability", "comparison_rule", "reference_value_digest", "connected_value_digest", "absolute_tolerance", "relative_tolerance", "outcome", "reason_code"],
+      "properties": {
+        "comparison_id": { "enum": ["dataset-binding", "implementation-identity", "scientific-contract", "participant-event-accounting", "central-order", "order-distribution", "participant-stage-output", "statistical-diagnostics", "all-supplied-fields"] },
+        "availability": { "enum": ["SUPPLIED", "NOT_SUPPLIED", "NOT_REQUIRED"] },
+        "comparison_rule": { "enum": ["EXACT_RFC8785_VALUE", "EXACT_CANONICAL_ARRAY_DIGEST"] },
+        "reference_value_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "connected_value_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "absolute_tolerance": { "type": "number", "minimum": 0 },
+        "relative_tolerance": { "type": "number", "minimum": 0 },
+        "outcome": { "enum": ["MATCH", "MISMATCH", "NOT_COMPARABLE", "NOT_SUPPLIED", "NOT_REQUIRED"] },
+        "reason_code": { "oneOf": [{ "$ref": "#/$defs/StableCode" }, { "type": "null" }] }
+      }
+    },
+    "BaselineReproductionRecordBody": {
+      "type": "object",
+      "required": ["record_schema_version", "benchmark_subject_digest", "reference_presence", "reference_id", "connected_result_id", "tolerance_contract", "ordered_comparisons", "status", "validated_language_eligibility", "reason_codes"],
+      "properties": {
+        "record_schema_version": { "const": "ebm-audit-baseline-reproduction/2.0" },
+        "benchmark_subject_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "reference_presence": { "enum": ["SUPPLIED", "NOT_SUPPLIED"] },
+        "reference_id": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "connected_result_id": { "$ref": "#/$defs/Sha256Digest" },
+        "tolerance_contract": { "$ref": "#/$defs/BaselineToleranceContract" },
+        "ordered_comparisons": { "type": "array", "minItems": 9, "maxItems": 9, "items": { "$ref": "#/$defs/BaselineComparisonResult" } },
+        "status": { "enum": ["BASELINE_REPRODUCED", "BASELINE_PARTIALLY_REPRODUCED", "BASELINE_NOT_REPRODUCED", "BASELINE_REFERENCE_NOT_SUPPLIED"] },
+        "validated_language_eligibility": { "type": "boolean" },
+        "reason_codes": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/StableCode" } }
+      }
+    },
+    "BaselineReproductionRecord": {
+      "allOf": [
+        { "$ref": "#/$defs/BaselineReproductionRecordBody" },
+        { "type": "object", "required": ["baseline_reproduction_id"], "properties": { "baseline_reproduction_id": { "$ref": "#/$defs/Sha256Digest" } } }
+      ],
+      "unevaluatedProperties": false
+    },
+    "BaselineReproductionRecordDigestPreimage": {
+      "allOf": [
+        { "$ref": "#/$defs/BaselineReproductionRecordBody" },
+        { "type": "object", "required": ["baseline_reproduction_id"], "properties": { "baseline_reproduction_id": { "type": "null" } } }
+      ],
+      "unevaluatedProperties": false
+    },
+    "BaselineAssessmentCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_ordinal", "candidate_id", "analysis_spec_id"],
+      "properties": {
+        "candidate_ordinal": { "$ref": "#/$defs/SafeInteger" },
+        "candidate_id": { "$ref": "#/$defs/Sha256Digest" },
+        "analysis_spec_id": { "$ref": "#/$defs/Sha256Digest" }
+      }
+    },
+    "BaselineAssessmentTerminal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["terminal_schema_version", "candidate_ordinal", "candidate_id", "analysis_spec_id", "universe_id", "final_status", "result_id", "result_digest", "error_evidence_digest"],
+      "properties": {
+        "terminal_schema_version": { "const": "ebm-audit-candidate-terminal/1.0" },
+        "candidate_ordinal": { "$ref": "#/$defs/SafeInteger" },
+        "candidate_id": { "$ref": "#/$defs/Sha256Digest" },
+        "analysis_spec_id": { "$ref": "#/$defs/Sha256Digest" },
+        "universe_id": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "final_status": {
+          "enum": [
+            "SUCCESS",
+            "CONVERGENCE_WARN",
+            "INVALID_INPUT",
+            "UNSUPPORTED_CAPABILITY",
+            "INVALID_SPECIFICATION",
+            "BACKEND_ERROR",
+            "TIMEOUT",
+            "CONVERGENCE_FAILED",
+            "CONVERGENCE_NOT_ASSESSABLE",
+            "PRIVACY_VIOLATION",
+            "PROTOCOL_ERROR"
+          ]
+        },
+        "result_id": { "$ref": "#/$defs/Sha256Digest" },
+        "result_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "error_evidence_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] }
+      }
+    },
+    "BaselineAssessmentRecordBody": {
+      "type": "object",
+      "required": ["assessment_schema_version", "plan_digest", "baseline_candidate", "candidate_terminal_index_digest", "baseline_terminal", "baseline_reproduction_id", "status", "validated_language_eligibility", "reason_codes"],
+      "properties": {
+        "assessment_schema_version": { "const": "ebm-audit-baseline-assessment/1.0" },
+        "plan_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "baseline_candidate": { "$ref": "#/$defs/BaselineAssessmentCandidate" },
+        "candidate_terminal_index_digest": { "$ref": "#/$defs/Sha256Digest" },
+        "baseline_terminal": { "$ref": "#/$defs/BaselineAssessmentTerminal" },
+        "baseline_reproduction_id": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "status": { "enum": ["BASELINE_REPRODUCED", "BASELINE_PARTIALLY_REPRODUCED", "BASELINE_NOT_REPRODUCED", "BASELINE_REFERENCE_NOT_SUPPLIED", "BASELINE_NOT_ASSESSABLE"] },
+        "validated_language_eligibility": { "type": "boolean" },
+        "reason_codes": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/StableCode" } }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "BASELINE_NOT_ASSESSABLE" } }, "required": ["status"] },
+          "then": {
+            "properties": {
+              "baseline_reproduction_id": { "type": "null" },
+              "validated_language_eligibility": { "const": false },
+              "baseline_terminal": { "properties": { "final_status": { "not": { "const": "SUCCESS" } } } },
+              "reason_codes": { "minItems": 1 }
+            }
+          },
+          "else": {
+            "properties": {
+              "baseline_reproduction_id": { "$ref": "#/$defs/Sha256Digest" },
+              "baseline_terminal": { "properties": { "final_status": { "const": "SUCCESS" } } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "status": { "const": "BASELINE_REPRODUCED" } }, "required": ["status"] },
+          "then": { "properties": { "validated_language_eligibility": { "const": true } } },
+          "else": { "properties": { "validated_language_eligibility": { "const": false } } }
+        }
+      ]
+    },
+    "BaselineAssessmentRecord": {
+      "allOf": [
+        { "$ref": "#/$defs/BaselineAssessmentRecordBody" },
+        { "type": "object", "required": ["baseline_assessment_id"], "properties": { "baseline_assessment_id": { "$ref": "#/$defs/Sha256Digest" } } }
+      ],
+      "unevaluatedProperties": false
+    },
+    "BaselineAssessmentRecordDigestPreimage": {
+      "allOf": [
+        { "$ref": "#/$defs/BaselineAssessmentRecordBody" },
+        { "type": "object", "required": ["baseline_assessment_id"], "properties": { "baseline_assessment_id": { "type": "null" } } }
+      ],
+      "unevaluatedProperties": false
+    },
+    "ComparisonParticipantAlignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alignment_method", "common_count", "left_only_count", "right_only_count", "alignment_digest"],
+      "properties": {
+        "alignment_method": { "enum": ["fixed-evaluation-cohort/1", "private-token-intersection/1", "not-applicable/1"] },
+        "common_count": { "$ref": "#/$defs/SafeInteger" },
+        "left_only_count": { "$ref": "#/$defs/SafeInteger" },
+        "right_only_count": { "$ref": "#/$defs/SafeInteger" },
+        "alignment_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] }
+      }
+    },
+    "ComparisonRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["comparison_schema_version", "comparison_id", "left_universe_id", "left_result_id", "right_universe_id", "right_result_id", "metric_id", "uncertainty_layer", "comparability", "participant_alignment", "common_event_ids", "left_only_event_ids", "right_only_event_ids", "value", "reason_code"],
+      "properties": {
+        "comparison_schema_version": { "const": "ebm-audit-comparison/1.0" },
+        "comparison_id": { "$ref": "#/$defs/Sha256Digest" },
+        "left_universe_id": { "$ref": "#/$defs/Sha256Digest" },
+        "left_result_id": { "$ref": "#/$defs/Sha256Digest" },
+        "right_universe_id": { "$ref": "#/$defs/Sha256Digest" },
+        "right_result_id": { "$ref": "#/$defs/Sha256Digest" },
+        "metric_id": { "$ref": "#/$defs/MachineId" },
+        "uncertainty_layer": { "enum": ["within_fit", "chain", "sampling", "analyst_decision", "participant_influence", "null"] },
+        "comparability": { "enum": ["COMPARABLE", "SELECTION_COUPLED", "SEMANTICALLY_NON_EQUIVALENT", "NOT_COMPARABLE"] },
+        "participant_alignment": { "$ref": "#/$defs/ComparisonParticipantAlignment" },
+        "common_event_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "left_only_event_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "right_only_event_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "value": { "type": ["number", "integer", "boolean", "null"] },
+        "reason_code": { "oneOf": [{ "$ref": "#/$defs/StableCode" }, { "type": "null" }] }
+      },
+      "allOf": [
+        { "if": { "properties": { "comparability": { "const": "NOT_COMPARABLE" } } }, "then": { "properties": { "value": { "type": "null" }, "reason_code": { "$ref": "#/$defs/StableCode" } } } }
+      ]
+    },
+    "InfluenceFloatMetricResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric_id", "status", "value", "reason_code"],
+      "properties": {
+        "metric_id": {
+          "enum": [
+            "central-order-kendall-distance/1",
+            "maximum-normalized-event-rank-displacement/1",
+            "strict-pairwise-majority-flip-fraction/1",
+            "position-matrix-distance/1",
+            "pairwise-matrix-distance/1"
+          ]
+        },
+        "status": { "enum": ["ASSESSABLE", "NOT_ASSESSABLE"] },
+        "value": { "oneOf": [{ "$ref": "#/$defs/Probability" }, { "type": "null" }] },
+        "reason_code": { "oneOf": [{ "$ref": "#/$defs/StableCode" }, { "type": "null" }] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "ASSESSABLE" } } },
+          "then": { "properties": { "value": { "$ref": "#/$defs/Probability" }, "reason_code": { "type": "null" } } },
+          "else": { "properties": { "value": { "type": "null" }, "reason_code": { "$ref": "#/$defs/StableCode" } } }
+        }
+      ]
+    },
+    "FixedCohortStageMetricResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric_id", "status", "value", "reason_code"],
+      "properties": {
+        "metric_id": {
+          "enum": [
+            "fixed-cohort-stage-wasserstein-median/1",
+            "fixed-cohort-stage-wasserstein-maximum/1"
+          ]
+        },
+        "status": {
+          "enum": ["ASSESSABLE", "NOT_ASSESSABLE", "NOT_APPLICABLE_BY_CAPABILITY"]
+        },
+        "value": { "oneOf": [{ "$ref": "#/$defs/Probability" }, { "type": "null" }] },
+        "reason_code": {
+          "oneOf": [{ "$ref": "#/$defs/StableCode" }, { "type": "null" }]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "ASSESSABLE" } }, "required": ["status"] },
+          "then": {
+            "properties": {
+              "value": { "$ref": "#/$defs/Probability" },
+              "reason_code": { "type": "null" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "status": { "const": "NOT_ASSESSABLE" } }, "required": ["status"] },
+          "then": {
+            "properties": {
+              "value": { "type": "null" },
+              "reason_code": {
+                "allOf": [
+                  { "$ref": "#/$defs/StableCode" },
+                  { "not": { "const": "STAGING.FIXED_COHORT_UNAVAILABLE" } }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "status": { "const": "NOT_APPLICABLE_BY_CAPABILITY" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "value": { "type": "null" },
+              "reason_code": { "const": "STAGING.FIXED_COHORT_UNAVAILABLE" }
+            }
+          }
+        }
+      ]
+    },
+    "InfluenceCountMetricResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric_id", "status", "value", "reason_code"],
+      "properties": {
+        "metric_id": { "const": "strict-pairwise-majority-flip-count/1" },
+        "status": { "enum": ["ASSESSABLE", "NOT_ASSESSABLE"] },
+        "value": { "oneOf": [{ "$ref": "#/$defs/SafeInteger" }, { "type": "null" }] },
+        "reason_code": { "oneOf": [{ "$ref": "#/$defs/StableCode" }, { "type": "null" }] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "ASSESSABLE" } } },
+          "then": { "properties": { "value": { "$ref": "#/$defs/SafeInteger" }, "reason_code": { "type": "null" } } },
+          "else": { "properties": { "value": { "type": "null" }, "reason_code": { "$ref": "#/$defs/StableCode" } } }
+        }
+      ]
+    },
+    "InfluenceBooleanMetricResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric_id", "status", "value", "reason_code"],
+      "properties": {
+        "metric_id": { "const": "convergence-degradation/1" },
+        "status": { "enum": ["ASSESSABLE", "NOT_ASSESSABLE"] },
+        "value": { "type": ["boolean", "null"] },
+        "reason_code": { "oneOf": [{ "$ref": "#/$defs/StableCode" }, { "type": "null" }] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "ASSESSABLE" } } },
+          "then": { "properties": { "value": { "type": "boolean" }, "reason_code": { "type": "null" } } },
+          "else": { "properties": { "value": { "type": "null" }, "reason_code": { "$ref": "#/$defs/StableCode" } } }
+        }
+      ]
+    },
+    "PairwiseMajorityFlip": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_a_id", "event_b_id", "baseline_probability_a_before_b", "removal_probability_a_before_b", "baseline_relation", "removal_relation"],
+      "properties": {
+        "event_a_id": { "$ref": "#/$defs/MachineId" },
+        "event_b_id": { "$ref": "#/$defs/MachineId" },
+        "baseline_probability_a_before_b": { "$ref": "#/$defs/Probability" },
+        "removal_probability_a_before_b": { "$ref": "#/$defs/Probability" },
+        "baseline_relation": { "enum": ["A_BEFORE_B", "B_BEFORE_A"] },
+        "removal_relation": { "enum": ["A_BEFORE_B", "B_BEFORE_A"] }
+      }
+    },
+    "InfluenceRecordCore": {
+      "type": "object",
+      "required": ["influence_schema_version", "influence_rule_version", "uncertainty_layer", "removal_spec_id", "removed_aliases", "baseline_universe_id", "removal_universe_id", "baseline_event_ids", "removal_event_ids", "pairwise_assessment", "pairwise_assessment_reason_code", "common_event_count", "strict_pairwise_majority_flip_denominator", "fixed_evaluation_cohort_digest", "fixed_evaluation_cohort_count", "central_order_kendall_distance", "maximum_normalized_event_rank_displacement", "strict_pairwise_majority_flip_count", "strict_pairwise_majority_flip_fraction", "strict_pairwise_majority_flips", "position_matrix_distance", "pairwise_matrix_distance", "baseline_convergence_state", "removal_convergence_state", "convergence_degradation", "fixed_cohort_stage_wasserstein_median", "fixed_cohort_stage_wasserstein_maximum", "component_states", "assessable_component_ids", "participant_state", "display_component_percentiles", "influence_display_score"],
+      "properties": {
+        "influence_schema_version": { "const": "ebm-audit-influence/2.0" },
+        "influence_rule_version": { "const": "metrics/influence/v0.1.0" },
+        "uncertainty_layer": { "const": "participant_influence" },
+        "removal_spec_id": { "$ref": "#/$defs/Sha256Digest" },
+        "removed_aliases": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^P-[0-9]{3,}$" } },
+        "baseline_universe_id": { "$ref": "#/$defs/Sha256Digest" },
+        "removal_universe_id": { "$ref": "#/$defs/Sha256Digest" },
+        "baseline_event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "removal_event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/MachineId" } },
+        "pairwise_assessment": { "enum": ["ASSESSABLE", "NOT_ASSESSABLE_FEWER_THAN_TWO_COMMON_EVENTS", "NOT_ASSESSABLE_REFERENCE_SNAPSHOT_UNAVAILABLE"] },
+        "pairwise_assessment_reason_code": { "oneOf": [{ "$ref": "#/$defs/StableCode" }, { "type": "null" }] },
+        "common_event_count": { "$ref": "#/$defs/SafeInteger" },
+        "strict_pairwise_majority_flip_denominator": { "oneOf": [{ "$ref": "#/$defs/PositiveSafeInteger" }, { "type": "null" }] },
+        "fixed_evaluation_cohort_digest": { "oneOf": [{ "$ref": "#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "fixed_evaluation_cohort_count": { "oneOf": [{ "$ref": "#/$defs/SafeInteger" }, { "type": "null" }] },
+        "central_order_kendall_distance": { "allOf": [{ "$ref": "#/$defs/InfluenceFloatMetricResult" }, { "properties": { "metric_id": { "const": "central-order-kendall-distance/1" } } }] },
+        "maximum_normalized_event_rank_displacement": { "allOf": [{ "$ref": "#/$defs/InfluenceFloatMetricResult" }, { "properties": { "metric_id": { "const": "maximum-normalized-event-rank-displacement/1" } } }] },
+        "strict_pairwise_majority_flip_count": { "$ref": "#/$defs/InfluenceCountMetricResult" },
+        "strict_pairwise_majority_flip_fraction": { "allOf": [{ "$ref": "#/$defs/InfluenceFloatMetricResult" }, { "properties": { "metric_id": { "const": "strict-pairwise-majority-flip-fraction/1" } } }] },
+        "strict_pairwise_majority_flips": { "type": "array", "items": { "$ref": "#/$defs/PairwiseMajorityFlip" } },
+        "position_matrix_distance": { "allOf": [{ "$ref": "#/$defs/InfluenceFloatMetricResult" }, { "properties": { "metric_id": { "const": "position-matrix-distance/1" } } }] },
+        "pairwise_matrix_distance": { "allOf": [{ "$ref": "#/$defs/InfluenceFloatMetricResult" }, { "properties": { "metric_id": { "const": "pairwise-matrix-distance/1" } } }] },
+        "baseline_convergence_state": { "enum": ["CONVERGENCE_PASS", "CONVERGENCE_WARN", "CONVERGENCE_FAIL", "CONVERGENCE_NOT_ASSESSABLE"] },
+        "removal_convergence_state": { "enum": ["CONVERGENCE_PASS", "CONVERGENCE_WARN", "CONVERGENCE_FAIL", "CONVERGENCE_NOT_ASSESSABLE"] },
+        "convergence_degradation": { "$ref": "#/$defs/InfluenceBooleanMetricResult" },
+        "fixed_cohort_stage_wasserstein_median": { "allOf": [{ "$ref": "#/$defs/FixedCohortStageMetricResult" }, { "properties": { "metric_id": { "const": "fixed-cohort-stage-wasserstein-median/1" } } }] },
+        "fixed_cohort_stage_wasserstein_maximum": { "allOf": [{ "$ref": "#/$defs/FixedCohortStageMetricResult" }, { "properties": { "metric_id": { "const": "fixed-cohort-stage-wasserstein-maximum/1" } } }] },
+        "component_states": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["central_order_kendall_distance", "maximum_normalized_event_rank_displacement", "strict_pairwise_majority_flip_fraction", "position_matrix_distance", "pairwise_matrix_distance", "fixed_cohort_stage_movement", "convergence_degradation"],
+          "properties": {
+            "central_order_kendall_distance": { "$ref": "#/$defs/InfluenceComponentState" },
+            "maximum_normalized_event_rank_displacement": { "$ref": "#/$defs/InfluenceComponentState" },
+            "strict_pairwise_majority_flip_fraction": { "$ref": "#/$defs/InfluenceComponentState" },
+            "position_matrix_distance": { "$ref": "#/$defs/InfluenceComponentState" },
+            "pairwise_matrix_distance": { "$ref": "#/$defs/InfluenceComponentState" },
+            "fixed_cohort_stage_movement": { "$ref": "#/$defs/InfluenceComponentState" },
+            "convergence_degradation": { "$ref": "#/$defs/InfluenceComponentState" }
+          }
+        },
+        "assessable_component_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/InfluenceComponentId" } },
+        "participant_state": { "enum": ["PARTICIPANT_INFLUENCE_MULTICOMPONENT", "PARTICIPANT_INFLUENCE_SINGLE_COMPONENT", "PARTICIPANT_INFLUENCE_NO_HIGH_COMPONENT", "PARTICIPANT_INFLUENCE_NOT_ASSESSABLE"] },
+        "display_component_percentiles": {
+          "oneOf": [
+            {
+              "type": "object",
+              "minProperties": 3,
+              "additionalProperties": false,
+              "properties": {
+                "central_order_kendall_distance": { "$ref": "#/$defs/Probability" },
+                "maximum_normalized_event_rank_displacement": { "$ref": "#/$defs/Probability" },
+                "strict_pairwise_majority_flip_fraction": { "$ref": "#/$defs/Probability" },
+                "position_matrix_distance": { "$ref": "#/$defs/Probability" },
+                "pairwise_matrix_distance": { "$ref": "#/$defs/Probability" },
+                "fixed_cohort_stage_movement": { "$ref": "#/$defs/Probability" },
+                "convergence_degradation": { "$ref": "#/$defs/Probability" }
+              }
+            },
+            { "type": "null" }
+          ]
+        },
+        "influence_display_score": { "oneOf": [{ "$ref": "#/$defs/Probability" }, { "type": "null" }] }
+      }
+    },
+    "InfluenceRecordAssessable": {
+      "allOf": [
+        { "$ref": "#/$defs/InfluenceRecordCore" },
+        {
+          "type": "object",
+          "properties": {
+            "pairwise_assessment": { "const": "ASSESSABLE" },
+            "pairwise_assessment_reason_code": { "type": "null" },
+            "common_event_count": { "type": "integer", "minimum": 2, "maximum": 9007199254740991 },
+            "strict_pairwise_majority_flip_denominator": { "$ref": "#/$defs/PositiveSafeInteger" },
+            "strict_pairwise_majority_flip_count": {
+              "allOf": [
+                { "$ref": "#/$defs/InfluenceCountMetricResult" },
+                { "properties": { "status": { "const": "ASSESSABLE" }, "value": { "$ref": "#/$defs/SafeInteger" }, "reason_code": { "type": "null" } } }
+              ]
+            },
+            "strict_pairwise_majority_flip_fraction": {
+              "allOf": [
+                { "$ref": "#/$defs/InfluenceFloatMetricResult" },
+                { "properties": { "metric_id": { "const": "strict-pairwise-majority-flip-fraction/1" }, "status": { "const": "ASSESSABLE" }, "value": { "$ref": "#/$defs/Probability" }, "reason_code": { "type": "null" } } }
+              ]
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false,
+      "x-ebm-invariants": [
+        "influence-common-event-count-exact/1",
+        "influence-pairwise-denominator-exact/1",
+        "influence-flip-count-matches-pairs/1",
+        "influence-flip-count-within-denominator/1",
+        "influence-flip-fraction-exact/1"
+      ]
+    },
+    "InfluenceRecordNotAssessable": {
+      "allOf": [
+        { "$ref": "#/$defs/InfluenceRecordCore" },
+        {
+          "type": "object",
+          "properties": {
+            "pairwise_assessment": { "const": "NOT_ASSESSABLE_FEWER_THAN_TWO_COMMON_EVENTS" },
+            "pairwise_assessment_reason_code": { "const": "INFLUENCE.INSUFFICIENT_COMMON_EVENTS" },
+            "common_event_count": { "enum": [0, 1] },
+            "strict_pairwise_majority_flip_denominator": { "type": "null" },
+            "strict_pairwise_majority_flip_count": {
+              "allOf": [
+                { "$ref": "#/$defs/InfluenceCountMetricResult" },
+                { "properties": { "status": { "const": "NOT_ASSESSABLE" }, "value": { "type": "null" }, "reason_code": { "const": "INFLUENCE.INSUFFICIENT_COMMON_EVENTS" } } }
+              ]
+            },
+            "strict_pairwise_majority_flip_fraction": {
+              "allOf": [
+                { "$ref": "#/$defs/InfluenceFloatMetricResult" },
+                { "properties": { "metric_id": { "const": "strict-pairwise-majority-flip-fraction/1" }, "status": { "const": "NOT_ASSESSABLE" }, "value": { "type": "null" }, "reason_code": { "const": "INFLUENCE.INSUFFICIENT_COMMON_EVENTS" } } }
+              ]
+            },
+            "strict_pairwise_majority_flips": { "type": "array", "maxItems": 0 }
+          }
+        }
+      ],
+      "unevaluatedProperties": false,
+      "x-ebm-invariants": [
+        "influence-common-event-count-exact/1"
+      ]
+    },
+    "InfluenceRecordReferenceSnapshotUnavailable": {
+      "allOf": [
+        { "$ref": "#/$defs/InfluenceRecordCore" },
+        {
+          "type": "object",
+          "properties": {
+            "pairwise_assessment": { "const": "NOT_ASSESSABLE_REFERENCE_SNAPSHOT_UNAVAILABLE" },
+            "pairwise_assessment_reason_code": { "const": "INFLUENCE.REFERENCE_SNAPSHOT_UNAVAILABLE" },
+            "common_event_count": { "type": "integer", "minimum": 2, "maximum": 9007199254740991 },
+            "strict_pairwise_majority_flip_denominator": { "type": "null" },
+            "central_order_kendall_distance": {
+              "properties": { "status": { "const": "NOT_ASSESSABLE" }, "value": { "type": "null" }, "reason_code": { "const": "INFLUENCE.REFERENCE_SNAPSHOT_UNAVAILABLE" } }
+            },
+            "maximum_normalized_event_rank_displacement": {
+              "properties": { "status": { "const": "NOT_ASSESSABLE" }, "value": { "type": "null" }, "reason_code": { "const": "INFLUENCE.REFERENCE_SNAPSHOT_UNAVAILABLE" } }
+            },
+            "strict_pairwise_majority_flip_count": {
+              "allOf": [
+                { "$ref": "#/$defs/InfluenceCountMetricResult" },
+                { "properties": { "status": { "const": "NOT_ASSESSABLE" }, "value": { "type": "null" }, "reason_code": { "const": "INFLUENCE.REFERENCE_SNAPSHOT_UNAVAILABLE" } } }
+              ]
+            },
+            "strict_pairwise_majority_flip_fraction": {
+              "allOf": [
+                { "$ref": "#/$defs/InfluenceFloatMetricResult" },
+                { "properties": { "metric_id": { "const": "strict-pairwise-majority-flip-fraction/1" }, "status": { "const": "NOT_ASSESSABLE" }, "value": { "type": "null" }, "reason_code": { "const": "INFLUENCE.REFERENCE_SNAPSHOT_UNAVAILABLE" } } }
+              ]
+            },
+            "strict_pairwise_majority_flips": { "type": "array", "maxItems": 0 },
+            "position_matrix_distance": {
+              "properties": { "status": { "const": "NOT_ASSESSABLE" }, "value": { "type": "null" }, "reason_code": { "const": "INFLUENCE.REFERENCE_SNAPSHOT_UNAVAILABLE" } }
+            },
+            "pairwise_matrix_distance": {
+              "properties": { "status": { "const": "NOT_ASSESSABLE" }, "value": { "type": "null" }, "reason_code": { "const": "INFLUENCE.REFERENCE_SNAPSHOT_UNAVAILABLE" } }
+            },
+            "baseline_convergence_state": { "const": "CONVERGENCE_PASS" },
+            "removal_convergence_state": { "enum": ["CONVERGENCE_FAIL", "CONVERGENCE_NOT_ASSESSABLE"] },
+            "convergence_degradation": {
+              "properties": { "metric_id": { "const": "convergence-degradation/1" }, "status": { "const": "ASSESSABLE" }, "value": { "const": true }, "reason_code": { "type": "null" } }
+            },
+            "fixed_cohort_stage_wasserstein_median": {
+              "properties": { "status": { "const": "NOT_APPLICABLE_BY_CAPABILITY" }, "value": { "type": "null" }, "reason_code": { "const": "STAGING.FIXED_COHORT_UNAVAILABLE" } }
+            },
+            "fixed_cohort_stage_wasserstein_maximum": {
+              "properties": { "status": { "const": "NOT_APPLICABLE_BY_CAPABILITY" }, "value": { "type": "null" }, "reason_code": { "const": "STAGING.FIXED_COHORT_UNAVAILABLE" } }
+            },
+            "component_states": {
+              "properties": {
+                "central_order_kendall_distance": { "const": "INFLUENCE_COMPONENT_NOT_ASSESSABLE" },
+                "maximum_normalized_event_rank_displacement": { "const": "INFLUENCE_COMPONENT_NOT_ASSESSABLE" },
+                "strict_pairwise_majority_flip_fraction": { "const": "INFLUENCE_COMPONENT_NOT_ASSESSABLE" },
+                "position_matrix_distance": { "const": "INFLUENCE_COMPONENT_NOT_ASSESSABLE" },
+                "pairwise_matrix_distance": { "const": "INFLUENCE_COMPONENT_NOT_ASSESSABLE" },
+                "fixed_cohort_stage_movement": { "const": "INFLUENCE_COMPONENT_NOT_ASSESSABLE" },
+                "convergence_degradation": { "const": "INFLUENCE_COMPONENT_HIGH" }
+              }
+            },
+            "assessable_component_ids": { "const": ["convergence_degradation"] },
+            "participant_state": { "const": "PARTICIPANT_INFLUENCE_NOT_ASSESSABLE" },
+            "display_component_percentiles": { "type": "null" },
+            "influence_display_score": { "type": "null" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false,
+      "x-ebm-invariants": [
+        "influence-common-event-count-exact/1",
+        "influence-fewer-than-two-common-events-empty-pairs/1"
+      ]
+    },
+    "InfluenceRecord": {
+      "oneOf": [
+        { "$ref": "#/$defs/InfluenceRecordAssessable" },
+        { "$ref": "#/$defs/InfluenceRecordNotAssessable" },
+        { "$ref": "#/$defs/InfluenceRecordReferenceSnapshotUnavailable" }
+      ],
+      "$comment": "The discriminator makes both insufficient-common-event and unavailable-reference-snapshot boundaries serializable. JSON Schema selects the branch; the named x-ebm-invariants are executed by the canonical runtime validator for exact intersections, pair counts, denominators, and fractions."
+    },
+    "InfluenceComponentId": {
+      "enum": ["central_order_kendall_distance", "maximum_normalized_event_rank_displacement", "strict_pairwise_majority_flip_fraction", "position_matrix_distance", "pairwise_matrix_distance", "fixed_cohort_stage_movement", "convergence_degradation"]
+    },
+    "InfluenceComponentState": {
+      "enum": ["INFLUENCE_COMPONENT_HIGH", "INFLUENCE_COMPONENT_NOT_HIGH", "INFLUENCE_COMPONENT_NOT_ASSESSABLE"]
+    }
+  }
+}

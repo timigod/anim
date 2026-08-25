@@ -1,0 +1,1305 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Closed semantic matched-comparator transactions and evidence",
+  "$ref": "#/$defs/MatchedComparatorEvidenceManifest",
+  "$defs": {
+    "Sha256Hex": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "Sha256Digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "UInt64Hex": {"type": "string", "pattern": "^[0-9a-f]{16}$"},
+    "MachineId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"},
+    "ComponentPath": {
+      "enum": ["parameters", "group_assignment", "latent_time", "covariates", "participant_effect", "subgroup_assignment", "measurement_normal", "measurement_scale", "measurement_skew", "contamination", "outliers", "missingness", "label_permutation", "within_group_feature_permutation"]
+    },
+    "SemanticTarget": {
+      "enum": [
+        "ANALYSIS_MCMC_PROFILE_ID",
+        "EVENT_PARAMETER_AMPLITUDE",
+        "EVENT_PARAMETER_TRANSITION_WIDTH",
+        "EVENT_PARAMETER_COVARIATE_EFFECT",
+        "EVENT_PARAMETER_GROUP_EFFECT",
+        "EVENT_PARAMETER_PARTICIPANT_EFFECT_LOADING",
+        "LATENT_GROUP_INDEPENDENT_WINDOW",
+        "TRUTH_ORDER_AND_STAGE_CLASSIFICATION",
+        "PARTICIPANT_COHORT",
+        "MEASUREMENT_NOISE_STANDARD_DEVIATIONS",
+        "LATENT_REFERENCE_WINDOW",
+        "LATENT_AT_RISK_WINDOW",
+        "PARTICIPANT_LATENT_TIME",
+        "SUBGROUP_ORDERS",
+        "ANALYSIS_REFERENCE_ONLY_RESIDUALISATION",
+        "ANALYSIS_GROUP_BOUNDARY",
+        "SCIENTIFIC_DATA_ANALYSIS_GROUP_LABELS",
+        "ANALYSIS_EVENT_SPEC_DIRECTIONS"
+      ]
+    },
+    "OperationCommon": {
+      "type": "object",
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0},
+        "member_id": {"$ref": "#/$defs/MachineId"}
+      },
+      "required": ["sequence"]
+    },
+    "SetAnalysisProfile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "member_id", "operation", "semantic_target", "profile_id"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0}, "member_id": {"$ref": "#/$defs/MachineId"},
+        "operation": {"const": "SET_ANALYSIS_PROFILE"}, "semantic_target": {"const": "ANALYSIS_MCMC_PROFILE_ID"},
+        "profile_id": {"$ref": "#/$defs/MachineId"}
+      }
+    },
+    "SetEventParameterVector": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "member_id", "operation", "semantic_target", "scalar_value", "vector_length_source"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0}, "member_id": {"$ref": "#/$defs/MachineId"},
+        "operation": {"const": "SET_EVENT_PARAMETER_VECTOR"},
+        "semantic_target": {"enum": ["EVENT_PARAMETER_AMPLITUDE", "EVENT_PARAMETER_TRANSITION_WIDTH", "EVENT_PARAMETER_COVARIATE_EFFECT", "EVENT_PARAMETER_GROUP_EFFECT", "EVENT_PARAMETER_PARTICIPANT_EFFECT_LOADING"]},
+        "scalar_value": {"type": "number"}, "vector_length_source": {"const": "RESOLVED_EVENT_COUNT"}
+      }
+    },
+    "SetLatentWindowFromSourceSpan": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "member_id", "operation", "semantic_target", "source_semantic_targets", "resulting_mode"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0}, "member_id": {"$ref": "#/$defs/MachineId"},
+        "operation": {"const": "SET_LATENT_WINDOW_FROM_SOURCE_SPAN"}, "semantic_target": {"const": "LATENT_GROUP_INDEPENDENT_WINDOW"},
+        "source_semantic_targets": {"const": ["LATENT_REFERENCE_WINDOW", "LATENT_AT_RISK_WINDOW"]},
+        "resulting_mode": {"const": "GROUP_INDEPENDENT_WINDOW"}
+      }
+    },
+    "SetTruthSignalClassification": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "member_id", "operation", "semantic_target", "truth_kind", "stage_truth_kind", "strict_order_identifiable", "recoverable_signal", "non_identifiability_reason"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0}, "member_id": {"$ref": "#/$defs/MachineId"},
+        "operation": {"const": "SET_TRUTH_SIGNAL_CLASSIFICATION"}, "semantic_target": {"const": "TRUTH_ORDER_AND_STAGE_CLASSIFICATION"},
+        "truth_kind": {"const": "NONE"}, "stage_truth_kind": {"const": "NONE"}, "strict_order_identifiable": {"const": false}, "recoverable_signal": {"const": false},
+        "non_identifiability_reason": {"const": "PURE_NO_SIGNAL"}
+      }
+    },
+    "BuildStratifiedParticipantParent": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "member_id", "operation", "semantic_target", "parent_count", "source_count_source", "retained_index_output", "ranking_domain"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0}, "member_id": {"$ref": "#/$defs/MachineId"},
+        "operation": {"const": "BUILD_STRATIFIED_PARTICIPANT_PARENT"}, "semantic_target": {"const": "PARTICIPANT_COHORT"},
+        "parent_count": {"type": "integer", "minimum": 2}, "source_count_source": {"const": "RESOLVED_PARTICIPANT_COUNT"},
+        "retained_index_output": {"const": "COMPARATOR_EVIDENCE_SOURCE_PARENT_INDEXES"},
+        "ranking_domain": {"type": "string", "minLength": 1}
+      }
+    },
+    "SelectMeasurementNoiseLevel": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "operation", "semantic_target", "values_source", "member_index", "vector_length_source"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0}, "operation": {"const": "SELECT_MEASUREMENT_NOISE_LEVEL"},
+        "semantic_target": {"const": "MEASUREMENT_NOISE_STANDARD_DEVIATIONS"}, "values_source": {"const": "SCENARIO_MEASUREMENT_NOISE_SD_LEVELS"},
+        "member_index": {"oneOf": [{"type": "integer", "minimum": 0}, {"const": "EXPANSION_MEMBER_INDEX"}]},
+        "vector_length_source": {"const": "RESOLVED_EVENT_COUNT"}
+      }
+    },
+    "SetLatentWindow": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "member_id", "operation", "semantic_target", "window"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0}, "member_id": {"$ref": "#/$defs/MachineId"},
+        "operation": {"const": "SET_LATENT_WINDOW"}, "semantic_target": {"enum": ["LATENT_REFERENCE_WINDOW", "LATENT_AT_RISK_WINDOW"]},
+        "window": {"type": "array", "prefixItems": [{"type": "number"}, {"type": "number"}], "items": false, "minItems": 2, "maxItems": 2}
+      }
+    },
+    "RemapLatentQuantilesToWindows": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "member_id", "operation", "semantic_target", "window_semantic_targets", "quantile_source"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0}, "member_id": {"$ref": "#/$defs/MachineId"},
+        "operation": {"const": "REMAP_LATENT_QUANTILES_TO_WINDOWS"}, "semantic_target": {"const": "PARTICIPANT_LATENT_TIME"},
+        "window_semantic_targets": {"const": ["LATENT_REFERENCE_WINDOW", "LATENT_AT_RISK_WINDOW"]},
+        "quantile_source": {"const": "SHARED_LATENT_UNIFORM_QUANTILES"}
+      }
+    },
+    "SetSubgroupOrdersToBase": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "member_id", "operation", "semantic_target", "source"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0}, "member_id": {"$ref": "#/$defs/MachineId"},
+        "operation": {"const": "SET_SUBGROUP_ORDERS_TO_BASE"}, "semantic_target": {"const": "SUBGROUP_ORDERS"},
+        "source": {"const": "RESOLVED_BASE_ORDER"}
+      }
+    },
+    "SetReferenceOnlyResidualisation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "member_id", "operation", "semantic_target", "enabled"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0}, "member_id": {"$ref": "#/$defs/MachineId"},
+        "operation": {"const": "SET_REFERENCE_ONLY_RESIDUALISATION"}, "semantic_target": {"const": "ANALYSIS_REFERENCE_ONLY_RESIDUALISATION"},
+        "enabled": {"type": "boolean"}
+      }
+    },
+    "SelectGroupBoundaryRule": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "operation", "semantic_target", "rule_ids_source", "shift_values_source", "base_cutoff_source", "member_index", "derived_output"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0}, "operation": {"const": "SELECT_GROUP_BOUNDARY_RULE"},
+        "semantic_target": {"const": "ANALYSIS_GROUP_BOUNDARY"}, "rule_ids_source": {"const": "SCENARIO_BOUNDARY_RULE_IDS"},
+        "shift_values_source": {"const": "SCENARIO_BOUNDARY_QUANTILE_SHIFTS"}, "base_cutoff_source": {"const": "SCENARIO_BASE_QUANTILE_CUTOFF"},
+        "member_index": {"oneOf": [{"type": "integer", "minimum": 0}, {"const": "EXPANSION_MEMBER_INDEX"}]},
+        "derived_output": {"const": "SCIENTIFIC_DATA_ANALYSIS_GROUP_LABELS"}
+      }
+    },
+    "SelectObservedGroupLabelView": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "member_id", "operation", "semantic_target", "view", "source"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0}, "member_id": {"$ref": "#/$defs/MachineId"},
+        "operation": {"const": "SELECT_OBSERVED_GROUP_LABEL_VIEW"}, "semantic_target": {"const": "SCIENTIFIC_DATA_ANALYSIS_GROUP_LABELS"},
+        "view": {"enum": ["ORIGINAL", "CONTAMINATED"]}, "source": {"const": "SYNTHETIC_TRUTH_GROUP_LABEL_VIEWS"}
+      }
+    },
+    "SetAnalysisEventDirectionsFromTruth": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sequence", "member_id", "operation", "semantic_target", "event_subset_source", "direction_source"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0}, "member_id": {"$ref": "#/$defs/MachineId"},
+        "operation": {"const": "SET_ANALYSIS_EVENT_DIRECTIONS_FROM_TRUTH"}, "semantic_target": {"const": "ANALYSIS_EVENT_SPEC_DIRECTIONS"},
+        "event_subset_source": {"const": "TRUTH_WRONG_DIRECTION_EVENT_IDS"}, "direction_source": {"const": "TRUTH_EVENT_DIRECTIONS"}
+      }
+    },
+    "ComparatorOperation": {
+      "oneOf": [
+        {"$ref": "#/$defs/SetAnalysisProfile"}, {"$ref": "#/$defs/SetEventParameterVector"},
+        {"$ref": "#/$defs/SetLatentWindowFromSourceSpan"}, {"$ref": "#/$defs/SetTruthSignalClassification"},
+        {"$ref": "#/$defs/BuildStratifiedParticipantParent"}, {"$ref": "#/$defs/SelectMeasurementNoiseLevel"},
+        {"$ref": "#/$defs/SetLatentWindow"}, {"$ref": "#/$defs/RemapLatentQuantilesToWindows"},
+        {"$ref": "#/$defs/SetSubgroupOrdersToBase"}, {"$ref": "#/$defs/SetReferenceOnlyResidualisation"},
+        {"$ref": "#/$defs/SelectGroupBoundaryRule"}, {"$ref": "#/$defs/SelectObservedGroupLabelView"},
+        {"$ref": "#/$defs/SetAnalysisEventDirectionsFromTruth"}
+      ]
+    },
+    "ResolvedComparatorOperation": {
+      "allOf": [
+        {"$ref": "#/$defs/ComparatorOperation"},
+        {"not": {"properties": {"member_index": {"const": "EXPANSION_MEMBER_INDEX"}}, "required": ["member_index"]}}
+      ],
+      "$comment": "Plan evidence is post-expansion. An operation either names a member_id or carries a concrete zero-based member_index; the registry-only EXPANSION_MEMBER_INDEX token is never persisted as evidence."
+    },
+    "PairingKey": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}/[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}/(0|[1-9][0-9]*)$"
+    }
+    ,
+    "NumberArray": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+    ,
+    "PositiveNumberArray": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      }
+    }
+    ,
+    "ProbabilityArray": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    }
+    ,
+    "IntegerArray": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      }
+    }
+    ,
+    "GroupLabelArray": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "reference",
+          "at_risk"
+        ]
+      }
+    }
+    ,
+    "NumberMatrix": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      }
+    }
+    ,
+    "CanonicalJsonValue": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CanonicalJsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/CanonicalJsonValue"
+          }
+        }
+      ]
+    }
+    ,
+    "RegisteredStateWritePath": {
+      "enum": [
+        "/resolved_configuration/analysis_configuration/mcmc_profile_id",
+        "/resolved_configuration/event_parameters/amplitude",
+        "/resolved_configuration/event_parameters/transition_width",
+        "/resolved_configuration/event_parameters/covariate_effect",
+        "/resolved_configuration/event_parameters/group_effect",
+        "/resolved_configuration/event_parameters/participant_effect_loading",
+        "/resolved_configuration/latent_sampling/mode",
+        "/resolved_configuration/latent_sampling/reference_window",
+        "/resolved_configuration/latent_sampling/at_risk_window",
+        "/resolved_configuration/latent_sampling/group_independent_window",
+        "/truth_state/truth_kind",
+        "/truth_state/stage_truth_kind",
+        "/truth_state/strict_order_identifiable",
+        "/truth_state/recoverable_signal",
+        "/truth_state/non_identifiability_reason",
+        "/resolved_configuration/dimensions/participant_count",
+        "/generated_state/source_parent_indexes",
+        "/resolved_configuration/measurement_noise/standard_deviations",
+        "/generated_state/participant_latent_time",
+        "/truth_state/subgroup_orders",
+        "/resolved_configuration/analysis_configuration/reference_only_residualisation",
+        "/resolved_configuration/group_generation/boundary_rule_id",
+        "/resolved_configuration/group_generation/quantile_cutoff",
+        "/generated_state/analysis_group_labels",
+        "/resolved_configuration/analysis_configuration/event_spec_directions"
+      ]
+    },
+    "EqualProjectionDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projection_schema_version",
+        "varied_semantic_targets",
+        "removed_write_paths",
+        "retained_state"
+      ],
+      "properties": {
+        "projection_schema_version": {
+          "const": "ebm-audit-comparator-equal-projection-preimage/1.0"
+        },
+        "varied_semantic_targets": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/SemanticTarget"}
+        },
+        "removed_write_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/RegisteredStateWritePath"}
+        },
+        "retained_state": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/CanonicalJsonValue"}
+        }
+      },
+      "$comment": "The evaluator derives varied targets from the selected operations, flattens their registered write paths in target order with first occurrence retained, removes exactly those paths from a complete ComparatorTransactionState, and hashes this closed wrapper under ebm-audit/comparator-equal-projection/1. The retained_state is intentionally a pruned canonical object and is not asserted to satisfy ComparatorTransactionState."
+    },
+    "ComparatorTruthState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "truth_kind",
+        "stage_truth_kind",
+        "strict_order_identifiable",
+        "recoverable_signal",
+        "non_identifiability_reason",
+        "base_order",
+        "subgroup_orders",
+        "wrong_direction_event_ids",
+        "truth_event_directions",
+        "original_group_labels",
+        "observed_group_labels"
+      ],
+      "properties": {
+        "truth_kind": {
+          "enum": [
+            "STRICT_TOTAL_ORDER",
+            "PARTIAL_ORDER",
+            "MIXTURE",
+            "NONE"
+          ]
+        },
+        "stage_truth_kind": {
+          "enum": [
+            "THRESHOLD_STAGE",
+            "MIXTURE_STAGE",
+            "NONE"
+          ]
+        },
+        "strict_order_identifiable": {
+          "type": "boolean"
+        },
+        "recoverable_signal": {
+          "type": "boolean"
+        },
+        "non_identifiability_reason": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/MachineId"
+            }
+          ]
+        },
+        "base_order": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "synthetic-resolved-configuration.schema.json#/$defs/EventId"
+          }
+        },
+        "subgroup_orders": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "$ref": "synthetic-resolved-configuration.schema.json#/$defs/EventId"
+            }
+          }
+        },
+        "wrong_direction_event_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "synthetic-resolved-configuration.schema.json#/$defs/EventId"
+          }
+        },
+        "truth_event_directions": {"type": "array", "items": {"enum": ["higher", "lower"]}},
+        "original_group_labels": {"$ref": "#/$defs/GroupLabelArray"},
+        "observed_group_labels": {"$ref": "#/$defs/GroupLabelArray"}
+      }
+    }
+    ,
+    "ComparatorGeneratedState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "participant_latent_time",
+        "latent_uniform_quantiles",
+        "ranked_parent_indexes",
+        "source_parent_indexes",
+        "grouping_coordinate",
+        "analysis_group_labels",
+        "standardized_measurement_variates"
+      ],
+      "properties": {
+        "participant_latent_time": {"$ref": "#/$defs/NumberArray"},
+        "latent_uniform_quantiles": {"$ref": "#/$defs/ProbabilityArray"},
+        "ranked_parent_indexes": {"$ref": "#/$defs/IntegerArray"},
+        "source_parent_indexes": {"$ref": "#/$defs/IntegerArray"},
+        "grouping_coordinate": {"$ref": "#/$defs/ProbabilityArray"},
+        "analysis_group_labels": {"$ref": "#/$defs/GroupLabelArray"},
+        "standardized_measurement_variates": {"$ref": "#/$defs/NumberMatrix"}
+      }
+    }
+    ,
+    "ResolvedGeneratorConfigurationDigestPreimageWitness": {
+      "allOf": [
+        {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ResolvedGeneratorConfiguration"},
+        {
+          "properties": {
+            "digest_state": {"const": "DIGEST_PREIMAGE"},
+            "resolved_generator_configuration_sha256": {"type": "null"}
+          },
+          "required": ["digest_state", "resolved_generator_configuration_sha256"]
+        }
+      ]
+    },
+    "ComparatorTransactionState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state_schema_version",
+        "resolved_configuration",
+        "truth_state",
+        "generated_state"
+      ],
+      "properties": {
+        "state_schema_version": {
+          "const": "ebm-audit-comparator-transaction-state/1.0"
+        },
+        "resolved_configuration": {"$ref": "#/$defs/ResolvedGeneratorConfigurationDigestPreimageWitness"},
+        "truth_state": {
+          "$ref": "#/$defs/ComparatorTruthState"
+        },
+        "generated_state": {
+          "$ref": "#/$defs/ComparatorGeneratedState"
+        }
+      },
+      "$comment": "This is the one complete typed state accepted by comparator operations. Implementations apply operations to this object only; parallel dictionaries, JSON-pointer patch APIs, and implicit generator defaults are prohibited."
+    }
+    ,
+    "SemanticTargetWriteBinding": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "ANALYSIS_MCMC_PROFILE_ID"
+            },
+            "write_paths": {
+              "const": [
+                "/resolved_configuration/analysis_configuration/mcmc_profile_id"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "EVENT_PARAMETER_AMPLITUDE"
+            },
+            "write_paths": {
+              "const": [
+                "/resolved_configuration/event_parameters/amplitude"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "EVENT_PARAMETER_TRANSITION_WIDTH"
+            },
+            "write_paths": {
+              "const": [
+                "/resolved_configuration/event_parameters/transition_width"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "EVENT_PARAMETER_COVARIATE_EFFECT"
+            },
+            "write_paths": {
+              "const": [
+                "/resolved_configuration/event_parameters/covariate_effect"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "EVENT_PARAMETER_GROUP_EFFECT"
+            },
+            "write_paths": {
+              "const": [
+                "/resolved_configuration/event_parameters/group_effect"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "EVENT_PARAMETER_PARTICIPANT_EFFECT_LOADING"
+            },
+            "write_paths": {
+              "const": [
+                "/resolved_configuration/event_parameters/participant_effect_loading"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "LATENT_GROUP_INDEPENDENT_WINDOW"
+            },
+            "write_paths": {
+              "const": [
+                "/resolved_configuration/latent_sampling/mode",
+                "/resolved_configuration/latent_sampling/reference_window",
+                "/resolved_configuration/latent_sampling/at_risk_window",
+                "/resolved_configuration/latent_sampling/group_independent_window"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "TRUTH_ORDER_AND_STAGE_CLASSIFICATION"
+            },
+            "write_paths": {
+              "const": [
+                "/truth_state/truth_kind",
+                "/truth_state/stage_truth_kind",
+                "/truth_state/strict_order_identifiable",
+                "/truth_state/recoverable_signal",
+                "/truth_state/non_identifiability_reason"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "PARTICIPANT_COHORT"
+            },
+            "write_paths": {
+              "const": [
+                "/resolved_configuration/dimensions/participant_count",
+                "/generated_state/source_parent_indexes"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "MEASUREMENT_NOISE_STANDARD_DEVIATIONS"
+            },
+            "write_paths": {
+              "const": [
+                "/resolved_configuration/measurement_noise/standard_deviations"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "LATENT_REFERENCE_WINDOW"
+            },
+            "write_paths": {
+              "const": [
+                "/resolved_configuration/latent_sampling/reference_window"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "LATENT_AT_RISK_WINDOW"
+            },
+            "write_paths": {
+              "const": [
+                "/resolved_configuration/latent_sampling/at_risk_window"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "PARTICIPANT_LATENT_TIME"
+            },
+            "write_paths": {
+              "const": [
+                "/generated_state/participant_latent_time"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "SUBGROUP_ORDERS"
+            },
+            "write_paths": {
+              "const": [
+                "/truth_state/subgroup_orders"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "ANALYSIS_REFERENCE_ONLY_RESIDUALISATION"
+            },
+            "write_paths": {
+              "const": [
+                "/resolved_configuration/analysis_configuration/reference_only_residualisation"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "ANALYSIS_GROUP_BOUNDARY"
+            },
+            "write_paths": {
+              "const": [
+                "/resolved_configuration/group_generation/boundary_rule_id",
+                "/resolved_configuration/group_generation/quantile_cutoff",
+                "/generated_state/analysis_group_labels"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "SCIENTIFIC_DATA_ANALYSIS_GROUP_LABELS"
+            },
+            "write_paths": {
+              "const": [
+                "/generated_state/analysis_group_labels"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_target",
+            "write_paths"
+          ],
+          "properties": {
+            "semantic_target": {
+              "const": "ANALYSIS_EVENT_SPEC_DIRECTIONS"
+            },
+            "write_paths": {
+              "const": [
+                "/resolved_configuration/analysis_configuration/event_spec_directions"
+              ]
+            }
+          }
+        }
+      ]
+    }
+    ,
+    "ComparatorTransactionTransition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pairing_key",
+        "sequence",
+        "operation",
+        "write_binding",
+        "pre_state",
+        "post_state",
+        "observed_changed_paths",
+        "pre_state_sha256",
+        "post_state_sha256"
+      ],
+      "properties": {
+        "pairing_key": {
+          "$ref": "#/$defs/PairingKey"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "operation": {
+          "$ref": "#/$defs/ResolvedComparatorOperation"
+        },
+        "write_binding": {
+          "$ref": "#/$defs/SemanticTargetWriteBinding"
+        },
+        "pre_state": {
+          "$ref": "#/$defs/ComparatorTransactionState"
+        },
+        "post_state": {
+          "$ref": "#/$defs/ComparatorTransactionState"
+        },
+        "observed_changed_paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "/resolved_configuration/analysis_configuration/mcmc_profile_id",
+              "/resolved_configuration/event_parameters/amplitude",
+              "/resolved_configuration/event_parameters/transition_width",
+              "/resolved_configuration/event_parameters/covariate_effect",
+              "/resolved_configuration/event_parameters/group_effect",
+              "/resolved_configuration/event_parameters/participant_effect_loading",
+              "/resolved_configuration/latent_sampling/mode",
+              "/resolved_configuration/latent_sampling/reference_window",
+              "/resolved_configuration/latent_sampling/at_risk_window",
+              "/resolved_configuration/latent_sampling/group_independent_window",
+              "/truth_state/truth_kind",
+              "/truth_state/stage_truth_kind",
+              "/truth_state/strict_order_identifiable",
+              "/truth_state/recoverable_signal",
+              "/truth_state/non_identifiability_reason",
+              "/resolved_configuration/dimensions/participant_count",
+              "/generated_state/source_parent_indexes",
+              "/resolved_configuration/measurement_noise/standard_deviations",
+              "/generated_state/participant_latent_time",
+              "/truth_state/subgroup_orders",
+              "/resolved_configuration/analysis_configuration/reference_only_residualisation",
+              "/resolved_configuration/group_generation/boundary_rule_id",
+              "/resolved_configuration/group_generation/quantile_cutoff",
+              "/generated_state/analysis_group_labels",
+              "/resolved_configuration/analysis_configuration/event_spec_directions"
+            ]
+          }
+        },
+        "pre_state_sha256": {
+          "$ref": "#/$defs/Sha256Hex"
+        },
+        "post_state_sha256": {
+          "$ref": "#/$defs/Sha256Hex"
+        }
+      },
+      "$comment": "The evaluator recomputes both state hashes under ebm-audit/comparator-transaction-state/1, requires sequence and pairing_key to match the operation/evidence, applies the operation itself, requires exact post-state equality, derives observed_changed_paths, and rejects any path outside the exact binding."
+    }
+    ,
+    "GeneratedScientificDataDigestPreimageWitness": {
+      "allOf": [
+        {
+          "$ref": "synthetic-scientific-data.schema.json"
+        },
+        {
+          "properties": {
+            "digest_state": {
+              "const": "DIGEST_PREIMAGE"
+            },
+            "generated_scientific_data_sha256": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "digest_state",
+            "generated_scientific_data_sha256"
+          ]
+        }
+      ]
+    }
+    ,
+    "ByteIdenticalGeneratedInputRelationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relation",
+        "proof_kind"
+      ],
+      "properties": {
+        "relation": {
+          "const": "BYTE_IDENTICAL"
+        },
+        "proof_kind": {
+          "const": "COMPLETE_GENERATED_OBJECT_BYTE_EQUALITY"
+        }
+      }
+    }
+    ,
+    "EqualDeclaredComponentsGeneratedInputRelationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relation",
+        "proof_kind",
+        "required_equal_component_paths"
+      ],
+      "properties": {
+        "relation": {
+          "const": "DIFFERENT_WITH_EQUAL_DECLARED_COMPONENT_DIGESTS"
+        },
+        "proof_kind": {
+          "const": "COMPLETE_GENERATED_OBJECT_DIFFERENCE_AND_COMPONENT_WITNESSES"
+        },
+        "required_equal_component_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/ComponentPath"
+          }
+        }
+      }
+    }
+    ,
+    "StratifiedSubsetGeneratedInputRelationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relation",
+        "proof_kind",
+        "source_parent_indexes"
+      ],
+      "properties": {
+        "relation": {
+          "const": "SOURCE_IS_DECLARED_GROUP_STRATIFIED_ROW_SUBSET_OF_COMPARATOR"
+        },
+        "proof_kind": {
+          "const": "COMPLETE_ROW_AND_CELL_SUBSET"
+        },
+        "source_parent_indexes": {
+          "$ref": "#/$defs/IntegerArray"
+        }
+      }
+    }
+    ,
+    "ScaledMeasurementGeneratedInputRelationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relation",
+        "proof_kind",
+        "standardized_measurement_variates",
+        "shared_unscaled_measurement_values",
+        "source_standard_deviations",
+        "member_standard_deviations"
+      ],
+      "properties": {
+        "relation": {
+          "const": "DIFFERENT_ONLY_BY_SCALING_SHARED_STANDARDIZED_MEASUREMENT_VARIATES"
+        },
+        "proof_kind": {
+          "const": "RECONSTRUCT_FROM_SHARED_STANDARDIZED_VARIATES"
+        },
+        "standardized_measurement_variates": {
+          "$ref": "#/$defs/NumberMatrix"
+        },
+        "shared_unscaled_measurement_values": {
+          "$ref": "#/$defs/NumberMatrix"
+        },
+        "source_standard_deviations": {
+          "$ref": "#/$defs/PositiveNumberArray"
+        },
+        "member_standard_deviations": {
+          "$ref": "#/$defs/PositiveNumberArray"
+        }
+      }
+    }
+    ,
+    "LatentQuantileGeneratedInputRelationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relation",
+        "proof_kind",
+        "shared_latent_uniform_quantiles",
+        "source_latent_time",
+        "member_latent_time",
+        "source_reference_window",
+        "source_at_risk_window",
+        "member_reference_window",
+        "member_at_risk_window"
+      ],
+      "properties": {
+        "relation": {
+          "const": "DIFFERENT_WITH_SHARED_LATENT_UNIFORM_QUANTILES"
+        },
+        "proof_kind": {
+          "const": "RECONSTRUCT_FROM_SHARED_QUANTILES_AND_WINDOWS"
+        },
+        "shared_latent_uniform_quantiles": {
+          "$ref": "#/$defs/ProbabilityArray"
+        },
+        "source_latent_time": {
+          "$ref": "#/$defs/NumberArray"
+        },
+        "member_latent_time": {
+          "$ref": "#/$defs/NumberArray"
+        },
+        "source_reference_window": {
+          "$ref": "synthetic-resolved-configuration.schema.json#/$defs/Interval"
+        },
+        "source_at_risk_window": {
+          "$ref": "synthetic-resolved-configuration.schema.json#/$defs/Interval"
+        },
+        "member_reference_window": {
+          "$ref": "synthetic-resolved-configuration.schema.json#/$defs/Interval"
+        },
+        "member_at_risk_window": {
+          "$ref": "synthetic-resolved-configuration.schema.json#/$defs/Interval"
+        }
+      }
+    }
+    ,
+    "BoundaryRuleGeneratedInputRelationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relation",
+        "proof_kind",
+        "grouping_coordinate",
+        "boundary_rule_id",
+        "quantile_cutoff"
+      ],
+      "properties": {
+        "relation": {
+          "const": "BYTE_IDENTICAL_MEASUREMENTS_WITH_RULE_DERIVED_GROUP_LABELS"
+        },
+        "proof_kind": {
+          "const": "RECOMPUTE_LABELS_FROM_BOUNDARY_RULE"
+        },
+        "grouping_coordinate": {
+          "$ref": "#/$defs/ProbabilityArray"
+        },
+        "boundary_rule_id": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "quantile_cutoff": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1
+        }
+      }
+    }
+    ,
+    "ObservedGroupVectorGeneratedInputRelationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relation",
+        "proof_kind",
+        "source_labels",
+        "member_labels"
+      ],
+      "properties": {
+        "relation": {
+          "const": "BYTE_IDENTICAL_VALUES_DIFFERENT_ONLY_OBSERVED_GROUP_VECTOR"
+        },
+        "proof_kind": {
+          "const": "COMPLETE_VALUE_BYTES_AND_EXACT_GROUP_VECTORS"
+        },
+        "source_labels": {
+          "$ref": "#/$defs/GroupLabelArray"
+        },
+        "member_labels": {
+          "$ref": "#/$defs/GroupLabelArray"
+        }
+      }
+    }
+    ,
+    "GeneratedInputRelationEvidence": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ByteIdenticalGeneratedInputRelationEvidence"
+        },
+        {
+          "$ref": "#/$defs/EqualDeclaredComponentsGeneratedInputRelationEvidence"
+        },
+        {
+          "$ref": "#/$defs/StratifiedSubsetGeneratedInputRelationEvidence"
+        },
+        {
+          "$ref": "#/$defs/ScaledMeasurementGeneratedInputRelationEvidence"
+        },
+        {
+          "$ref": "#/$defs/LatentQuantileGeneratedInputRelationEvidence"
+        },
+        {
+          "$ref": "#/$defs/BoundaryRuleGeneratedInputRelationEvidence"
+        },
+        {
+          "$ref": "#/$defs/ObservedGroupVectorGeneratedInputRelationEvidence"
+        }
+      ]
+    },
+    "SharedComponentEquality": {
+      "type": "object", "additionalProperties": false,
+      "required": ["component_path", "source_component_value", "member_component_value", "source_component_sha256", "member_component_sha256", "equal"],
+      "properties": {
+        "component_path": {"$ref": "#/$defs/ComponentPath"},
+        "source_component_value": {"$ref": "#/$defs/CanonicalJsonValue"},
+        "member_component_value": {"$ref": "#/$defs/CanonicalJsonValue"},
+        "source_component_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "member_component_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "equal": {"type": "boolean"}
+      },
+      "x-ebm-invariants": ["comparator-shared-component-equality-executable/1"],
+      "$comment": "Recompute both component digests from the embedded canonical values under ebm-audit/comparator-component/1 and independently compare those values with the named generator component output. equal is true if and only if the recomputed digests and canonical values are byte-equal; a copied boolean or digest is not evidence."
+    },
+    "ComparatorChainBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["chain_index", "source_chain_seed", "member_chain_seed", "equal", "backend_identity_digest", "settings_digest", "environment_digest"],
+      "properties": {
+        "chain_index": {"type": "integer", "minimum": 0, "maximum": 3},
+        "source_chain_seed": {"$ref": "#/$defs/UInt64Hex"}, "member_chain_seed": {"$ref": "#/$defs/UInt64Hex"}, "equal": {"type": "boolean"},
+        "backend_identity_digest": {"$ref": "#/$defs/Sha256Digest"}, "settings_digest": {"$ref": "#/$defs/Sha256Digest"}, "environment_digest": {"$ref": "#/$defs/Sha256Digest"}
+      },
+      "x-ebm-invariants": ["comparator-chain-binding-equality-executable/1"],
+      "$comment": "equal is true if and only if source_chain_seed equals member_chain_seed. The three execution identities are checked against every other chain and the sealed case/result by the four-chain and sealed-case invariants."
+    },
+    "MatchedComparatorPlanEvidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "comparator_id", "source_variant_id", "replicate_index", "pair_index", "pairing_key", "shared_draw_seed", "ordered_member_ids", "ordered_operations", "varied_semantic_targets", "shared_component_paths", "generated_input_relation", "share_backend_chain_seeds"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-matched-comparator-plan-evidence/1.0"},
+        "comparator_id": {"$ref": "#/$defs/MachineId"}, "source_variant_id": {"$ref": "#/$defs/MachineId"},
+        "replicate_index": {"type": "integer", "minimum": 0}, "pair_index": {"type": "integer", "minimum": 0},
+        "pairing_key": {"$ref": "#/$defs/PairingKey"},
+        "shared_draw_seed": {"$ref": "#/$defs/UInt64Hex"},
+        "ordered_member_ids": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"$ref": "#/$defs/MachineId"}},
+        "ordered_operations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/ResolvedComparatorOperation"}},
+        "varied_semantic_targets": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/SemanticTarget"}},
+        "shared_component_paths": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/ComponentPath"}},
+        "generated_input_relation": {"enum": ["BYTE_IDENTICAL", "DIFFERENT_WITH_EQUAL_DECLARED_COMPONENT_DIGESTS", "SOURCE_IS_DECLARED_GROUP_STRATIFIED_ROW_SUBSET_OF_COMPARATOR", "DIFFERENT_ONLY_BY_SCALING_SHARED_STANDARDIZED_MEASUREMENT_VARIATES", "DIFFERENT_WITH_SHARED_LATENT_UNIFORM_QUANTILES", "BYTE_IDENTICAL_MEASUREMENTS_WITH_RULE_DERIVED_GROUP_LABELS", "BYTE_IDENTICAL_VALUES_DIFFERENT_ONLY_OBSERVED_GROUP_VECTOR"]},
+        "share_backend_chain_seeds": {"const": true}
+      },
+      "x-ebm-invariants": ["comparator-plan-member-binding-exact/1"],
+      "$comment": "pairing_key is exactly comparator_id/source_variant_id/replicate_index_decimal. sequence is exactly 0..n-1. Every operation resolves to exactly one ordered_member_ids entry: member_id must be present in that array, or a concrete member_index selects it. varied_semantic_targets is the duplicate-free set of operation semantic_target values."
+    },
+    "MatchedComparatorEvidence": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema_version", "benchmark_subject_digest", "capabilities_digest", "requested_outputs_digest", "algorithm_id", "comparator_id", "source_variant_id", "replicate_index", "pair_index", "pairing_key", "shared_draw_seed", "member_id",
+        "matched_comparator_plan_evidence", "matched_comparator_plan_evidence_sha256",
+        "source_preoperation_state", "member_postoperation_state", "ordered_operation_evidence",
+        "source_preoperation_resolved_generator_configuration_sha256", "member_postoperation_resolved_generator_configuration_sha256",
+        "ordered_operations_sha256", "equal_projection_sha256", "equal_projection_verified",
+        "source_generated_scientific_data", "member_generated_scientific_data", "source_generated_scientific_data_sha256", "member_generated_scientific_data_sha256",
+        "source_scientific_data_digest_preimage", "member_scientific_data_digest_preimage", "source_input_digest", "member_input_digest",
+        "generated_input_relation", "generated_input_relation_evidence", "generated_input_relation_verified", "shared_component_equalities", "chain_bindings", "evidence_state"
+      ],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-matched-comparator-evidence/1.0"},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"}, "capabilities_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "requested_outputs_digest": {"$ref": "#/$defs/Sha256Digest"}, "algorithm_id": {"$ref": "#/$defs/MachineId"},
+        "comparator_id": {"$ref": "#/$defs/MachineId"}, "source_variant_id": {"$ref": "#/$defs/MachineId"},
+        "replicate_index": {"type": "integer", "minimum": 0}, "pair_index": {"type": "integer", "minimum": 0},
+        "pairing_key": {"$ref": "#/$defs/PairingKey"}, "shared_draw_seed": {"$ref": "#/$defs/UInt64Hex"}, "member_id": {"$ref": "#/$defs/MachineId"},
+        "matched_comparator_plan_evidence": {"$ref": "#/$defs/MatchedComparatorPlanEvidence"},
+        "matched_comparator_plan_evidence_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "source_preoperation_state": {"$ref": "#/$defs/ComparatorTransactionState"},
+        "member_postoperation_state": {"$ref": "#/$defs/ComparatorTransactionState"},
+        "ordered_operation_evidence": {"type": "array", "items": {"$ref": "#/$defs/ComparatorTransactionTransition"}},
+        "source_preoperation_resolved_generator_configuration_sha256": {"$ref": "#/$defs/Sha256Hex", "$comment": "Registered alias of resolved_generator_configuration_sha256. Recompute with domain ebm-audit/resolved-generator-configuration/1 from the complete source pre-operation ResolvedGeneratorConfiguration digest preimage."},
+        "member_postoperation_resolved_generator_configuration_sha256": {"$ref": "#/$defs/Sha256Hex", "$comment": "Registered alias of resolved_generator_configuration_sha256. Recompute with domain ebm-audit/resolved-generator-configuration/1 from the complete member post-operation ResolvedGeneratorConfiguration digest preimage."},
+        "ordered_operations_sha256": {"$ref": "#/$defs/Sha256Hex"}, "equal_projection_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "equal_projection_verified": {"type": "boolean"},
+        "source_generated_scientific_data": {"$ref": "#/$defs/GeneratedScientificDataDigestPreimageWitness"},
+        "member_generated_scientific_data": {"$ref": "#/$defs/GeneratedScientificDataDigestPreimageWitness"},
+        "source_generated_scientific_data_sha256": {"$ref": "#/$defs/Sha256Hex"}, "member_generated_scientific_data_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "source_scientific_data_digest_preimage": {"$ref": "canonical-records.schema.json#/$defs/ScientificDataDigestPreimage"},
+        "member_scientific_data_digest_preimage": {"$ref": "canonical-records.schema.json#/$defs/ScientificDataDigestPreimage"},
+        "source_input_digest": {"$ref": "#/$defs/Sha256Digest"}, "member_input_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "generated_input_relation": {"enum": ["BYTE_IDENTICAL", "DIFFERENT_WITH_EQUAL_DECLARED_COMPONENT_DIGESTS", "SOURCE_IS_DECLARED_GROUP_STRATIFIED_ROW_SUBSET_OF_COMPARATOR", "DIFFERENT_ONLY_BY_SCALING_SHARED_STANDARDIZED_MEASUREMENT_VARIATES", "DIFFERENT_WITH_SHARED_LATENT_UNIFORM_QUANTILES", "BYTE_IDENTICAL_MEASUREMENTS_WITH_RULE_DERIVED_GROUP_LABELS", "BYTE_IDENTICAL_VALUES_DIFFERENT_ONLY_OBSERVED_GROUP_VECTOR"]},
+        "generated_input_relation_evidence": {"$ref": "#/$defs/GeneratedInputRelationEvidence"},
+        "generated_input_relation_verified": {"type": "boolean"},
+        "shared_component_equalities": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/SharedComponentEquality"}},
+        "chain_bindings": {
+          "type": "array", "minItems": 4, "maxItems": 4,
+          "prefixItems": [
+            {"allOf": [{"$ref": "#/$defs/ComparatorChainBinding"}, {"properties": {"chain_index": {"const": 0}}}]},
+            {"allOf": [{"$ref": "#/$defs/ComparatorChainBinding"}, {"properties": {"chain_index": {"const": 1}}}]},
+            {"allOf": [{"$ref": "#/$defs/ComparatorChainBinding"}, {"properties": {"chain_index": {"const": 2}}}]},
+            {"allOf": [{"$ref": "#/$defs/ComparatorChainBinding"}, {"properties": {"chain_index": {"const": 3}}}]}
+          ], "items": false
+        },
+        "evidence_state": {"enum": ["PASS", "FAIL"]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"evidence_state": {"const": "PASS"}}, "required": ["evidence_state"]},
+          "then": {
+            "properties": {
+              "equal_projection_verified": {"const": true},
+              "generated_input_relation_verified": {"const": true},
+              "shared_component_equalities": {"items": {"allOf": [{"$ref": "#/$defs/SharedComponentEquality"}, {"properties": {"equal": {"const": true}}}]}},
+              "chain_bindings": {"items": {"allOf": [{"$ref": "#/$defs/ComparatorChainBinding"}, {"properties": {"equal": {"const": true}}}]}}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"generated_input_relation": {"const": "BYTE_IDENTICAL"}}, "required": ["generated_input_relation"]},
+          "then": {"properties": {"generated_input_relation_evidence": {"$ref": "#/$defs/ByteIdenticalGeneratedInputRelationEvidence"}}}
+        },
+        {
+          "if": {"properties": {"generated_input_relation": {"const": "DIFFERENT_WITH_EQUAL_DECLARED_COMPONENT_DIGESTS"}}, "required": ["generated_input_relation"]},
+          "then": {"properties": {"generated_input_relation_evidence": {"$ref": "#/$defs/EqualDeclaredComponentsGeneratedInputRelationEvidence"}}}
+        },
+        {
+          "if": {"properties": {"generated_input_relation": {"const": "SOURCE_IS_DECLARED_GROUP_STRATIFIED_ROW_SUBSET_OF_COMPARATOR"}}, "required": ["generated_input_relation"]},
+          "then": {"properties": {"generated_input_relation_evidence": {"$ref": "#/$defs/StratifiedSubsetGeneratedInputRelationEvidence"}}}
+        },
+        {
+          "if": {"properties": {"generated_input_relation": {"const": "DIFFERENT_ONLY_BY_SCALING_SHARED_STANDARDIZED_MEASUREMENT_VARIATES"}}, "required": ["generated_input_relation"]},
+          "then": {"properties": {"generated_input_relation_evidence": {"$ref": "#/$defs/ScaledMeasurementGeneratedInputRelationEvidence"}}}
+        },
+        {
+          "if": {"properties": {"generated_input_relation": {"const": "DIFFERENT_WITH_SHARED_LATENT_UNIFORM_QUANTILES"}}, "required": ["generated_input_relation"]},
+          "then": {"properties": {"generated_input_relation_evidence": {"$ref": "#/$defs/LatentQuantileGeneratedInputRelationEvidence"}}}
+        },
+        {
+          "if": {"properties": {"generated_input_relation": {"const": "BYTE_IDENTICAL_MEASUREMENTS_WITH_RULE_DERIVED_GROUP_LABELS"}}, "required": ["generated_input_relation"]},
+          "then": {"properties": {"generated_input_relation_evidence": {"$ref": "#/$defs/BoundaryRuleGeneratedInputRelationEvidence"}}}
+        },
+        {
+          "if": {"properties": {"generated_input_relation": {"const": "BYTE_IDENTICAL_VALUES_DIFFERENT_ONLY_OBSERVED_GROUP_VECTOR"}}, "required": ["generated_input_relation"]},
+          "then": {"properties": {"generated_input_relation_evidence": {"$ref": "#/$defs/ObservedGroupVectorGeneratedInputRelationEvidence"}}}
+        }
+      ],
+      "x-ebm-invariants": [
+        "comparator-shared-component-equality-executable/1",
+        "comparator-chain-binding-equality-executable/1",
+        "comparator-plan-member-binding-exact/1",
+        "comparator-evidence-four-chain-binding-exact/1",
+        "comparator-sealed-case-binding-exact/1"
+      ],
+      "$comment": "PASS is legal only after pairing_key is reconstructed from comparator_id/source_variant_id/replicate_index; evidence.member_id is resolved inside ordered_member_ids; every member_id or concrete member_index operation is selected exactly once in plan order; and the embedded plan hash, exact selected-operation hash, complete transition chain, both raw resolved-configuration hashes, closed EqualProjectionDigestPreimage, both raw generated-data hashes, both canonical input digests, relation-specific reconstruction from actual data/state, every shared-component digest/equality, and all four chain bindings have been independently recomputed. Caller booleans, witness assertions, and supplied digests are never evidence. FAIL preserves any mismatch and remains in its planned denominator."
+    },
+    "MatchedComparatorEvidenceManifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "benchmark_subject_digest", "plan_evidence", "member_evidence", "matched_comparator_evidence_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-matched-comparator-evidence-manifest/1.0"},
+        "digest_state": {"enum": ["PERSISTED", "DIGEST_PREIMAGE"]},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "plan_evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/MatchedComparatorPlanEvidence"}},
+        "member_evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/MatchedComparatorEvidence"}},
+        "matched_comparator_evidence_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}}, "then": {"properties": {"matched_comparator_evidence_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}}, "then": {"properties": {"matched_comparator_evidence_sha256": {"type": "null"}}}}
+      ],
+      "x-ebm-invariants": [
+        "comparator-plan-member-binding-exact/1",
+        "comparator-evidence-four-chain-binding-exact/1"
+      ],
+      "$comment": "For every member evidence object, reconstruct pairing_key and recompute matched_comparator_plan_evidence_sha256; resolve exactly one plan with the same comparator_id, source_variant_id, replicate_index, pair_index, and pairing_key. member_id must occur exactly once in that plan. Resolve every operation exactly once through member_id or ordered_member_ids[member_index], retain selected operations in complete-plan order, bind ordered_operations_sha256 to that exact selected array, and require one continuous transition per selected operation from source_preoperation_state to member_postoperation_state. Declared varied targets and shared components must equal the recomputed operation/equality evidence, and no plan member may be missing or duplicated. Every member has exactly the four ordered chains 0..3; source/member seeds must match per chain and backend, settings, and environment identities must be identical across all four bindings."
+    },
+    "MatchedComparatorEvidenceManifestDigestPreimage": {
+      "allOf": [
+        {"$ref": "#/$defs/MatchedComparatorEvidenceManifest"},
+        {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}, "matched_comparator_evidence_sha256": {"type": "null"}}, "required": ["digest_state", "matched_comparator_evidence_sha256"]}
+      ]
+    }
+  }
+}

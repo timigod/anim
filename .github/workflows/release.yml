@@ -1,0 +1,345 @@
+name: Release Anim
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: Build exact distributions
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_DATE_EPOCH: "1787616000"
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the tagged source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install the locked uv version
+        uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: "0.9.15"
+          enable-cache: false
+
+      - name: Verify the tag and package version
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+
+          version = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+          tag = os.environ["GITHUB_REF_NAME"]
+          if tag != f"v{version}":
+              raise SystemExit(f"tag {tag!r} does not match project version {version!r}")
+          if version != "0.1.0":
+              raise SystemExit(f"unexpected first public version {version!r}")
+          PY
+
+      - name: Install the exact locked build group
+        run: uv sync --frozen --only-group build --no-install-project --python 3.12
+
+      - name: Build wheel and source distribution without build isolation
+        run: uv build --no-build-isolation
+
+      - name: Verify exact distribution filenames
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          actual = sorted(path.name for path in Path("dist").iterdir() if path.is_file())
+          expected = ["anim-0.1.0-py3-none-any.whl", "anim-0.1.0.tar.gz"]
+          if actual != expected:
+              raise SystemExit(f"unexpected distributions: {actual!r}")
+          PY
+
+      - name: Validate distribution metadata and public inventory
+        shell: bash
+        run: |
+          .venv/bin/python - <<'PY'
+          import email.parser
+          import hashlib
+          import re
+          import tarfile
+          import zipfile
+          from pathlib import Path, PurePosixPath
+
+          from packaging.specifiers import SpecifierSet
+
+          wheel = Path("dist/anim-0.1.0-py3-none-any.whl")
+          source = Path("dist/anim-0.1.0.tar.gz")
+          expected_requirements = {
+              "attrs": "26.1.0",
+              "jsonschema": "4.26.0",
+              "jsonschema-specifications": "2025.9.1",
+              "numpy": "2.3.1",
+              "pyyaml": "6.0.3",
+              "referencing": "0.37.0",
+              "rfc8785": "0.1.4",
+              "rpds-py": "2026.6.3",
+              "typing-extensions": "4.16.0",
+          }
+          required_wheel = {
+              "ebm_audit/LICENSE",
+              "ebm_audit/README.md",
+              "ebm_audit/SECURITY.md",
+              "ebm_audit/THIRD_PARTY_NOTICES.md",
+              "ebm_audit/evaluator_contracts/proportional_benchmark_contract.yaml",
+              "ebm_audit/evaluator_contracts/readiness_contract.yaml",
+              "ebm_audit/evaluator_contracts/scenario_derivation_registry.json",
+              "ebm_audit/evaluator_contracts/scenario_predicate_registry.yaml",
+              "sitecustomize.py",
+          }
+          required_source = {
+              "CHANGELOG.md",
+              "LICENSE",
+              "README.md",
+              "SECURITY.md",
+              "THIRD_PARTY_NOTICES.md",
+              "evaluator/proportional_benchmark_contract-0.3.0-candidate.yaml",
+              "evaluator/proportional_benchmark_contract.yaml",
+              "evaluator/scenario_derivation_registry.json",
+              "evaluator/scenario_predicate_registry.yaml",
+              "pyproject.toml",
+              "uv.lock",
+          }
+          forbidden_fragments = (
+              "heldout_manifest",
+              "/workers/pysaebm/",
+              "contract-acceptance",
+              "acquisition-receipt",
+              "environment-receipt",
+              "robustness-auditor-build-prompt",
+              "/research/",
+          )
+          forbidden_content_fragments = (
+              b"robustness-auditor-build-prompt",
+              b"build_prompt",
+              b"heldout_" b"manifest.json",
+              b"/users/",
+              b"/private/tmp/",
+          )
+          forbidden_hex_token_hashes = {
+              "2307040750d61ff6c7d5cd57959d6632d8ee77cbe87330e9d584fea73850f39d",
+          }
+
+          with zipfile.ZipFile(wheel) as archive:
+              wheel_members = set(archive.namelist())
+              wheel_payloads = {
+                  name: archive.read(name)
+                  for name in wheel_members
+              }
+              metadata_names = [name for name in wheel_members if name.endswith(".dist-info/METADATA")]
+              if len(metadata_names) != 1:
+                  raise SystemExit(f"unexpected wheel metadata files: {metadata_names!r}")
+              metadata = email.parser.BytesParser().parsebytes(
+                  archive.read(metadata_names[0])
+              )
+          if metadata["Name"] != "anim" or metadata["Version"] != "0.1.0":
+              raise SystemExit("wheel name/version metadata mismatch")
+          if SpecifierSet(metadata["Requires-Python"]) != SpecifierSet(">=3.12,<3.13"):
+              raise SystemExit("wheel Python requirement mismatch")
+          if metadata["License-Expression"] != "Apache-2.0":
+              raise SystemExit("wheel licence expression mismatch")
+          observed_requirements = {}
+          for requirement in metadata.get_all("Requires-Dist", []):
+              match = re.fullmatch(r"([A-Za-z0-9_.-]+)==([^ ;]+)", requirement)
+              if match is None:
+                  raise SystemExit(f"runtime requirement is not exact: {requirement!r}")
+              name = re.sub(r"[-_.]+", "-", match.group(1)).lower()
+              observed_requirements[name] = match.group(2)
+          if observed_requirements != expected_requirements:
+              raise SystemExit(f"runtime requirement mismatch: {observed_requirements!r}")
+          missing_wheel = required_wheel - wheel_members
+          if missing_wheel:
+              raise SystemExit(f"wheel is missing public files: {sorted(missing_wheel)!r}")
+
+          with tarfile.open(source, "r:gz") as archive:
+              source_members = set()
+              source_payloads = {}
+              for member in archive.getmembers():
+                  path = PurePosixPath(member.name)
+                  if path == PurePosixPath("anim-0.1.0"):
+                      continue
+                  relative = path.relative_to("anim-0.1.0").as_posix()
+                  source_members.add(relative)
+                  if member.isfile():
+                      extracted = archive.extractfile(member)
+                      if extracted is None:
+                          raise SystemExit(f"could not read source member: {relative!r}")
+                      source_payloads[relative] = extracted.read()
+          missing_source = required_source - source_members
+          if missing_source:
+              raise SystemExit(f"source distribution is missing public files: {sorted(missing_source)!r}")
+          for member in wheel_members | source_members:
+              lowered = f"/{member.lower()}"
+              if any(fragment in lowered for fragment in forbidden_fragments):
+                  raise SystemExit(f"private or proof-only file in distribution: {member!r}")
+          for payloads in (wheel_payloads, source_payloads):
+              for member, payload in payloads.items():
+                  lowered = payload.lower()
+                  if any(fragment in lowered for fragment in forbidden_content_fragments):
+                      raise SystemExit(
+                          f"private or proof-only content in distribution member: {member!r}"
+                      )
+                  hex_tokens = re.findall(
+                      rb"(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])",
+                      lowered,
+                  )
+                  if any(
+                      hashlib.sha256(token).hexdigest() in forbidden_hex_token_hashes
+                      for token in hex_tokens
+                  ):
+                      raise SystemExit(
+                          f"private or proof-only identity in distribution member: {member!r}"
+                      )
+          PY
+
+      - name: Verify reviewed distribution hashes
+        shell: bash
+        run: |
+          .venv/bin/python - <<'PY'
+          import hashlib
+          from pathlib import Path
+
+          manifest = Path("release/anim-0.1.0-sha256.txt")
+          expected = {}
+          for line in manifest.read_text(encoding="utf-8").splitlines():
+              digest, filename = line.split("  ", 1)
+              expected[filename] = digest
+          required = {
+              "anim-0.1.0-py3-none-any.whl",
+              "anim-0.1.0.tar.gz",
+          }
+          if set(expected) != required:
+              raise SystemExit(f"unexpected reviewed artifact manifest: {sorted(expected)!r}")
+          observed = {
+              filename: hashlib.sha256((Path("dist") / filename).read_bytes()).hexdigest()
+              for filename in required
+          }
+          if observed != expected:
+              raise SystemExit("built distributions do not match the reviewed SHA-256 manifest")
+          PY
+
+      - name: Retain exact distributions
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: anim-0.1.0-distributions
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+
+  smoke:
+    name: Installed smoke on ${{ matrix.os }}
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-14
+          - ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    steps:
+      - name: Install the locked uv version
+        uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: "0.9.15"
+          enable-cache: false
+
+      - name: Download exact distributions
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: anim-0.1.0-distributions
+          path: dist
+
+      - name: Install and run the public synthetic route
+        shell: bash
+        run: |
+          proof_root="$RUNNER_TEMP/anim-release-smoke"
+          mkdir -p "$proof_root"
+          uv venv "$proof_root/venv" --python 3.12
+          uv pip install \
+            --python "$proof_root/venv/bin/python" \
+            "$GITHUB_WORKSPACE/dist/anim-0.1.0-py3-none-any.whl"
+          cd "$proof_root"
+          "$proof_root/venv/bin/python" - <<'PY'
+          from importlib import metadata
+
+          assert metadata.version("anim") == "0.1.0"
+          import ebm_audit
+          assert ebm_audit.__version__ == "0.1.0"
+          PY
+          "$proof_root/venv/bin/ebm-audit" doctor
+          set +e
+          "$proof_root/venv/bin/ebm-audit" demo --conformance-ebm > "$proof_root/demo-status.json"
+          demo_exit=$?
+          set -e
+          if [ "$demo_exit" -ne 12 ]; then
+            echo "unexpected demo exit code: $demo_exit" >&2
+            exit 1
+          fi
+          "$proof_root/venv/bin/python" - "$proof_root" <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+
+          root = Path(sys.argv[1])
+          status = json.loads((root / "demo-status.json").read_bytes())
+          report = json.loads((root / "ebm-audit-demo/report/report.json").read_bytes())
+          html = (root / "ebm-audit-demo/report/report.html").read_bytes()
+          csv = (root / "ebm-audit-demo/report/universes.csv").read_bytes()
+          assert status["run_completion_status"] == "PARTIAL"
+          assert status["candidate_execution_status"] == "COMPLETE"
+          assert status["success_count"] == status["requested_candidate_count"] == 1
+          assert report["report_status"] == "INCOMPLETE"
+          assert report["input_declaration"] == "DECLARED_SYNTHETIC"
+          assert html and csv
+          PY
+
+  publish-pypi:
+    name: Publish to PyPI with trusted identity
+    needs: smoke
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/anim/0.1.0/
+    permissions:
+      id-token: write
+    steps:
+      - name: Download exact distributions
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: anim-0.1.0-distributions
+          path: dist
+
+      - name: Publish exact distributions
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+
+  github-release:
+    name: Create matching GitHub Release
+    needs: publish-pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download exact distributions
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: anim-0.1.0-distributions
+          path: dist
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --generate-notes \
+            --title "Anim 0.1.0"

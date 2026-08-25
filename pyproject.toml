@@ -1,0 +1,135 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "anim"
+version = "0.1.0"
+description = "Local, backend-neutral robustness auditing for event-based models"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+keywords = [
+  "event-based models",
+  "research software",
+  "robustness",
+  "scientific computing",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering",
+  "Typing :: Typed",
+]
+dependencies = [
+  "attrs==26.1.0",
+  "jsonschema==4.26.0",
+  "jsonschema-specifications==2025.9.1",
+  "numpy==2.3.1",
+  "PyYAML==6.0.3",
+  "referencing==0.37.0",
+  "rfc8785==0.1.4",
+  "rpds-py==2026.6.3",
+  "typing-extensions==4.16.0",
+]
+
+[project.scripts]
+ebm-audit = "ebm_audit.cli:main"
+
+[project.urls]
+Changelog = "https://github.com/timigod/anim/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/timigod/anim/tree/main/docs"
+Issues = "https://github.com/timigod/anim/issues"
+Repository = "https://github.com/timigod/anim"
+
+[dependency-groups]
+build = [
+  "hatchling==1.27.0",
+]
+dev = [
+  "hypothesis>=6.130,<7",
+  "mypy>=1.15,<2",
+  "pytest>=8.3,<9",
+  "ruff>=0.11,<1",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/CHANGELOG.md",
+  "/LICENSE",
+  "/PRIVACY.md",
+  "/README.md",
+  "/SECURITY.md",
+  "/THIRD_PARTY_NOTICES.md",
+  "/docs/handoff",
+  "/docs/how-it-works.md",
+  "/docs/security",
+  "/docs/spec",
+  "/evaluator/proportional_benchmark_contract-0.3.0-candidate.yaml",
+  "/evaluator/proportional_benchmark_contract.yaml",
+  "/evaluator/scenario_derivation_registry.json",
+  "/evaluator/scenario_predicate_registry.yaml",
+  "/examples/config",
+  "/examples/custom_worker",
+  "/examples/development",
+  "/examples/idris_2025_public",
+  "/pyproject.toml",
+  "/schemas",
+  "/src/sitecustomize.py",
+  "/src/ebm_audit",
+  "/uv.lock",
+  "/workers/conformance_ebm/model.py",
+  "/workers/conformance_ebm/worker.py",
+  "/workers/conformance_ebm_partial/partial_model.py",
+  "/workers/conformance_ebm_partial/partial_worker.py",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ebm_audit"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"schemas" = "ebm_audit/schemas"
+"examples/config" = "ebm_audit/examples/config"
+"examples/custom_worker" = "ebm_audit/examples/custom_worker"
+"examples/development" = "ebm_audit/examples/development"
+"examples/idris_2025_public" = "ebm_audit/examples/idris_2025_public"
+"docs/handoff" = "ebm_audit/docs/handoff"
+"docs/how-it-works.md" = "ebm_audit/docs/how-it-works.md"
+"docs/security" = "ebm_audit/docs/security"
+"docs/spec" = "ebm_audit/docs/spec"
+"evaluator/proportional_benchmark_contract-0.3.0-candidate.yaml" = "ebm_audit/evaluator_contracts/readiness_contract.yaml"
+"evaluator/proportional_benchmark_contract.yaml" = "ebm_audit/evaluator_contracts/proportional_benchmark_contract.yaml"
+"evaluator/scenario_derivation_registry.json" = "ebm_audit/evaluator_contracts/scenario_derivation_registry.json"
+"evaluator/scenario_predicate_registry.yaml" = "ebm_audit/evaluator_contracts/scenario_predicate_registry.yaml"
+"PRIVACY.md" = "ebm_audit/PRIVACY.md"
+"README.md" = "ebm_audit/README.md"
+"SECURITY.md" = "ebm_audit/SECURITY.md"
+"THIRD_PARTY_NOTICES.md" = "ebm_audit/THIRD_PARTY_NOTICES.md"
+"CHANGELOG.md" = "ebm_audit/CHANGELOG.md"
+"LICENSE" = "ebm_audit/LICENSE"
+"src/sitecustomize.py" = "sitecustomize.py"
+"uv.lock" = "ebm_audit/uv.lock"
+"workers/conformance_ebm/model.py" = "ebm_audit/workers/conformance_ebm/model.py"
+"workers/conformance_ebm/worker.py" = "ebm_audit/workers/conformance_ebm/worker.py"
+"workers/conformance_ebm_partial/partial_model.py" = "ebm_audit/workers/conformance_ebm_partial/partial_model.py"
+"workers/conformance_ebm_partial/partial_worker.py" = "ebm_audit/workers/conformance_ebm_partial/partial_worker.py"
+
+[tool.pytest.ini_options]
+addopts = ["--strict-config", "--strict-markers"]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["ebm_audit"]

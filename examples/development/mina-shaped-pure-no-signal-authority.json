@@ -1,0 +1,980 @@
+{
+  "schema_version": "ebm-audit-public-development-scenario-authority/1.0",
+  "data_classification": "SYNTHETIC_ONLY",
+  "published_order_targeting": false,
+  "generator_field_registry": {
+    "ordered_field_ids": [
+      "participants",
+      "events",
+      "event_ids",
+      "event_directions",
+      "baseline",
+      "event_center_range",
+      "event_centers",
+      "transition_width",
+      "amplitude",
+      "participant_random_effect_sd",
+      "participant_random_effect_loading",
+      "measurement_noise_family",
+      "measurement_noise_sd",
+      "equicorrelation",
+      "reference_sampling_window",
+      "at_risk_sampling_window",
+      "reference_sampling_window_low",
+      "at_risk_sampling_window_high",
+      "latent_sampling_window",
+      "reference_fraction",
+      "missingness",
+      "outliers",
+      "covariates",
+      "truth_type",
+      "adjacent_center_gap",
+      "adjacent_center_gap_over_width",
+      "affected_events",
+      "alternate_inversions",
+      "base_boundary_rule_id",
+      "base_quantile_cutoff",
+      "boundary_quantile_shift",
+      "boundary_quantile_shifts",
+      "boundary_rule_ids",
+      "center_gap_over_width",
+      "centered_lognormal_sigma",
+      "centered_lognormal_weight",
+      "contamination_fraction",
+      "covariate_event_effect",
+      "covariate_log_odds_coefficient",
+      "declared_rules",
+      "duplicate_center_gap",
+      "duplicate_pair_correlation",
+      "equivalence_block_event_ids",
+      "equivalence_block_size",
+      "event_covariate_effect",
+      "event_missing_probabilities",
+      "event_missing_probability",
+      "group_event_effect",
+      "group_log_odds_coefficient",
+      "injected_participants",
+      "latent_group_distribution",
+      "levels",
+      "marginal_missing_probability",
+      "matched_latent_draws_across_levels",
+      "measurement_noise_sd_levels",
+      "minority_fraction",
+      "offset_noise_sd",
+      "opposing_relation_fraction",
+      "pair_direction_rule",
+      "pair_event_ids",
+      "pair_mode",
+      "permutations_per_source",
+      "reversed_direction_events",
+      "source_events",
+      "source_participants",
+      "source_variant",
+      "standardized_group_covariate_difference",
+      "student_t_df",
+      "subgroup_fraction",
+      "target_pair_event_ids",
+      "wrong_direction_event_ids"
+    ],
+    "fields": {
+      "participants": {
+        "value_type": "uint32",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "inclusive_discrete_uniform"
+      },
+      "events": {
+        "value_type": "uint16",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "inclusive_discrete_uniform"
+      },
+      "event_ids": {
+        "value_type": "event_id_tuple",
+        "allowed_form": "derived_value",
+        "heldout_draw": "fixed"
+      },
+      "event_directions": {
+        "value_type": "direction_tuple",
+        "allowed_form": "derived_value",
+        "heldout_draw": "fixed"
+      },
+      "baseline": {
+        "value_type": "finite_float64_or_event_tuple",
+        "allowed_form": "inclusive_scalar_range_or_fixed_default",
+        "heldout_draw": "decimal_tick_if_range"
+      },
+      "event_center_range": {
+        "value_type": "fixed_float64_interval",
+        "allowed_form": "literal_endpoint_vector",
+        "heldout_draw": "fixed"
+      },
+      "event_centers": {
+        "value_type": "finite_float64_event_tuple",
+        "allowed_form": "derived_value",
+        "heldout_draw": "fixed"
+      },
+      "transition_width": {
+        "value_type": "positive_float64_or_event_tuple",
+        "allowed_form": "inclusive_scalar_range_or_fixed_default",
+        "heldout_draw": "decimal_tick_if_range"
+      },
+      "amplitude": {
+        "value_type": "nonnegative_float64_or_event_tuple",
+        "allowed_form": "inclusive_scalar_range_or_fixed_default",
+        "heldout_draw": "decimal_tick_if_range"
+      },
+      "participant_random_effect_sd": {
+        "value_type": "nonnegative_float64",
+        "allowed_form": "inclusive_scalar_range_or_fixed_default",
+        "heldout_draw": "decimal_tick_if_range"
+      },
+      "participant_random_effect_loading": {
+        "value_type": "finite_float64_or_event_tuple",
+        "allowed_form": "inclusive_scalar_range_or_fixed_default",
+        "heldout_draw": "decimal_tick_if_range"
+      },
+      "measurement_noise_family": {
+        "value_type": "closed_enum",
+        "allowed_form": "ordered_enum_choices_or_fixed",
+        "heldout_draw": "ordered_enum_uniform_unless_stratified"
+      },
+      "measurement_noise_sd": {
+        "value_type": "positive_float64_or_event_tuple",
+        "allowed_form": "inclusive_scalar_range_or_fixed_default",
+        "heldout_draw": "decimal_tick_if_range"
+      },
+      "equicorrelation": {
+        "value_type": "finite_float64",
+        "allowed_form": "inclusive_scalar_range_or_fixed_default",
+        "heldout_draw": "decimal_tick_if_range"
+      },
+      "reference_sampling_window": {
+        "value_type": "fixed_float64_interval",
+        "allowed_form": "literal_endpoint_vector",
+        "heldout_draw": "fixed"
+      },
+      "at_risk_sampling_window": {
+        "value_type": "fixed_float64_interval",
+        "allowed_form": "literal_endpoint_vector",
+        "heldout_draw": "fixed"
+      },
+      "reference_sampling_window_low": {
+        "value_type": "finite_float64",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "at_risk_sampling_window_high": {
+        "value_type": "finite_float64",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "latent_sampling_window": {
+        "value_type": "fixed_float64_interval",
+        "allowed_form": "literal_endpoint_vector",
+        "heldout_draw": "fixed"
+      },
+      "reference_fraction": {
+        "value_type": "probability_float64",
+        "allowed_form": "inclusive_scalar_range_or_fixed_default",
+        "heldout_draw": "decimal_tick_if_range"
+      },
+      "missingness": {
+        "value_type": "closed_enum",
+        "allowed_form": "fixed_or_derived",
+        "heldout_draw": "fixed"
+      },
+      "outliers": {
+        "value_type": "closed_enum",
+        "allowed_form": "fixed_or_derived",
+        "heldout_draw": "fixed"
+      },
+      "covariates": {
+        "value_type": "closed_enum",
+        "allowed_form": "fixed_or_derived",
+        "heldout_draw": "fixed"
+      },
+      "truth_type": {
+        "value_type": "closed_enum",
+        "allowed_form": "fixed",
+        "heldout_draw": "fixed"
+      },
+      "adjacent_center_gap": {
+        "value_type": "positive_float64",
+        "allowed_form": "fixed_variant_value",
+        "heldout_draw": "fixed"
+      },
+      "adjacent_center_gap_over_width": {
+        "value_type": "positive_float64",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "affected_events": {
+        "value_type": "positive_uint16",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "inclusive_discrete_uniform"
+      },
+      "alternate_inversions": {
+        "value_type": "nonnegative_uint32",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "inclusive_discrete_uniform"
+      },
+      "base_boundary_rule_id": {
+        "value_type": "machine_id",
+        "allowed_form": "fixed",
+        "heldout_draw": "fixed"
+      },
+      "base_quantile_cutoff": {
+        "value_type": "nullable_probability_float64",
+        "allowed_form": "fixed_or_not_applicable",
+        "heldout_draw": "fixed"
+      },
+      "boundary_quantile_shift": {
+        "value_type": "finite_float64",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "boundary_quantile_shifts": {
+        "value_type": "finite_float64_tuple",
+        "allowed_form": "fixed_ordered_tuple",
+        "heldout_draw": "fixed"
+      },
+      "boundary_rule_ids": {
+        "value_type": "machine_id_tuple",
+        "allowed_form": "fixed_ordered_tuple",
+        "heldout_draw": "fixed"
+      },
+      "center_gap_over_width": {
+        "value_type": "nonnegative_float64",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "centered_lognormal_sigma": {
+        "value_type": "nonnegative_float64",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "centered_lognormal_weight": {
+        "value_type": "nonnegative_float64",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "contamination_fraction": {
+        "value_type": "probability_float64",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "covariate_event_effect": {
+        "value_type": "finite_float64_or_event_tuple",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "covariate_log_odds_coefficient": {
+        "value_type": "finite_float64",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "declared_rules": {
+        "value_type": "positive_uint16",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "inclusive_discrete_uniform"
+      },
+      "duplicate_center_gap": {
+        "value_type": "nonnegative_float64",
+        "allowed_form": "inclusive_scalar_range_or_fixed_variant",
+        "heldout_draw": "decimal_tick_if_range"
+      },
+      "duplicate_pair_correlation": {
+        "value_type": "finite_float64",
+        "allowed_form": "inclusive_scalar_range_or_fixed_variant",
+        "heldout_draw": "decimal_tick_if_range"
+      },
+      "equivalence_block_event_ids": {
+        "value_type": "event_id_tuple",
+        "allowed_form": "fixed_ordered_tuple",
+        "heldout_draw": "derived_selector"
+      },
+      "equivalence_block_size": {
+        "value_type": "positive_uint16",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "inclusive_discrete_uniform"
+      },
+      "event_covariate_effect": {
+        "value_type": "finite_float64_or_event_tuple",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "event_missing_probabilities": {
+        "value_type": "probability_event_tuple",
+        "allowed_form": "fixed_ordered_tuple",
+        "heldout_draw": "fixed"
+      },
+      "event_missing_probability": {
+        "value_type": "probability_float64",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "group_event_effect": {
+        "value_type": "finite_float64_or_event_tuple",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "group_log_odds_coefficient": {
+        "value_type": "finite_float64",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "injected_participants": {
+        "value_type": "positive_uint16",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "inclusive_discrete_uniform"
+      },
+      "latent_group_distribution": {
+        "value_type": "closed_enum",
+        "allowed_form": "fixed",
+        "heldout_draw": "fixed"
+      },
+      "levels": {
+        "value_type": "positive_uint16",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "inclusive_discrete_uniform"
+      },
+      "marginal_missing_probability": {
+        "value_type": "probability_float64",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "matched_latent_draws_across_levels": {
+        "value_type": "boolean",
+        "allowed_form": "fixed",
+        "heldout_draw": "fixed"
+      },
+      "measurement_noise_sd_levels": {
+        "value_type": "positive_float64_tuple",
+        "allowed_form": "fixed_ordered_tuple",
+        "heldout_draw": "fixed"
+      },
+    "minority_fraction": {
+      "value_type": "probability_float64",
+      "allowed_form": "inclusive_scalar_range",
+      "heldout_draw": "decimal_tick"
+    },
+      "offset_noise_sd": {
+        "value_type": "finite_float64",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "opposing_relation_fraction": {
+        "value_type": "probability_float64",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "pair_direction_rule": {
+        "value_type": "closed_enum",
+        "allowed_form": "fixed",
+        "heldout_draw": "derived_from_pair_mode"
+      },
+      "pair_event_ids": {
+        "value_type": "event_id_pair",
+        "allowed_form": "fixed_ordered_tuple",
+        "heldout_draw": "derived_selector"
+      },
+      "pair_mode": {
+        "value_type": "closed_enum",
+        "allowed_form": "pre_root_stratum_or_fixed_variant",
+        "heldout_draw": "pre_root_stratum"
+      },
+      "permutations_per_source": {
+        "value_type": "positive_uint32",
+        "allowed_form": "inclusive_scalar_range_or_fixed_variant",
+        "heldout_draw": "inclusive_discrete_uniform_if_range"
+      },
+      "reversed_direction_events": {
+        "value_type": "positive_uint16",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "inclusive_discrete_uniform"
+      },
+      "source_events": {
+        "value_type": "uint16",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "source_binding_only"
+      },
+      "source_participants": {
+        "value_type": "uint32",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "source_binding_only"
+      },
+      "source_variant": {
+        "value_type": "variant_reference",
+        "allowed_form": "fixed",
+        "heldout_draw": "fixed"
+      },
+      "standardized_group_covariate_difference": {
+        "value_type": "nonnegative_float64",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "student_t_df": {
+        "value_type": "float64_gt_2",
+        "allowed_form": "inclusive_scalar_range",
+        "heldout_draw": "decimal_tick"
+      },
+      "subgroup_fraction": {
+        "value_type": "probability_float64",
+        "allowed_form": "inclusive_scalar_range_or_fixed_variant",
+        "heldout_draw": "decimal_tick_if_range"
+      },
+      "target_pair_event_ids": {
+        "value_type": "event_id_pair",
+        "allowed_form": "fixed_ordered_tuple",
+        "heldout_draw": "derived_selector"
+      },
+      "wrong_direction_event_ids": {
+        "value_type": "event_id_tuple",
+        "allowed_form": "fixed_ordered_tuple",
+        "heldout_draw": "derived_selector"
+      }
+    }
+  },
+  "common_defaults": {},
+  "scenario_families": [
+    {
+      "id": "moderate_mina_shape",
+      "truth_type": "strict_total_order",
+      "development_replicates": 1,
+      "allowed_ranges": {},
+      "development_variants": [
+        {
+          "id": "moderate_57_public",
+          "participants": 57,
+          "events": 9,
+          "baseline": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "event_center_range": [
+            -2.0,
+            2.0
+          ],
+          "transition_width": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "amplitude": [
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ],
+          "participant_random_effect_sd": 0.25,
+          "participant_random_effect_loading": [
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2
+          ],
+          "measurement_noise_family": "multivariate_normal",
+          "measurement_noise_sd": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "equicorrelation": 0.25,
+          "reference_sampling_window": [
+            -3.0,
+            -0.5
+          ],
+          "at_risk_sampling_window": [
+            0.5,
+            3.0
+          ],
+          "reference_fraction": 0.5,
+          "missingness": "none",
+          "outliers": "none",
+          "covariates": "none",
+          "event_covariate_effect": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "group_event_effect": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pure_no_signal",
+      "truth_type": "no_recoverable_order_or_stage",
+      "development_replicates": 59,
+      "allowed_ranges": {},
+      "development_variants": [
+        {
+          "id": "null_correlated",
+          "participants": 57,
+          "events": 9,
+          "baseline": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "event_center_range": [
+            -2.0,
+            2.0
+          ],
+          "transition_width": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "amplitude": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "participant_random_effect_sd": 0.25,
+          "participant_random_effect_loading": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "measurement_noise_family": "multivariate_normal",
+          "measurement_noise_sd": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "equicorrelation": 0.25,
+          "reference_sampling_window": [
+            -3.0,
+            -0.5
+          ],
+          "at_risk_sampling_window": [
+            0.5,
+            3.0
+          ],
+          "latent_sampling_window": [
+            -3.0,
+            3.0
+          ],
+          "reference_fraction": 0.5,
+          "missingness": "none",
+          "outliers": "none",
+          "covariates": "none",
+          "event_covariate_effect": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "group_event_effect": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    }
+  ],
+  "seed_policy": {
+    "development_root_seeds": [
+      "c9adc6fee9c00b79",
+      "86b6740157a8ec3e",
+      "725fb844ce462a7e",
+      "e5d0209ee54c66a1",
+      "dd399be8bd501127",
+      "f4d96b9f89b343ac",
+      "f6a23ede94bc2a08",
+      "e5e6fccf71686a92",
+      "d69f50f07ea0cf93",
+      "1f4d13cb6c4ff06a",
+      "3c35840ae1763e7e",
+      "c48b0957bdab6130",
+      "109f6ac0f8746f5a",
+      "600d05fdfe00758c",
+      "efe2a92699068924",
+      "ed67ce1fe0115556",
+      "086a591f36a66891",
+      "7db71299c9e719a2",
+      "48f4e929892c697e",
+      "0a50739e258974b4",
+      "7ebc5298d88b25f2",
+      "a1a3852ee15b0ee5",
+      "c3307105c874fff7",
+      "559c18bb0355bf34",
+      "1ed240b81a36d8ea",
+      "691b64bce0348884",
+      "3ae94df13fcfa2fb",
+      "1c98ef7663ad9cce",
+      "e3d86c0fd03c7b4e",
+      "cfaf9403bcdd4d3b",
+      "d414252b7b8e72ce",
+      "4a64123a912c3f2a",
+      "db9b83a2909e3a39",
+      "63b17b75ca6adf37",
+      "cafbd03c08ad29d0",
+      "7a617719c7edb47c",
+      "b282ec0ab7087b7c",
+      "2eb820519ed0236d",
+      "058ac42f6e689abf",
+      "458967e38abf065a",
+      "e8afabfadaa1b183",
+      "e41c010d6b297ddd",
+      "3aabc54e71eb8f2a",
+      "af5f09b1e75ffd54",
+      "8bb0ecf12d136f04",
+      "75e7244193f4034b",
+      "fc0a7055add8a3fb",
+      "0bed7b96c27d6379",
+      "45d25e650ae37df5",
+      "8af607da5334d6e7",
+      "37bf1a21566f58bb",
+      "1faa7686d2d7342c",
+      "dba7f865587de3d0",
+      "abfcb95d4be180fa",
+      "b63d485290778de2",
+      "db290699cf6fd604",
+      "251400e3a3635dd6",
+      "880035a231619ceb",
+      "3818c7c6588026ee"
+    ],
+    "component_root_assignment": {
+      "assignment_order": [
+        "OPERATION_SEED",
+        "SHARED_DRAW_SEED",
+        "CASE_SEED"
+      ]
+    }
+  },
+  "generation_stage_hash_registry": {
+    "ordered_stages": [
+      {
+        "stage_id": "resolved_parameters"
+      },
+      {
+        "stage_id": "group_assignment"
+      },
+      {
+        "stage_id": "latent_coordinate"
+      },
+      {
+        "stage_id": "latent_source_contamination"
+      },
+      {
+        "stage_id": "transition_signal"
+      },
+      {
+        "stage_id": "covariate_effect"
+      },
+      {
+        "stage_id": "group_effect"
+      },
+      {
+        "stage_id": "participant_effect"
+      },
+      {
+        "stage_id": "base_measurement_noise"
+      },
+      {
+        "stage_id": "centered_skew"
+      },
+      {
+        "stage_id": "exact_duplicate_copy"
+      },
+      {
+        "stage_id": "observed_label_contamination"
+      },
+      {
+        "stage_id": "outliers"
+      },
+      {
+        "stage_id": "missingness"
+      }
+    ]
+  },
+  "dependency_stage_registry": {
+    "ordered_stages": [
+      {
+        "stage": "participants",
+        "input_field_ids": [
+          "participants",
+          "source_participants"
+        ],
+        "output_json_pointers": [
+          "/dimensions/participant_count"
+        ],
+        "status": "APPLIED"
+      },
+      {
+        "stage": "events",
+        "input_field_ids": [
+          "events",
+          "source_events",
+          "event_ids",
+          "event_directions"
+        ],
+        "output_json_pointers": [
+          "/dimensions/event_count",
+          "/event_ids",
+          "/event_directions"
+        ],
+        "status": "APPLIED"
+      },
+      {
+        "stage": "group_counts",
+        "input_field_ids": [
+          "participants",
+          "reference_fraction",
+          "base_boundary_rule_id",
+          "base_quantile_cutoff",
+          "boundary_quantile_shift",
+          "boundary_quantile_shifts",
+          "boundary_rule_ids",
+          "declared_rules"
+        ],
+        "output_json_pointers": [
+          "/group_generation"
+        ],
+        "status": "APPLIED"
+      },
+      {
+        "stage": "mechanism",
+        "input_field_ids": [
+          "reference_sampling_window",
+          "at_risk_sampling_window",
+          "reference_sampling_window_low",
+          "at_risk_sampling_window_high",
+          "latent_sampling_window",
+          "participant_random_effect_sd",
+          "missingness",
+          "outliers",
+          "covariates",
+          "truth_type",
+          "adjacent_center_gap",
+          "adjacent_center_gap_over_width",
+          "affected_events",
+          "alternate_inversions",
+          "center_gap_over_width",
+          "contamination_fraction",
+          "covariate_log_odds_coefficient",
+          "equivalence_block_event_ids",
+          "equivalence_block_size",
+          "event_missing_probabilities",
+          "event_missing_probability",
+          "group_log_odds_coefficient",
+          "injected_participants",
+          "latent_group_distribution",
+          "levels",
+          "marginal_missing_probability",
+          "matched_latent_draws_across_levels",
+          "measurement_noise_sd_levels",
+          "minority_fraction",
+          "offset_noise_sd",
+          "opposing_relation_fraction",
+          "pair_direction_rule",
+          "pair_event_ids",
+          "pair_mode",
+          "permutations_per_source",
+          "reversed_direction_events",
+          "standardized_group_covariate_difference",
+          "subgroup_fraction",
+          "target_pair_event_ids",
+          "wrong_direction_event_ids"
+        ],
+        "output_json_pointers": [
+          "/latent_sampling",
+          "/covariates",
+          "/participant_effect",
+          "/missingness",
+          "/outliers",
+          "/scenario_parameters"
+        ],
+        "status": "APPLIED"
+      },
+      {
+        "stage": "event_arrays",
+        "input_field_ids": [
+          "events",
+          "event_center_range",
+          "baseline",
+          "event_centers",
+          "transition_width",
+          "amplitude",
+          "covariate_event_effect",
+          "event_covariate_effect",
+          "group_event_effect",
+          "participant_random_effect_loading",
+          "adjacent_center_gap",
+          "adjacent_center_gap_over_width",
+          "center_gap_over_width",
+          "duplicate_center_gap",
+          "equivalence_block_event_ids",
+          "pair_event_ids",
+          "pair_mode",
+          "target_pair_event_ids"
+        ],
+        "output_json_pointers": [
+          "/event_parameters"
+        ],
+        "status": "APPLIED"
+      },
+      {
+        "stage": "covariance_validity",
+        "input_field_ids": [
+          "events",
+          "measurement_noise_family",
+          "measurement_noise_sd",
+          "equicorrelation",
+          "duplicate_pair_correlation",
+          "pair_event_ids",
+          "pair_mode",
+          "student_t_df",
+          "centered_lognormal_sigma",
+          "centered_lognormal_weight"
+        ],
+        "output_json_pointers": [
+          "/measurement_noise"
+        ],
+        "status": "VALIDATED"
+      },
+      {
+        "stage": "matched_comparator_overrides",
+        "input_field_ids": [
+          "event_directions",
+          "wrong_direction_event_ids",
+          "source_variant"
+        ],
+        "output_json_pointers": [
+          "/analysis_configuration"
+        ],
+        "status": "APPLIED"
+      }
+    ]
+  },
+  "generator_parameter_source_contract": {
+    "schema_version": "ebm-audit-generator-parameter-source-contract/1.0",
+    "family_mode_registry": {},
+    "derivation_registry": {
+      "event_ids": {
+        "derivation_id": "event-ids-from-count/1",
+        "ordered_input_field_ids": [
+          "events"
+        ]
+      },
+      "event_directions": {
+        "derivation_id": "alternating-event-directions/1",
+        "ordered_input_field_ids": [
+          "events",
+          "event_ids"
+        ]
+      },
+      "event_centers": {
+        "derivation_id": "even-event-centers/1",
+        "ordered_input_field_ids": [
+          "events",
+          "event_ids",
+          "event_center_range"
+        ]
+      }
+    },
+    "not_applicable_rule": {
+      "rule_id": "field-source-precedence-exhausted/1",
+      "ordered_precedence": [
+        "TRANSFORMED_SOURCE_BINDING",
+        "EVALUATOR_DERIVATION",
+        "FAMILY_MODE_REGISTRY",
+        "DEVELOPMENT_VARIANT",
+        "FAMILY_MECHANISM",
+        "FAMILY_FIXED_RANGE",
+        "COMMON_DEFAULT"
+      ]
+    }
+  },
+  "family_mechanism_closure": {
+    "moderate_mina_shape": "STRICT_TOTAL_ORDER",
+    "pure_no_signal": "PURE_NO_SIGNAL"
+  }
+}

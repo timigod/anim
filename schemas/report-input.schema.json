@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ebm-audit.invalid/schemas/report-input.schema.json",
+  "title": "Sealed public report input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_input_schema_version",
+    "sealed",
+    "run_id",
+    "artifacts"
+  ],
+  "properties": {
+    "report_input_schema_version": {
+      "const": "ebm-audit-report-input/1.0"
+    },
+    "sealed": {
+      "const": true
+    },
+    "run_id": {
+      "$ref": "#/$defs/Sha256Digest"
+    },
+    "artifacts": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/RequiredArtifacts"
+        },
+        {
+          "$ref": "#/$defs/RequiredArtifactsWithBaseline"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "Sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "Artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "sha256"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256Digest"
+        }
+      }
+    },
+    "ResultRecordsArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/Artifact"
+        },
+        {
+          "properties": {
+            "name": {
+              "const": "result-records.json"
+            }
+          }
+        }
+      ]
+    },
+    "TerminalIndexArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/Artifact"
+        },
+        {
+          "properties": {
+            "name": {
+              "const": "candidate-terminal-index.json"
+            }
+          }
+        }
+      ]
+    },
+    "DataAccountingArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/Artifact"
+        },
+        {
+          "properties": {
+            "name": {
+              "const": "data-accounting.json"
+            }
+          }
+        }
+      ]
+    },
+    "UniverseCoverageArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/Artifact"
+        },
+        {
+          "properties": {
+            "name": {
+              "const": "universe-coverage.json"
+            }
+          }
+        }
+      ]
+    },
+    "FailuresArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/Artifact"
+        },
+        {
+          "properties": {
+            "name": {
+              "const": "failures.jsonl"
+            }
+          }
+        }
+      ]
+    },
+    "WarningsArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/Artifact"
+        },
+        {
+          "properties": {
+            "name": {
+              "const": "warnings.jsonl"
+            }
+          }
+        }
+      ]
+    },
+    "ProvenanceArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/Artifact"
+        },
+        {
+          "properties": {
+            "name": {
+              "const": "provenance.json"
+            }
+          }
+        }
+      ]
+    },
+    "UncertaintyArtifact": {
+      "description": "Seals uncertainty-summaries.json. Its content must contain exactly one explicit summary row for each metric in the closed ReportModel/1 metric catalogue; typed unavailable rows with closed reasons are required instead of omissions.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/Artifact"
+        },
+        {
+          "properties": {
+            "name": {
+              "const": "uncertainty-summaries.json"
+            }
+          }
+        }
+      ]
+    },
+    "BaselineArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/Artifact"
+        },
+        {
+          "properties": {
+            "name": {
+              "const": "baseline-reproduction.json"
+            }
+          }
+        }
+      ]
+    },
+    "RequiredArtifacts": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/ResultRecordsArtifact"
+        },
+        {
+          "$ref": "#/$defs/TerminalIndexArtifact"
+        },
+        {
+          "$ref": "#/$defs/DataAccountingArtifact"
+        },
+        {
+          "$ref": "#/$defs/UniverseCoverageArtifact"
+        },
+        {
+          "$ref": "#/$defs/FailuresArtifact"
+        },
+        {
+          "$ref": "#/$defs/WarningsArtifact"
+        },
+        {
+          "$ref": "#/$defs/ProvenanceArtifact"
+        },
+        {
+          "$ref": "#/$defs/UncertaintyArtifact"
+        }
+      ],
+      "items": false
+    },
+    "RequiredArtifactsWithBaseline": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/ResultRecordsArtifact"
+        },
+        {
+          "$ref": "#/$defs/TerminalIndexArtifact"
+        },
+        {
+          "$ref": "#/$defs/DataAccountingArtifact"
+        },
+        {
+          "$ref": "#/$defs/UniverseCoverageArtifact"
+        },
+        {
+          "$ref": "#/$defs/FailuresArtifact"
+        },
+        {
+          "$ref": "#/$defs/WarningsArtifact"
+        },
+        {
+          "$ref": "#/$defs/ProvenanceArtifact"
+        },
+        {
+          "$ref": "#/$defs/UncertaintyArtifact"
+        },
+        {
+          "$ref": "#/$defs/BaselineArtifact"
+        }
+      ],
+      "items": false
+    }
+  }
+}

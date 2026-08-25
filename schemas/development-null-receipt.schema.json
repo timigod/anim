@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ebm-audit.invalid/schemas/development-null-receipt.schema.json",
+  "title": "Development-only generated audit input receipts",
+  "$defs": {
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "ClosedSyntheticReplayReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "replay_receipt_schema_version",
+        "status",
+        "compared_stage_count",
+        "data_match",
+        "truth_match",
+        "stage_ledger_digest",
+        "receipt_digest"
+      ],
+      "properties": {
+        "replay_receipt_schema_version": {
+          "const": "ebm-audit-synthetic-replay-receipt/1.0"
+        },
+        "status": { "const": "MATCH" },
+        "compared_stage_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "data_match": { "const": true },
+        "truth_match": { "const": true },
+        "stage_ledger_digest": { "$ref": "#/$defs/Digest" },
+        "receipt_digest": { "$ref": "#/$defs/Digest" }
+      }
+    },
+    "TerminalStatusCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "SUCCESS",
+        "CONVERGENCE_WARN",
+        "INVALID_INPUT",
+        "UNSUPPORTED_CAPABILITY",
+        "INVALID_SPECIFICATION",
+        "BACKEND_ERROR",
+        "TIMEOUT",
+        "CONVERGENCE_FAILED",
+        "CONVERGENCE_NOT_ASSESSABLE",
+        "PRIVACY_VIOLATION",
+        "PROTOCOL_ERROR"
+      ],
+      "properties": {
+        "SUCCESS": { "type": "integer", "minimum": 0 },
+        "CONVERGENCE_WARN": { "type": "integer", "minimum": 0 },
+        "INVALID_INPUT": { "type": "integer", "minimum": 0 },
+        "UNSUPPORTED_CAPABILITY": { "type": "integer", "minimum": 0 },
+        "INVALID_SPECIFICATION": { "type": "integer", "minimum": 0 },
+        "BACKEND_ERROR": { "type": "integer", "minimum": 0 },
+        "TIMEOUT": { "type": "integer", "minimum": 0 },
+        "CONVERGENCE_FAILED": { "type": "integer", "minimum": 0 },
+        "CONVERGENCE_NOT_ASSESSABLE": { "type": "integer", "minimum": 0 },
+        "PRIVACY_VIOLATION": { "type": "integer", "minimum": 0 },
+        "PROTOCOL_ERROR": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "DevelopmentNullReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "development_null_receipt_schema_version",
+        "development_scope",
+        "calibration_state",
+        "null_relative_label",
+        "strong_null_relative_language_eligible",
+        "held_out_false_positive_rate_eligible",
+        "family_id",
+        "variant_id",
+        "replicate_index",
+        "resolution_mode",
+        "null_method_id",
+        "transformation",
+        "refit_preprocessing",
+        "preserves_group_conditional_event_marginals",
+        "case_id",
+        "intent_config_digest",
+        "authority_byte_digest",
+        "source_contract_digest",
+        "scenario_definitions_digest",
+        "resolved_configuration_digest",
+        "resolved_mechanism_digest",
+        "generated_data_digest",
+        "truth_digest",
+        "replay_receipt_digest",
+        "mapping_digest",
+        "serialized_input_byte_digest",
+        "source_admission_digest",
+        "prepared_dataset_digest",
+        "plan_digest",
+        "terminal_index_digest",
+        "terminal_binding_digest",
+        "participant_count",
+        "event_count",
+        "covariate_count",
+        "missing_cell_count",
+        "generation_stage_count",
+        "candidate_count",
+        "terminal_record_count",
+        "success_count",
+        "non_success_terminal_count",
+        "terminal_status_counts",
+        "receipt_digest"
+      ],
+      "properties": {
+        "development_null_receipt_schema_version": {
+          "const": "ebm-audit-development-null-receipt/1.0"
+        },
+        "development_scope": { "const": "DEVELOPMENT_ONLY" },
+        "calibration_state": { "const": "DEVELOPMENT_UNCALIBRATED" },
+        "null_relative_label": { "const": "NULL_CALIBRATION_NOT_VALIDATED" },
+        "strong_null_relative_language_eligible": { "const": false },
+        "held_out_false_positive_rate_eligible": { "const": false },
+        "family_id": { "const": "pure_no_signal" },
+        "variant_id": { "const": "null_correlated" },
+        "replicate_index": { "type": "integer", "minimum": 0, "maximum": 58 },
+        "resolution_mode": { "const": "DEVELOPMENT_VARIANT" },
+        "null_method_id": { "const": "pure-no-signal-synthetic/1" },
+        "transformation": { "const": "pure-no-signal-synthetic" },
+        "refit_preprocessing": { "const": true },
+        "preserves_group_conditional_event_marginals": { "const": false },
+        "case_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+/-]{0,255}$"
+        },
+        "intent_config_digest": { "$ref": "#/$defs/Digest" },
+        "authority_byte_digest": { "$ref": "#/$defs/Digest" },
+        "source_contract_digest": { "$ref": "#/$defs/Digest" },
+        "scenario_definitions_digest": { "$ref": "#/$defs/Digest" },
+        "resolved_configuration_digest": { "$ref": "#/$defs/Digest" },
+        "resolved_mechanism_digest": { "$ref": "#/$defs/Digest" },
+        "generated_data_digest": { "$ref": "#/$defs/Digest" },
+        "truth_digest": { "$ref": "#/$defs/Digest" },
+        "replay_receipt_digest": { "$ref": "#/$defs/Digest" },
+        "mapping_digest": { "$ref": "#/$defs/Digest" },
+        "serialized_input_byte_digest": { "$ref": "#/$defs/Digest" },
+        "source_admission_digest": { "$ref": "#/$defs/Digest" },
+        "prepared_dataset_digest": { "$ref": "#/$defs/Digest" },
+        "plan_digest": { "$ref": "#/$defs/Digest" },
+        "terminal_index_digest": { "$ref": "#/$defs/Digest" },
+        "terminal_binding_digest": { "$ref": "#/$defs/Digest" },
+        "participant_count": { "type": "integer", "minimum": 2 },
+        "event_count": { "type": "integer", "minimum": 2, "maximum": 12 },
+        "covariate_count": { "type": "integer", "minimum": 0 },
+        "missing_cell_count": { "type": "integer", "minimum": 0 },
+        "generation_stage_count": { "type": "integer", "minimum": 1 },
+        "candidate_count": { "const": 1 },
+        "terminal_record_count": { "const": 1 },
+        "success_count": { "type": "integer", "minimum": 0, "maximum": 1 },
+        "non_success_terminal_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "terminal_status_counts": { "$ref": "#/$defs/TerminalStatusCounts" },
+        "receipt_digest": { "$ref": "#/$defs/Digest" }
+      }
+    },
+    "DevelopmentNullScienceReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "development_null_science_receipt_schema_version",
+        "scientific_evidence",
+        "development_null",
+        "receipt_digest"
+      ],
+      "properties": {
+        "development_null_science_receipt_schema_version": {
+          "const": "ebm-audit-development-null-science-receipt/1.0"
+        },
+        "scientific_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "scientific_evidence_schema_version",
+            "evidence_rule_id",
+            "plan_digest",
+            "terminal_index_digest",
+            "influence_preparation_bindings_digest",
+            "position_summary_rule",
+            "chain_top_k_rule",
+            "matrix_cross_check_tolerance_rule",
+            "uncertainty_layer_coverage",
+            "science_completion_gate",
+            "candidate_records",
+            "sampling_evidence",
+            "analyst_decision_evidence",
+            "participant_influence_evidence",
+            "null_evidence",
+            "scientific_evidence_digest"
+          ],
+          "properties": {
+            "scientific_evidence_schema_version": { "type": "string" },
+            "evidence_rule_id": { "type": "string" },
+            "plan_digest": { "$ref": "#/$defs/Digest" },
+            "terminal_index_digest": { "$ref": "#/$defs/Digest" },
+            "influence_preparation_bindings_digest": { "$ref": "#/$defs/Digest" },
+            "position_summary_rule": { "type": "object" },
+            "chain_top_k_rule": { "type": "object" },
+            "matrix_cross_check_tolerance_rule": { "type": "object" },
+            "uncertainty_layer_coverage": { "type": "object" },
+            "science_completion_gate": { "type": "object" },
+            "candidate_records": { "type": "array" },
+            "sampling_evidence": { "type": "object" },
+            "analyst_decision_evidence": { "type": "object" },
+            "participant_influence_evidence": { "type": "object" },
+            "null_evidence": {
+              "$ref": "null-evidence.schema.json#/$defs/NullLayerEvidence"
+            },
+            "scientific_evidence_digest": { "$ref": "#/$defs/Digest" }
+          }
+        },
+        "development_null": { "$ref": "#/$defs/DevelopmentNullReceipt" },
+        "receipt_digest": { "$ref": "#/$defs/Digest" }
+      }
+    }
+  }
+}

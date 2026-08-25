@@ -1,0 +1,877 @@
+{
+  "config_schema_version": "ebm-audit-config/0.3",
+  "template": {
+    "kind": "synthetic",
+    "contains_real_rows": false,
+    "status": "READY_SYNTHETIC_EXAMPLE",
+    "note": "Synthetic-only mapping template. The file contains configuration and no participant rows. Replace all zero digests after generating a local synthetic CSV."
+  },
+  "offline": true,
+  "input": {
+    "path": "data/synthetic.csv",
+    "byte_digest_method": "sha256-exact-file-bytes/1",
+    "expected_byte_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "format": {
+      "kind": "csv",
+      "encoding": "utf-8",
+      "delimiter": ",",
+      "quote_character": "\"",
+      "header": true,
+      "line_ending": "lf",
+      "allow_quoted_newlines": false,
+      "trim_whitespace": false,
+      "locale": null,
+      "infer_types": false,
+      "implicit_na_tokens": false,
+      "missing_tokens": [
+        ""
+      ],
+      "true_tokens": [
+        "true"
+      ],
+      "false_tokens": [
+        "false"
+      ],
+      "columns": [
+        {
+          "source_column": "participant_code",
+          "physical_type": "string"
+        },
+        {
+          "source_column": "group",
+          "physical_type": "string"
+        },
+        {
+          "source_column": "event_01",
+          "physical_type": "float64"
+        },
+        {
+          "source_column": "event_02",
+          "physical_type": "float64"
+        },
+        {
+          "source_column": "covariate_01",
+          "physical_type": "float64"
+        },
+        {
+          "source_column": "metadata_01",
+          "physical_type": "integer"
+        },
+        {
+          "source_column": "ignored_01",
+          "physical_type": "string"
+        }
+      ]
+    },
+    "variant": {
+      "variant_schema_version": "ebm-audit-data-variant/2.0",
+      "variant_id": "baseline-input",
+      "label": "Researcher-supplied synthetic baseline input",
+      "source_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "source_digest_method": "exact-file/1",
+      "provenance_note": "Local synthetic table; replace the placeholder digest before use.",
+      "created_by": "researcher",
+      "synthetic_truth_digest": null,
+      "is_synthetic": true,
+      "externally_completed_or_transformed": false
+    }
+  },
+  "column_roles": {
+    "participant_id_column": "participant_code",
+    "events": [
+      {
+        "schema_version": "ebm-audit-event/1.0",
+        "event_id": "event-01",
+        "display_name": "Synthetic event 01",
+        "source_column": "event_01",
+        "category": "synthetic",
+        "unit": null,
+        "abnormal_direction": "higher",
+        "permitted_transformations": [
+          "none"
+        ],
+        "missingness_declaration": "error",
+        "feature_sensitivity_eligible": true,
+        "identifier_risk_reviewed": true,
+        "public_source_note": "Synthetic placeholder event.",
+        "privacy_sensitive_display_override": null
+      },
+      {
+        "schema_version": "ebm-audit-event/1.0",
+        "event_id": "event-02",
+        "display_name": "Synthetic event 02",
+        "source_column": "event_02",
+        "category": "synthetic",
+        "unit": null,
+        "abnormal_direction": "lower",
+        "permitted_transformations": [
+          "none"
+        ],
+        "missingness_declaration": "error",
+        "feature_sensitivity_eligible": true,
+        "identifier_risk_reviewed": true,
+        "public_source_note": "Synthetic placeholder event.",
+        "privacy_sensitive_display_override": null
+      }
+    ],
+    "groups": [
+      {
+        "group_spec_id": "primary-groups",
+        "source": "column",
+        "source_column_or_rule": {
+          "kind": "column",
+          "source_column": "group"
+        },
+        "label_to_role": [
+          {
+            "label": {
+              "type": "string",
+              "value": "reference"
+            },
+            "role": "reference"
+          },
+          {
+            "label": {
+              "type": "string",
+              "value": "at-risk"
+            },
+            "role": "at_risk"
+          }
+        ],
+        "required_roles": [
+          "reference",
+          "at_risk"
+        ],
+        "rationale": "Synthetic two-role analysis grouping."
+      }
+    ],
+    "covariates": [
+      {
+        "covariate_id": "covariate-01",
+        "source_column": "covariate_01",
+        "kind": "continuous",
+        "level_order": null,
+        "missingness": "error"
+      }
+    ],
+    "metadata": [
+      {
+        "metadata_id": "metadata-01",
+        "source_column": "metadata_01",
+        "kind": "integer",
+        "missingness": "error"
+      }
+    ],
+    "ignored_columns": [
+      {
+        "source_column": "ignored_01",
+        "reason": "Synthetic non-analysis column."
+      }
+    ]
+  },
+  "external_missingness_variant": {
+    "status": "NOT_DECLARED",
+    "path": null,
+    "byte_digest": null
+  },
+  "worker": {
+    "config_path": "worker/worker.json",
+    "worker_config_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "worker_identity_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "protocol_version": "ebm-audit-worker/v2"
+  },
+  "baseline_reference": {
+    "status": "NOT_SUPPLIED",
+    "path": null,
+    "byte_digest": null,
+    "interpretation": "No published order or participant-level reference is supplied for this synthetic template."
+  },
+  "baseline_analysis": {
+    "spec_schema_version": "ebm-audit-analysis-spec/3.0",
+    "dataset_variant_intent": {
+      "source_variant_id": "baseline-input",
+      "variant_kind": "baseline-input",
+      "source_variant_id_ref": null,
+      "method_id": "exact-input-bytes/1"
+    },
+    "cohort_rule": {
+      "group_spec_id": "primary-groups",
+      "source_kind": "label-alias",
+      "public_field_ids": [
+        "analysis-group"
+      ],
+      "label_roles": [
+        {
+          "public_label_id": "group-at-risk",
+          "role": "at_risk"
+        },
+        {
+          "public_label_id": "group-reference",
+          "role": "reference"
+        }
+      ],
+      "role_rules": [],
+      "required_roles": [
+        "reference",
+        "at_risk"
+      ]
+    },
+    "event_set": [
+      {
+        "event_id": "event-01"
+      },
+      {
+        "event_id": "event-02"
+      }
+    ],
+    "event_directions": {
+      "event-01": "higher",
+      "event-02": "lower"
+    },
+    "preprocessing": [],
+    "outlier_policy": {
+      "policy_kind": "none",
+      "threshold": null,
+      "scope": "none",
+      "action": "none",
+      "reference_population": "none",
+      "value_transformation": null
+    },
+    "missingness_policy": {
+      "policy": "error",
+      "event_ids": [
+        "event-01",
+        "event-02"
+      ]
+    },
+    "covariate_adjustment": {
+      "method": "none",
+      "ordered_terms": [],
+      "intercept": null,
+      "categorical_encoding": "none",
+      "minimum_reference_rows": null,
+      "require_full_rank": false
+    },
+    "backend": {
+      "backend_schema_version": "ebm-audit-backend-spec/3.0",
+      "adapter_id": "local-worker",
+      "adapter_semantics_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "expected_backend_name": "local-ebm",
+      "expected_backend_source_digest": null,
+      "algorithm_id": "classical-ebm",
+      "settings_classification": "public-scientific-settings/1",
+      "capabilities_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "settings_schema_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "stage_semantics_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "settings": {},
+      "settings_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "requested_outputs": [
+        "central_order",
+        "order_samples",
+        "position_probabilities",
+        "pairwise_precedence"
+      ],
+      "requested_outputs_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "mcmc": {
+      "raw_iteration_count": 1000,
+      "burn_in_count": 200,
+      "thinning_interval": 10,
+      "indexing_rule": "returned-post-proposal-row/1",
+      "proposal_settings": [],
+      "chain_count": 2,
+      "seed_derivation_version": "hmac-sha256-u64be-v2",
+      "initialization_rule": "independent-shuffle-v1",
+      "proposal_method_id": "selected-subset-full-derangement-v1",
+      "proposal_settings_schema_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "proposal_settings_classification": "public-scientific-settings/1"
+    },
+    "operation_intent": {
+      "kind": "ordinary"
+    }
+  },
+  "source_variants": [
+    {
+      "source_variant_id": "baseline-input",
+      "variant_kind": "baseline-input",
+      "source_variant_id_ref": null,
+      "method_id": "exact-input-bytes/1",
+      "rationale": "The exact validated source table."
+    },
+    {
+      "source_variant_id": "bootstrap-resample",
+      "variant_kind": "bootstrap-resample",
+      "source_variant_id_ref": "baseline-input",
+      "method_id": "participant-bootstrap-with-replacement/1",
+      "rationale": "Participant bootstrap rows derived from the baseline source."
+    },
+    {
+      "source_variant_id": "participant-subsample",
+      "variant_kind": "participant-subsample",
+      "source_variant_id_ref": "baseline-input",
+      "method_id": "participant-subsample-without-replacement/1",
+      "rationale": "Participant subsamples derived without replacement."
+    },
+    {
+      "source_variant_id": "influence-removal",
+      "variant_kind": "influence-removal",
+      "source_variant_id_ref": "baseline-input",
+      "method_id": "exact-participant-or-named-group-removal/1",
+      "rationale": "Deterministic influence removals from the baseline source."
+    },
+    {
+      "source_variant_id": "null-pure-no-signal",
+      "variant_kind": "null-transformation",
+      "source_variant_id_ref": "baseline-input",
+      "method_id": "pure-no-signal-synthetic/1",
+      "rationale": "Independently generated pure no-signal source."
+    },
+    {
+      "source_variant_id": "null-label-permutation",
+      "variant_kind": "null-transformation",
+      "source_variant_id_ref": "baseline-input",
+      "method_id": "label-permutation/1",
+      "rationale": "Label permutation source."
+    },
+    {
+      "source_variant_id": "null-featurewise-within-group",
+      "variant_kind": "null-transformation",
+      "source_variant_id_ref": "baseline-input",
+      "method_id": "featurewise-within-group-participant-permutation/1",
+      "rationale": "Featurewise within-group participant permutation source."
+    }
+  ],
+  "experiments": {
+    "allow_full_factorial": false,
+    "full_factorial_override_rationale": null,
+    "sets": [
+      {
+        "experiment_set_id": "baseline",
+        "mode": "baseline",
+        "enabled": true,
+        "rationale": "The sole baseline analysis.",
+        "axes": [],
+        "members": [],
+        "bootstrap": null,
+        "subsample": null,
+        "influence": null,
+        "null_families": []
+      },
+      {
+        "experiment_set_id": "one-axis",
+        "mode": "one-axis",
+        "enabled": true,
+        "rationale": "A bounded synthetic sensitivity check changes only the declared MCMC schedule.",
+        "axes": [
+          {
+            "axis_id": "mcmc-choice",
+            "semantic_target": "mcmc",
+            "owned_analysis_spec_paths": [
+              "/mcmc"
+            ],
+            "baseline_choice_id": "baseline-mcmc",
+            "rationale": "Compare the baseline sampling schedule with one predeclared longer schedule.",
+            "choices": [
+              {
+                "choice_id": "baseline-mcmc",
+                "assignments": [
+                  {
+                    "path": "/mcmc",
+                    "value": {
+                      "raw_iteration_count": 1000,
+                      "burn_in_count": 200,
+                      "thinning_interval": 10,
+                      "indexing_rule": "returned-post-proposal-row/1",
+                      "proposal_settings": [],
+                      "chain_count": 2,
+                      "seed_derivation_version": "hmac-sha256-u64be-v2",
+                      "initialization_rule": "independent-shuffle-v1",
+                      "proposal_method_id": "selected-subset-full-derangement-v1",
+                      "proposal_settings_schema_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                      "proposal_settings_classification": "public-scientific-settings/1"
+                    }
+                  }
+                ],
+                "rationale": "The exact baseline MCMC specification."
+              },
+              {
+                "choice_id": "extended-mcmc",
+                "assignments": [
+                  {
+                    "path": "/mcmc",
+                    "value": {
+                      "raw_iteration_count": 2000,
+                      "burn_in_count": 400,
+                      "thinning_interval": 10,
+                      "indexing_rule": "returned-post-proposal-row/1",
+                      "proposal_settings": [],
+                      "chain_count": 2,
+                      "seed_derivation_version": "hmac-sha256-u64be-v2",
+                      "initialization_rule": "independent-shuffle-v1",
+                      "proposal_method_id": "selected-subset-full-derangement-v1",
+                      "proposal_settings_schema_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                      "proposal_settings_classification": "public-scientific-settings/1"
+                    }
+                  }
+                ],
+                "rationale": "A longer predeclared schedule tests sampling sensitivity without changing rows or values."
+              }
+            ]
+          }
+        ],
+        "members": [
+          {
+            "member_id": "extended-mcmc",
+            "axis_choices": [
+              {
+                "axis_id": "mcmc-choice",
+                "choice_id": "extended-mcmc"
+              }
+            ],
+            "rationale": "Run the single longer-schedule sensitivity universe."
+          }
+        ],
+        "bootstrap": null,
+        "subsample": null,
+        "influence": null,
+        "null_families": []
+      },
+      {
+        "experiment_set_id": "declared-combinations",
+        "mode": "declared-combinations",
+        "enabled": true,
+        "rationale": "One named synthetic combination tests sampling and non-mutating outlier-flag sensitivity.",
+        "axes": [
+          {
+            "axis_id": "mcmc-choice",
+            "semantic_target": "mcmc",
+            "owned_analysis_spec_paths": [
+              "/mcmc"
+            ],
+            "baseline_choice_id": "baseline-mcmc",
+            "rationale": "A complete MCMC specification is selected as one typed decision.",
+            "choices": [
+              {
+                "choice_id": "baseline-mcmc",
+                "assignments": [
+                  {
+                    "path": "/mcmc",
+                    "value": {
+                      "raw_iteration_count": 1000,
+                      "burn_in_count": 200,
+                      "thinning_interval": 10,
+                      "indexing_rule": "returned-post-proposal-row/1",
+                      "proposal_settings": [],
+                      "chain_count": 2,
+                      "seed_derivation_version": "hmac-sha256-u64be-v2",
+                      "initialization_rule": "independent-shuffle-v1",
+                      "proposal_method_id": "selected-subset-full-derangement-v1",
+                      "proposal_settings_schema_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                      "proposal_settings_classification": "public-scientific-settings/1"
+                    }
+                  }
+                ],
+                "rationale": "The exact baseline MCMC specification."
+              },
+              {
+                "choice_id": "extended-mcmc",
+                "assignments": [
+                  {
+                    "path": "/mcmc",
+                    "value": {
+                      "raw_iteration_count": 2000,
+                      "burn_in_count": 400,
+                      "thinning_interval": 10,
+                      "indexing_rule": "returned-post-proposal-row/1",
+                      "proposal_settings": [],
+                      "chain_count": 2,
+                      "seed_derivation_version": "hmac-sha256-u64be-v2",
+                      "initialization_rule": "independent-shuffle-v1",
+                      "proposal_method_id": "selected-subset-full-derangement-v1",
+                      "proposal_settings_schema_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                      "proposal_settings_classification": "public-scientific-settings/1"
+                    }
+                  }
+                ],
+                "rationale": "A longer predeclared schedule tests sampling sensitivity without changing rows or values."
+              }
+            ]
+          },
+          {
+            "axis_id": "outlier-choice",
+            "semantic_target": "outlier-policy",
+            "owned_analysis_spec_paths": [
+              "/outlier_policy"
+            ],
+            "baseline_choice_id": "baseline-outlier",
+            "rationale": "Compare no outlier action with a visible flag-only policy that retains every value.",
+            "choices": [
+              {
+                "choice_id": "baseline-outlier",
+                "assignments": [
+                  {
+                    "path": "/outlier_policy",
+                    "value": {
+                      "policy_kind": "none",
+                      "threshold": null,
+                      "scope": "none",
+                      "action": "none",
+                      "reference_population": "none",
+                      "value_transformation": null
+                    }
+                  }
+                ],
+                "rationale": "The exact baseline outlier policy."
+              },
+              {
+                "choice_id": "flag-only-outlier",
+                "assignments": [
+                  {
+                    "path": "/outlier_policy",
+                    "value": {
+                      "policy_kind": "tukey-iqr",
+                      "threshold": 3.0,
+                      "scope": "cell",
+                      "action": "flag-only",
+                      "reference_population": "reference-group",
+                      "value_transformation": null
+                    }
+                  }
+                ],
+                "rationale": "A non-mutating flag-only sensitivity policy preserves every synthetic row and value."
+              }
+            ]
+          }
+        ],
+        "members": [
+          {
+            "member_id": "extended-mcmc-with-outlier-flags",
+            "axis_choices": [
+              {
+                "axis_id": "mcmc-choice",
+                "choice_id": "extended-mcmc"
+              },
+              {
+                "axis_id": "outlier-choice",
+                "choice_id": "flag-only-outlier"
+              }
+            ],
+            "rationale": "Run the named longer-schedule universe with visible, non-mutating outlier flags."
+          }
+        ],
+        "bootstrap": null,
+        "subsample": null,
+        "influence": null,
+        "null_families": []
+      },
+      {
+        "experiment_set_id": "full-factorial",
+        "mode": "full-factorial",
+        "enabled": false,
+        "rationale": "Disabled by default to prevent an uncontrolled Cartesian product.",
+        "axes": [
+          {
+            "axis_id": "mcmc-choice",
+            "semantic_target": "mcmc",
+            "owned_analysis_spec_paths": [
+              "/mcmc"
+            ],
+            "baseline_choice_id": "baseline-mcmc",
+            "rationale": "A complete MCMC specification is selected as one typed decision.",
+            "choices": [
+              {
+                "choice_id": "baseline-mcmc",
+                "assignments": [
+                  {
+                    "path": "/mcmc",
+                    "value": {
+                      "raw_iteration_count": 1000,
+                      "burn_in_count": 200,
+                      "thinning_interval": 10,
+                      "indexing_rule": "returned-post-proposal-row/1",
+                      "proposal_settings": [],
+                      "chain_count": 2,
+                      "seed_derivation_version": "hmac-sha256-u64be-v2",
+                      "initialization_rule": "independent-shuffle-v1",
+                      "proposal_method_id": "selected-subset-full-derangement-v1",
+                      "proposal_settings_schema_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                      "proposal_settings_classification": "public-scientific-settings/1"
+                    }
+                  }
+                ],
+                "rationale": "The exact baseline MCMC specification."
+              },
+              {
+                "choice_id": "extended-mcmc",
+                "assignments": [
+                  {
+                    "path": "/mcmc",
+                    "value": {
+                      "raw_iteration_count": 2000,
+                      "burn_in_count": 400,
+                      "thinning_interval": 10,
+                      "indexing_rule": "returned-post-proposal-row/1",
+                      "proposal_settings": [],
+                      "chain_count": 2,
+                      "seed_derivation_version": "hmac-sha256-u64be-v2",
+                      "initialization_rule": "independent-shuffle-v1",
+                      "proposal_method_id": "selected-subset-full-derangement-v1",
+                      "proposal_settings_schema_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                      "proposal_settings_classification": "public-scientific-settings/1"
+                    }
+                  }
+                ],
+                "rationale": "A longer predeclared schedule tests sampling sensitivity without changing rows or values."
+              }
+            ]
+          },
+          {
+            "axis_id": "outlier-choice",
+            "semantic_target": "outlier-policy",
+            "owned_analysis_spec_paths": [
+              "/outlier_policy"
+            ],
+            "baseline_choice_id": "baseline-outlier",
+            "rationale": "Compare no outlier action with a visible flag-only policy that retains every value.",
+            "choices": [
+              {
+                "choice_id": "baseline-outlier",
+                "assignments": [
+                  {
+                    "path": "/outlier_policy",
+                    "value": {
+                      "policy_kind": "none",
+                      "threshold": null,
+                      "scope": "none",
+                      "action": "none",
+                      "reference_population": "none",
+                      "value_transformation": null
+                    }
+                  }
+                ],
+                "rationale": "The exact baseline outlier policy."
+              },
+              {
+                "choice_id": "flag-only-outlier",
+                "assignments": [
+                  {
+                    "path": "/outlier_policy",
+                    "value": {
+                      "policy_kind": "tukey-iqr",
+                      "threshold": 3.0,
+                      "scope": "cell",
+                      "action": "flag-only",
+                      "reference_population": "reference-group",
+                      "value_transformation": null
+                    }
+                  }
+                ],
+                "rationale": "A non-mutating flag-only sensitivity policy preserves every synthetic row and value."
+              }
+            ]
+          }
+        ],
+        "members": [],
+        "bootstrap": null,
+        "subsample": null,
+        "influence": null,
+        "null_families": []
+      },
+      {
+        "experiment_set_id": "bootstrap",
+        "mode": "bootstrap",
+        "enabled": true,
+        "rationale": "Stratified synthetic participant bootstrap with complete refit.",
+        "axes": [],
+        "members": [],
+        "bootstrap": {
+          "source_analysis_spec_ids": [
+            "sha256:53043fbe6101a911c199b764517b940ce9d2ca6d8e0cbcb2d34700914339f125"
+          ],
+          "source_variant_id": "baseline-input",
+          "derived_source_variant_id": "bootstrap-resample",
+          "sampling_method_id": "participant-bootstrap-with-replacement/1",
+          "sampling_design": "stratified",
+          "strata_group_spec_ids": [
+            "primary-groups"
+          ],
+          "refit_preprocessing": true,
+          "fixed_evaluation_cohort_policy": "fixed-baseline-cohort-or-unsupported/1"
+        },
+        "subsample": null,
+        "influence": null,
+        "null_families": []
+      },
+      {
+        "experiment_set_id": "subsample",
+        "mode": "subsample",
+        "enabled": true,
+        "rationale": "Stratified participant subsampling without replacement.",
+        "axes": [],
+        "members": [],
+        "bootstrap": null,
+        "subsample": {
+          "source_analysis_spec_ids": [
+            "sha256:53043fbe6101a911c199b764517b940ce9d2ca6d8e0cbcb2d34700914339f125"
+          ],
+          "source_variant_id": "baseline-input",
+          "derived_source_variant_id": "participant-subsample",
+          "sampling_method_id": "participant-subsample-without-replacement/1",
+          "sampling_design": "stratified",
+          "retained_fraction": 0.8,
+          "strata_group_spec_ids": [
+            "primary-groups"
+          ],
+          "refit_preprocessing": true,
+          "fixed_evaluation_cohort_policy": "fixed-subsample-cohort-or-unsupported/1"
+        },
+        "influence": null,
+        "null_families": []
+      },
+      {
+        "experiment_set_id": "influence",
+        "mode": "influence",
+        "enabled": true,
+        "rationale": "Leave-one-synthetic-participant-out influence refits.",
+        "axes": [],
+        "members": [],
+        "bootstrap": null,
+        "subsample": null,
+        "influence": {
+          "source_analysis_spec_ids": [
+            "sha256:53043fbe6101a911c199b764517b940ce9d2ca6d8e0cbcb2d34700914339f125"
+          ],
+          "source_variant_id": "baseline-input",
+          "derived_source_variant_id": "influence-removal",
+          "removal_method_id": "exact-participant-or-named-group-removal/1",
+          "removal_kind": "leave-one-participant-out",
+          "named_group_spec_ids": [],
+          "refit_preprocessing": true,
+          "fixed_non_removed_cohort_policy": "fixed-non-removed-baseline-cohort-or-unsupported/1"
+        },
+        "null_families": []
+      },
+      {
+        "experiment_set_id": "null",
+        "mode": "null",
+        "enabled": true,
+        "rationale": "Predeclared no-signal comparisons with complete refit.",
+        "axes": [],
+        "members": [],
+        "bootstrap": null,
+        "subsample": null,
+        "influence": null,
+        "null_families": [
+          {
+            "null_family_id": "pure-no-signal",
+            "source_analysis_spec_ids": [
+              "sha256:53043fbe6101a911c199b764517b940ce9d2ca6d8e0cbcb2d34700914339f125"
+            ],
+            "source_variant_id": "baseline-input",
+            "derived_source_variant_id": "null-pure-no-signal",
+            "null_method_id": "pure-no-signal-synthetic/1",
+            "transformation": "pure-no-signal-synthetic",
+            "within_group_spec_id": null,
+            "refit_preprocessing": true,
+            "preserves_group_conditional_event_marginals": false,
+            "rationale": "Generate an independently seeded pure no-signal synthetic table."
+          },
+          {
+            "null_family_id": "label-permutation",
+            "source_analysis_spec_ids": [
+              "sha256:53043fbe6101a911c199b764517b940ce9d2ca6d8e0cbcb2d34700914339f125"
+            ],
+            "source_variant_id": "baseline-input",
+            "derived_source_variant_id": "null-label-permutation",
+            "null_method_id": "label-permutation/1",
+            "transformation": "label-permutation",
+            "within_group_spec_id": null,
+            "refit_preprocessing": true,
+            "preserves_group_conditional_event_marginals": false,
+            "rationale": "Permute analysis labels and refit the entire pipeline."
+          },
+          {
+            "null_family_id": "featurewise-within-group-permutation",
+            "source_analysis_spec_ids": [
+              "sha256:53043fbe6101a911c199b764517b940ce9d2ca6d8e0cbcb2d34700914339f125"
+            ],
+            "source_variant_id": "baseline-input",
+            "derived_source_variant_id": "null-featurewise-within-group",
+            "null_method_id": "featurewise-within-group-participant-permutation/1",
+            "transformation": "featurewise-participant-permutation",
+            "within_group_spec_id": "primary-groups",
+            "refit_preprocessing": true,
+            "preserves_group_conditional_event_marginals": true,
+            "rationale": "Independently permute each event within analysis groups to preserve group-conditional marginals while destroying participant alignment."
+          }
+        ]
+      },
+      {
+        "experiment_set_id": "custom",
+        "mode": "custom",
+        "enabled": false,
+        "rationale": "Explicit custom universes may be added without changing source code.",
+        "axes": [],
+        "members": [],
+        "bootstrap": null,
+        "subsample": null,
+        "influence": null,
+        "null_families": []
+      }
+    ]
+  },
+  "profiles": {
+    "quick": {
+      "profile_id": "quick",
+      "ordinary_universe_limit": 32,
+      "ordinary_limit_override_rationale": null,
+      "max_total_fits": 32,
+      "max_wall_seconds": 900,
+      "max_parallel_workers": 1,
+      "bootstrap_replicates": 2,
+      "subsample_replicates": 2,
+      "influence_max_removals": 2,
+      "null_replicates_per_family": 2,
+      "fit_budget_overflow_policy": "error-before-execution/1",
+      "influence_ceiling_policy": "error-if-exact-removal-count-exceeds-ceiling/1"
+    },
+    "full": {
+      "profile_id": "full",
+      "ordinary_universe_limit": 128,
+      "ordinary_limit_override_rationale": null,
+      "max_total_fits": 128,
+      "max_wall_seconds": 14400,
+      "max_parallel_workers": 2,
+      "bootstrap_replicates": 10,
+      "subsample_replicates": 10,
+      "influence_max_removals": 10,
+      "null_replicates_per_family": 10,
+      "fit_budget_overflow_policy": "error-before-execution/1",
+      "influence_ceiling_policy": "error-if-exact-removal-count-exceeds-ceiling/1"
+    },
+    "release": {
+      "profile_id": "release",
+      "ordinary_universe_limit": 256,
+      "ordinary_limit_override_rationale": null,
+      "max_total_fits": 256,
+      "max_wall_seconds": 86400,
+      "max_parallel_workers": 4,
+      "bootstrap_replicates": 20,
+      "subsample_replicates": 20,
+      "influence_max_removals": 20,
+      "null_replicates_per_family": 20,
+      "fit_budget_overflow_policy": "error-before-execution/1",
+      "influence_ceiling_policy": "error-if-exact-removal-count-exceeds-ceiling/1"
+    }
+  },
+  "randomness": {
+    "master_seed": "0123456789abcdef",
+    "seed_derivation_version": "hmac-sha256-u64be-v2"
+  },
+  "output": {
+    "root": "runs/synthetic",
+    "layout_version": "ebm-audit-run-layout/1",
+    "overwrite": false,
+    "private_directory_mode": "0700"
+  }
+}

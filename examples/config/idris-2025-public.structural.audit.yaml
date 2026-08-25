@@ -1,0 +1,1031 @@
+{
+  "config_schema_version": "ebm-audit-config/0.3",
+  "template": {
+    "kind": "idris-2025-public-structural",
+    "contains_real_rows": false,
+    "status": "REQUIRES_LOCAL_MAPPING_CONFIRMATION",
+    "note": "Idris 2025 public mapping aid only. It contains no participant rows, private column names, published or expected event order, or reproduced model. The event_01 through event_09 aliases and their array order are for mapping only, not disease order. Confirm every local mapping, direction, identifier review, and zero digest before any fit."
+  },
+  "offline": true,
+  "input": {
+    "path": "data/idris-2025-public.local.csv",
+    "byte_digest_method": "sha256-exact-file-bytes/1",
+    "expected_byte_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "format": {
+      "kind": "csv",
+      "encoding": "utf-8",
+      "delimiter": ",",
+      "quote_character": "\"",
+      "header": true,
+      "line_ending": "lf",
+      "allow_quoted_newlines": false,
+      "trim_whitespace": false,
+      "locale": null,
+      "infer_types": false,
+      "implicit_na_tokens": false,
+      "missing_tokens": [
+        ""
+      ],
+      "true_tokens": [
+        "true"
+      ],
+      "false_tokens": [
+        "false"
+      ],
+      "columns": [
+        {
+          "source_column": "participant_code",
+          "physical_type": "string"
+        },
+        {
+          "source_column": "group",
+          "physical_type": "string"
+        },
+        {
+          "source_column": "event_01",
+          "physical_type": "float64"
+        },
+        {
+          "source_column": "event_02",
+          "physical_type": "float64"
+        },
+        {
+          "source_column": "event_03",
+          "physical_type": "float64"
+        },
+        {
+          "source_column": "event_04",
+          "physical_type": "float64"
+        },
+        {
+          "source_column": "event_05",
+          "physical_type": "float64"
+        },
+        {
+          "source_column": "event_06",
+          "physical_type": "float64"
+        },
+        {
+          "source_column": "event_07",
+          "physical_type": "float64"
+        },
+        {
+          "source_column": "event_08",
+          "physical_type": "float64"
+        },
+        {
+          "source_column": "event_09",
+          "physical_type": "float64"
+        },
+        {
+          "source_column": "covariate_01",
+          "physical_type": "float64"
+        },
+        {
+          "source_column": "metadata_01",
+          "physical_type": "integer"
+        },
+        {
+          "source_column": "ignored_01",
+          "physical_type": "string"
+        }
+      ]
+    },
+    "variant": {
+      "variant_schema_version": "ebm-audit-data-variant/2.0",
+      "variant_id": "baseline-input",
+      "label": "Researcher-supplied local structural input",
+      "source_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "source_digest_method": "exact-file/1",
+      "provenance_note": "Local structural table; replace the placeholder digest before use.",
+      "created_by": "researcher",
+      "synthetic_truth_digest": null,
+      "is_synthetic": false,
+      "externally_completed_or_transformed": false
+    }
+  },
+  "column_roles": {
+    "participant_id_column": "participant_code",
+    "events": [
+      {
+        "schema_version": "ebm-audit-event/1.0",
+        "event_id": "event-01",
+        "display_name": "Plasma Aβ42/40 ratio",
+        "source_column": "event_01",
+        "category": "plasma",
+        "unit": null,
+        "abnormal_direction": "REQUIRES_CONFIRMATION",
+        "permitted_transformations": [],
+        "missingness_declaration": "error",
+        "feature_sensitivity_eligible": true,
+        "identifier_risk_reviewed": false,
+        "public_source_note": "Public mapping label only. Confirm local assay definition, unit or scaling, coding, and abnormal direction. Mapping position is not event order.",
+        "privacy_sensitive_display_override": null
+      },
+      {
+        "schema_version": "ebm-audit-event/1.0",
+        "event_id": "event-02",
+        "display_name": "Plasma p-tau181",
+        "source_column": "event_02",
+        "category": "plasma",
+        "unit": null,
+        "abnormal_direction": "REQUIRES_CONFIRMATION",
+        "permitted_transformations": [],
+        "missingness_declaration": "error",
+        "feature_sensitivity_eligible": true,
+        "identifier_risk_reviewed": false,
+        "public_source_note": "Public mapping label only. Confirm local assay definition, unit or scaling, coding, and abnormal direction. Mapping position is not event order.",
+        "privacy_sensitive_display_override": null
+      },
+      {
+        "schema_version": "ebm-audit-event/1.0",
+        "event_id": "event-03",
+        "display_name": "Plasma p-tau231",
+        "source_column": "event_03",
+        "category": "plasma",
+        "unit": null,
+        "abnormal_direction": "REQUIRES_CONFIRMATION",
+        "permitted_transformations": [],
+        "missingness_declaration": "error",
+        "feature_sensitivity_eligible": true,
+        "identifier_risk_reviewed": false,
+        "public_source_note": "Public mapping label only. Confirm local assay definition, unit or scaling, coding, and abnormal direction. Mapping position is not event order.",
+        "privacy_sensitive_display_override": null
+      },
+      {
+        "schema_version": "ebm-audit-event/1.0",
+        "event_id": "event-04",
+        "display_name": "Plasma neurofilament light (NfL)",
+        "source_column": "event_04",
+        "category": "plasma",
+        "unit": null,
+        "abnormal_direction": "REQUIRES_CONFIRMATION",
+        "permitted_transformations": [],
+        "missingness_declaration": "error",
+        "feature_sensitivity_eligible": true,
+        "identifier_risk_reviewed": false,
+        "public_source_note": "Public mapping label only. Confirm local assay definition, unit or scaling, coding, and abnormal direction. Mapping position is not event order.",
+        "privacy_sensitive_display_override": null
+      },
+      {
+        "schema_version": "ebm-audit-event/1.0",
+        "event_id": "event-05",
+        "display_name": "Plasma glial fibrillary acidic protein (GFAP)",
+        "source_column": "event_05",
+        "category": "plasma",
+        "unit": null,
+        "abnormal_direction": "REQUIRES_CONFIRMATION",
+        "permitted_transformations": [],
+        "missingness_declaration": "error",
+        "feature_sensitivity_eligible": true,
+        "identifier_risk_reviewed": false,
+        "public_source_note": "Public mapping label only. Confirm local assay definition, unit or scaling, coding, and abnormal direction. Mapping position is not event order.",
+        "privacy_sensitive_display_override": null
+      },
+      {
+        "schema_version": "ebm-audit-event/1.0",
+        "event_id": "event-06",
+        "display_name": "CANTAB Paired Associates Learning first-trial memory score",
+        "source_column": "event_06",
+        "category": "cognitive",
+        "unit": null,
+        "abnormal_direction": "REQUIRES_CONFIRMATION",
+        "permitted_transformations": [],
+        "missingness_declaration": "error",
+        "feature_sensitivity_eligible": true,
+        "identifier_risk_reviewed": false,
+        "public_source_note": "Public mapping label only. Confirm exact variable and scoring version, unit or range, coding, and abnormal direction. Mapping position is not event order.",
+        "privacy_sensitive_display_override": null
+      },
+      {
+        "schema_version": "ebm-audit-event/1.0",
+        "event_id": "event-07",
+        "display_name": "Tower of London total score",
+        "source_column": "event_07",
+        "category": "cognitive",
+        "unit": null,
+        "abnormal_direction": "REQUIRES_CONFIRMATION",
+        "permitted_transformations": [],
+        "missingness_declaration": "error",
+        "feature_sensitivity_eligible": true,
+        "identifier_risk_reviewed": false,
+        "public_source_note": "Public mapping label only. Confirm exact instrument, variable and scoring version, unit or range, coding, and abnormal direction. Mapping position is not event order.",
+        "privacy_sensitive_display_override": null
+      },
+      {
+        "schema_version": "ebm-audit-event/1.0",
+        "event_id": "event-08",
+        "display_name": "CANTAB Intra/Extra Dimensional Set Shift stages completed",
+        "source_column": "event_08",
+        "category": "cognitive",
+        "unit": null,
+        "abnormal_direction": "REQUIRES_CONFIRMATION",
+        "permitted_transformations": [],
+        "missingness_declaration": "error",
+        "feature_sensitivity_eligible": true,
+        "identifier_risk_reviewed": false,
+        "public_source_note": "Public mapping label only. Confirm exact variable and scoring version, unit or range, coding, and abnormal direction. Mapping position is not event order.",
+        "privacy_sensitive_display_override": null
+      },
+      {
+        "schema_version": "ebm-audit-event/1.0",
+        "event_id": "event-09",
+        "display_name": "NEPSY-II visuomotor precision car-and-motorcycle score",
+        "source_column": "event_09",
+        "category": "cognitive",
+        "unit": null,
+        "abnormal_direction": "REQUIRES_CONFIRMATION",
+        "permitted_transformations": [],
+        "missingness_declaration": "error",
+        "feature_sensitivity_eligible": true,
+        "identifier_risk_reviewed": false,
+        "public_source_note": "Public mapping label only. Confirm exact variable and scoring version, unit or range, coding, and abnormal direction. Mapping position is not event order.",
+        "privacy_sensitive_display_override": null
+      }
+    ],
+    "groups": [
+      {
+        "group_spec_id": "primary-groups",
+        "source": "column",
+        "source_column_or_rule": {
+          "kind": "column",
+          "source_column": "group"
+        },
+        "label_to_role": [
+          {
+            "label": {
+              "type": "string",
+              "value": "reference"
+            },
+            "role": "reference"
+          },
+          {
+            "label": {
+              "type": "string",
+              "value": "at-risk"
+            },
+            "role": "at_risk"
+          }
+        ],
+        "required_roles": [
+          "reference",
+          "at_risk"
+        ],
+        "rationale": "Generic label-alias mapping example, not a scientific default; confirm local labels and roles."
+      }
+    ],
+    "covariates": [
+      {
+        "covariate_id": "covariate-01",
+        "source_column": "covariate_01",
+        "kind": "continuous",
+        "level_order": null,
+        "missingness": "error"
+      }
+    ],
+    "metadata": [
+      {
+        "metadata_id": "metadata-01",
+        "source_column": "metadata_01",
+        "kind": "integer",
+        "missingness": "error"
+      }
+    ],
+    "ignored_columns": [
+      {
+        "source_column": "ignored_01",
+        "reason": "Structural non-analysis column."
+      }
+    ]
+  },
+  "external_missingness_variant": {
+    "status": "NOT_DECLARED",
+    "path": null,
+    "byte_digest": null
+  },
+  "worker": {
+    "config_path": "worker/worker.json",
+    "worker_config_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "worker_identity_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "protocol_version": "ebm-audit-worker/v2"
+  },
+  "baseline_reference": {
+    "status": "NOT_SUPPLIED",
+    "path": null,
+    "byte_digest": null,
+    "interpretation": "No canonical reference-result bundle is supplied. The published order is not ground truth, a benchmark target, or evidence of baseline reproduction."
+  },
+  "baseline_analysis": {
+    "spec_schema_version": "ebm-audit-analysis-spec/3.0",
+    "dataset_variant_intent": {
+      "source_variant_id": "baseline-input",
+      "variant_kind": "baseline-input",
+      "source_variant_id_ref": null,
+      "method_id": "exact-input-bytes/1"
+    },
+    "cohort_rule": {
+      "group_spec_id": "primary-groups",
+      "source_kind": "label-alias",
+      "public_field_ids": [
+        "analysis-group"
+      ],
+      "label_roles": [
+        {
+          "public_label_id": "group-at-risk",
+          "role": "at_risk"
+        },
+        {
+          "public_label_id": "group-reference",
+          "role": "reference"
+        }
+      ],
+      "role_rules": [],
+      "required_roles": [
+        "reference",
+        "at_risk"
+      ]
+    },
+    "event_set": [
+      {
+        "event_id": "event-01"
+      },
+      {
+        "event_id": "event-02"
+      },
+      {
+        "event_id": "event-03"
+      },
+      {
+        "event_id": "event-04"
+      },
+      {
+        "event_id": "event-05"
+      },
+      {
+        "event_id": "event-06"
+      },
+      {
+        "event_id": "event-07"
+      },
+      {
+        "event_id": "event-08"
+      },
+      {
+        "event_id": "event-09"
+      }
+    ],
+    "event_directions": {
+      "event-01": "REQUIRES_CONFIRMATION",
+      "event-02": "REQUIRES_CONFIRMATION",
+      "event-03": "REQUIRES_CONFIRMATION",
+      "event-04": "REQUIRES_CONFIRMATION",
+      "event-05": "REQUIRES_CONFIRMATION",
+      "event-06": "REQUIRES_CONFIRMATION",
+      "event-07": "REQUIRES_CONFIRMATION",
+      "event-08": "REQUIRES_CONFIRMATION",
+      "event-09": "REQUIRES_CONFIRMATION"
+    },
+    "preprocessing": [],
+    "outlier_policy": {
+      "policy_kind": "none",
+      "threshold": null,
+      "scope": "none",
+      "action": "none",
+      "reference_population": "none",
+      "value_transformation": null
+    },
+    "missingness_policy": {
+      "policy": "error",
+      "event_ids": [
+        "event-01",
+        "event-02",
+        "event-03",
+        "event-04",
+        "event-05",
+        "event-06",
+        "event-07",
+        "event-08",
+        "event-09"
+      ]
+    },
+    "covariate_adjustment": {
+      "method": "none",
+      "ordered_terms": [],
+      "intercept": null,
+      "categorical_encoding": "none",
+      "minimum_reference_rows": null,
+      "require_full_rank": false
+    },
+    "backend": {
+      "backend_schema_version": "ebm-audit-backend-spec/3.0",
+      "adapter_id": "local-worker",
+      "adapter_semantics_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "expected_backend_name": "local-ebm",
+      "expected_backend_source_digest": null,
+      "algorithm_id": "classical-ebm",
+      "settings_classification": "public-scientific-settings/1",
+      "capabilities_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "settings_schema_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "stage_semantics_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "settings": {},
+      "settings_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "requested_outputs": [
+        "central_order",
+        "order_samples",
+        "position_probabilities",
+        "pairwise_precedence"
+      ],
+      "requested_outputs_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "mcmc": {
+      "raw_iteration_count": 1000,
+      "burn_in_count": 200,
+      "thinning_interval": 10,
+      "indexing_rule": "returned-post-proposal-row/1",
+      "proposal_settings": [],
+      "chain_count": 2,
+      "seed_derivation_version": "hmac-sha256-u64be-v2",
+      "initialization_rule": "independent-shuffle-v1",
+      "proposal_method_id": "selected-subset-full-derangement-v1",
+      "proposal_settings_schema_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "proposal_settings_classification": "public-scientific-settings/1"
+    },
+    "operation_intent": {
+      "kind": "ordinary"
+    }
+  },
+  "source_variants": [
+    {
+      "source_variant_id": "baseline-input",
+      "variant_kind": "baseline-input",
+      "source_variant_id_ref": null,
+      "method_id": "exact-input-bytes/1",
+      "rationale": "The exact validated source table."
+    },
+    {
+      "source_variant_id": "bootstrap-resample",
+      "variant_kind": "bootstrap-resample",
+      "source_variant_id_ref": "baseline-input",
+      "method_id": "participant-bootstrap-with-replacement/1",
+      "rationale": "Participant bootstrap rows derived from the baseline source."
+    },
+    {
+      "source_variant_id": "participant-subsample",
+      "variant_kind": "participant-subsample",
+      "source_variant_id_ref": "baseline-input",
+      "method_id": "participant-subsample-without-replacement/1",
+      "rationale": "Participant subsamples derived without replacement."
+    },
+    {
+      "source_variant_id": "influence-removal",
+      "variant_kind": "influence-removal",
+      "source_variant_id_ref": "baseline-input",
+      "method_id": "exact-participant-or-named-group-removal/1",
+      "rationale": "Deterministic influence removals from the baseline source."
+    },
+    {
+      "source_variant_id": "null-pure-no-signal",
+      "variant_kind": "null-transformation",
+      "source_variant_id_ref": "baseline-input",
+      "method_id": "pure-no-signal-synthetic/1",
+      "rationale": "Independently generated pure no-signal source."
+    },
+    {
+      "source_variant_id": "null-label-permutation",
+      "variant_kind": "null-transformation",
+      "source_variant_id_ref": "baseline-input",
+      "method_id": "label-permutation/1",
+      "rationale": "Label permutation source."
+    },
+    {
+      "source_variant_id": "null-featurewise-within-group",
+      "variant_kind": "null-transformation",
+      "source_variant_id_ref": "baseline-input",
+      "method_id": "featurewise-within-group-participant-permutation/1",
+      "rationale": "Featurewise within-group participant permutation source."
+    }
+  ],
+  "experiments": {
+    "allow_full_factorial": false,
+    "full_factorial_override_rationale": null,
+    "sets": [
+      {
+        "experiment_set_id": "baseline",
+        "mode": "baseline",
+        "enabled": true,
+        "rationale": "The sole baseline analysis.",
+        "axes": [],
+        "members": [],
+        "bootstrap": null,
+        "subsample": null,
+        "influence": null,
+        "null_families": []
+      },
+      {
+        "experiment_set_id": "one-axis",
+        "mode": "one-axis",
+        "enabled": false,
+        "rationale": "Declare individual decision changes here before enabling.",
+        "axes": [
+          {
+            "axis_id": "scientific-choice",
+            "semantic_target": "event-set",
+            "owned_analysis_spec_paths": [
+              "/event_set"
+            ],
+            "baseline_choice_id": "baseline-choice",
+            "rationale": "One predeclared scientific choice at a time.",
+            "choices": [
+              {
+                "choice_id": "baseline-choice",
+                "assignments": [
+                  {
+                    "path": "/event_set",
+                    "value": [
+                      {
+                        "event_id": "event-01"
+                      },
+                      {
+                        "event_id": "event-02"
+                      },
+                      {
+                        "event_id": "event-03"
+                      },
+                      {
+                        "event_id": "event-04"
+                      },
+                      {
+                        "event_id": "event-05"
+                      },
+                      {
+                        "event_id": "event-06"
+                      },
+                      {
+                        "event_id": "event-07"
+                      },
+                      {
+                        "event_id": "event-08"
+                      },
+                      {
+                        "event_id": "event-09"
+                      }
+                    ]
+                  }
+                ],
+                "rationale": "The baseline choice."
+              },
+              {
+                "choice_id": "declared-alternative",
+                "assignments": [
+                  {
+                    "path": "/event_set",
+                    "value": [
+                      {
+                        "event_id": "event-01"
+                      }
+                    ]
+                  }
+                ],
+                "rationale": "An independently justified alternative."
+              }
+            ]
+          }
+        ],
+        "members": [],
+        "bootstrap": null,
+        "subsample": null,
+        "influence": null,
+        "null_families": []
+      },
+      {
+        "experiment_set_id": "declared-combinations",
+        "mode": "declared-combinations",
+        "enabled": false,
+        "rationale": "Only independently justified named combinations belong here.",
+        "axes": [
+          {
+            "axis_id": "scientific-choice",
+            "semantic_target": "event-set",
+            "owned_analysis_spec_paths": [
+              "/event_set"
+            ],
+            "baseline_choice_id": "baseline-choice",
+            "rationale": "A scientific decision axis.",
+            "choices": [
+              {
+                "choice_id": "baseline-choice",
+                "assignments": [
+                  {
+                    "path": "/event_set",
+                    "value": [
+                      {
+                        "event_id": "event-01"
+                      },
+                      {
+                        "event_id": "event-02"
+                      },
+                      {
+                        "event_id": "event-03"
+                      },
+                      {
+                        "event_id": "event-04"
+                      },
+                      {
+                        "event_id": "event-05"
+                      },
+                      {
+                        "event_id": "event-06"
+                      },
+                      {
+                        "event_id": "event-07"
+                      },
+                      {
+                        "event_id": "event-08"
+                      },
+                      {
+                        "event_id": "event-09"
+                      }
+                    ]
+                  }
+                ],
+                "rationale": "The baseline choice."
+              },
+              {
+                "choice_id": "declared-alternative",
+                "assignments": [
+                  {
+                    "path": "/event_set",
+                    "value": [
+                      {
+                        "event_id": "event-01"
+                      }
+                    ]
+                  }
+                ],
+                "rationale": "A justified alternative."
+              }
+            ]
+          },
+          {
+            "axis_id": "preprocessing-choice",
+            "semantic_target": "preprocessing",
+            "owned_analysis_spec_paths": [
+              "/preprocessing"
+            ],
+            "baseline_choice_id": "baseline-preprocessing",
+            "rationale": "A preprocessing decision axis.",
+            "choices": [
+              {
+                "choice_id": "baseline-preprocessing",
+                "assignments": [
+                  {
+                    "path": "/preprocessing",
+                    "value": []
+                  }
+                ],
+                "rationale": "The baseline preprocessing."
+              },
+              {
+                "choice_id": "declared-preprocessing",
+                "assignments": [
+                  {
+                    "path": "/preprocessing",
+                    "value": [
+                      {
+                        "method_id": "zscore-reference",
+                        "event_ids": [
+                          "event-01"
+                        ],
+                        "parameters": [],
+                        "parameters_schema_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                        "parameters_classification": "public-scientific-settings/1"
+                      }
+                    ]
+                  }
+                ],
+                "rationale": "A justified preprocessing alternative."
+              }
+            ]
+          }
+        ],
+        "members": [],
+        "bootstrap": null,
+        "subsample": null,
+        "influence": null,
+        "null_families": []
+      },
+      {
+        "experiment_set_id": "full-factorial",
+        "mode": "full-factorial",
+        "enabled": false,
+        "rationale": "Disabled by default to prevent an uncontrolled Cartesian product.",
+        "axes": [
+          {
+            "axis_id": "scientific-choice",
+            "semantic_target": "event-set",
+            "owned_analysis_spec_paths": [
+              "/event_set"
+            ],
+            "baseline_choice_id": "baseline-choice",
+            "rationale": "A scientific decision axis.",
+            "choices": [
+              {
+                "choice_id": "baseline-choice",
+                "assignments": [
+                  {
+                    "path": "/event_set",
+                    "value": [
+                      {
+                        "event_id": "event-01"
+                      },
+                      {
+                        "event_id": "event-02"
+                      },
+                      {
+                        "event_id": "event-03"
+                      },
+                      {
+                        "event_id": "event-04"
+                      },
+                      {
+                        "event_id": "event-05"
+                      },
+                      {
+                        "event_id": "event-06"
+                      },
+                      {
+                        "event_id": "event-07"
+                      },
+                      {
+                        "event_id": "event-08"
+                      },
+                      {
+                        "event_id": "event-09"
+                      }
+                    ]
+                  }
+                ],
+                "rationale": "The baseline choice."
+              },
+              {
+                "choice_id": "declared-alternative",
+                "assignments": [
+                  {
+                    "path": "/event_set",
+                    "value": [
+                      {
+                        "event_id": "event-01"
+                      }
+                    ]
+                  }
+                ],
+                "rationale": "A justified alternative."
+              }
+            ]
+          },
+          {
+            "axis_id": "preprocessing-choice",
+            "semantic_target": "preprocessing",
+            "owned_analysis_spec_paths": [
+              "/preprocessing"
+            ],
+            "baseline_choice_id": "baseline-preprocessing",
+            "rationale": "A preprocessing decision axis.",
+            "choices": [
+              {
+                "choice_id": "baseline-preprocessing",
+                "assignments": [
+                  {
+                    "path": "/preprocessing",
+                    "value": []
+                  }
+                ],
+                "rationale": "The baseline preprocessing."
+              },
+              {
+                "choice_id": "declared-preprocessing",
+                "assignments": [
+                  {
+                    "path": "/preprocessing",
+                    "value": [
+                      {
+                        "method_id": "zscore-reference",
+                        "event_ids": [
+                          "event-01"
+                        ],
+                        "parameters": [],
+                        "parameters_schema_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                        "parameters_classification": "public-scientific-settings/1"
+                      }
+                    ]
+                  }
+                ],
+                "rationale": "A justified preprocessing alternative."
+              }
+            ]
+          }
+        ],
+        "members": [],
+        "bootstrap": null,
+        "subsample": null,
+        "influence": null,
+        "null_families": []
+      },
+      {
+        "experiment_set_id": "bootstrap",
+        "mode": "bootstrap",
+        "enabled": true,
+        "rationale": "Stratified structural participant bootstrap with complete refit.",
+        "axes": [],
+        "members": [],
+        "bootstrap": {
+          "source_analysis_spec_ids": [
+            "sha256:18d91cb7eb35472f29ec3c5b8251c5430aeb47ab05c830cc86d923b1a60ea350"
+          ],
+          "source_variant_id": "baseline-input",
+          "derived_source_variant_id": "bootstrap-resample",
+          "sampling_method_id": "participant-bootstrap-with-replacement/1",
+          "sampling_design": "stratified",
+          "strata_group_spec_ids": [
+            "primary-groups"
+          ],
+          "refit_preprocessing": true,
+          "fixed_evaluation_cohort_policy": "fixed-baseline-cohort-or-unsupported/1"
+        },
+        "subsample": null,
+        "influence": null,
+        "null_families": []
+      },
+      {
+        "experiment_set_id": "subsample",
+        "mode": "subsample",
+        "enabled": true,
+        "rationale": "Stratified participant subsampling without replacement.",
+        "axes": [],
+        "members": [],
+        "bootstrap": null,
+        "subsample": {
+          "source_analysis_spec_ids": [
+            "sha256:18d91cb7eb35472f29ec3c5b8251c5430aeb47ab05c830cc86d923b1a60ea350"
+          ],
+          "source_variant_id": "baseline-input",
+          "derived_source_variant_id": "participant-subsample",
+          "sampling_method_id": "participant-subsample-without-replacement/1",
+          "sampling_design": "stratified",
+          "retained_fraction": 0.8,
+          "strata_group_spec_ids": [
+            "primary-groups"
+          ],
+          "refit_preprocessing": true,
+          "fixed_evaluation_cohort_policy": "fixed-subsample-cohort-or-unsupported/1"
+        },
+        "influence": null,
+        "null_families": []
+      },
+      {
+        "experiment_set_id": "influence",
+        "mode": "influence",
+        "enabled": true,
+        "rationale": "Leave-one-structural-participant-out influence refits.",
+        "axes": [],
+        "members": [],
+        "bootstrap": null,
+        "subsample": null,
+        "influence": {
+          "source_analysis_spec_ids": [
+            "sha256:18d91cb7eb35472f29ec3c5b8251c5430aeb47ab05c830cc86d923b1a60ea350"
+          ],
+          "source_variant_id": "baseline-input",
+          "derived_source_variant_id": "influence-removal",
+          "removal_method_id": "exact-participant-or-named-group-removal/1",
+          "removal_kind": "leave-one-participant-out",
+          "named_group_spec_ids": [],
+          "refit_preprocessing": true,
+          "fixed_non_removed_cohort_policy": "fixed-non-removed-baseline-cohort-or-unsupported/1"
+        },
+        "null_families": []
+      },
+      {
+        "experiment_set_id": "null",
+        "mode": "null",
+        "enabled": true,
+        "rationale": "Predeclared no-signal comparisons with complete refit.",
+        "axes": [],
+        "members": [],
+        "bootstrap": null,
+        "subsample": null,
+        "influence": null,
+        "null_families": [
+          {
+            "null_family_id": "pure-no-signal",
+            "source_analysis_spec_ids": [
+              "sha256:18d91cb7eb35472f29ec3c5b8251c5430aeb47ab05c830cc86d923b1a60ea350"
+            ],
+            "source_variant_id": "baseline-input",
+            "derived_source_variant_id": "null-pure-no-signal",
+            "null_method_id": "pure-no-signal-synthetic/1",
+            "transformation": "pure-no-signal-synthetic",
+            "within_group_spec_id": null,
+            "refit_preprocessing": true,
+            "preserves_group_conditional_event_marginals": false,
+            "rationale": "Generate an independently seeded pure no-signal synthetic table."
+          },
+          {
+            "null_family_id": "label-permutation",
+            "source_analysis_spec_ids": [
+              "sha256:18d91cb7eb35472f29ec3c5b8251c5430aeb47ab05c830cc86d923b1a60ea350"
+            ],
+            "source_variant_id": "baseline-input",
+            "derived_source_variant_id": "null-label-permutation",
+            "null_method_id": "label-permutation/1",
+            "transformation": "label-permutation",
+            "within_group_spec_id": null,
+            "refit_preprocessing": true,
+            "preserves_group_conditional_event_marginals": false,
+            "rationale": "Permute analysis labels and refit the entire pipeline."
+          },
+          {
+            "null_family_id": "featurewise-within-group-permutation",
+            "source_analysis_spec_ids": [
+              "sha256:18d91cb7eb35472f29ec3c5b8251c5430aeb47ab05c830cc86d923b1a60ea350"
+            ],
+            "source_variant_id": "baseline-input",
+            "derived_source_variant_id": "null-featurewise-within-group",
+            "null_method_id": "featurewise-within-group-participant-permutation/1",
+            "transformation": "featurewise-participant-permutation",
+            "within_group_spec_id": "primary-groups",
+            "refit_preprocessing": true,
+            "preserves_group_conditional_event_marginals": true,
+            "rationale": "Independently permute each event within analysis groups to preserve group-conditional marginals while destroying participant alignment."
+          }
+        ]
+      },
+      {
+        "experiment_set_id": "custom",
+        "mode": "custom",
+        "enabled": false,
+        "rationale": "Explicit custom universes may be added without changing source code.",
+        "axes": [],
+        "members": [],
+        "bootstrap": null,
+        "subsample": null,
+        "influence": null,
+        "null_families": []
+      }
+    ]
+  },
+  "profiles": {
+    "quick": {
+      "profile_id": "quick",
+      "ordinary_universe_limit": 32,
+      "ordinary_limit_override_rationale": null,
+      "max_total_fits": 32,
+      "max_wall_seconds": 900,
+      "max_parallel_workers": 1,
+      "bootstrap_replicates": 2,
+      "subsample_replicates": 2,
+      "influence_max_removals": 2,
+      "null_replicates_per_family": 2,
+      "fit_budget_overflow_policy": "error-before-execution/1",
+      "influence_ceiling_policy": "error-if-exact-removal-count-exceeds-ceiling/1"
+    },
+    "full": {
+      "profile_id": "full",
+      "ordinary_universe_limit": 128,
+      "ordinary_limit_override_rationale": null,
+      "max_total_fits": 128,
+      "max_wall_seconds": 14400,
+      "max_parallel_workers": 2,
+      "bootstrap_replicates": 10,
+      "subsample_replicates": 10,
+      "influence_max_removals": 10,
+      "null_replicates_per_family": 10,
+      "fit_budget_overflow_policy": "error-before-execution/1",
+      "influence_ceiling_policy": "error-if-exact-removal-count-exceeds-ceiling/1"
+    },
+    "release": {
+      "profile_id": "release",
+      "ordinary_universe_limit": 256,
+      "ordinary_limit_override_rationale": null,
+      "max_total_fits": 256,
+      "max_wall_seconds": 86400,
+      "max_parallel_workers": 4,
+      "bootstrap_replicates": 20,
+      "subsample_replicates": 20,
+      "influence_max_removals": 20,
+      "null_replicates_per_family": 20,
+      "fit_budget_overflow_policy": "error-before-execution/1",
+      "influence_ceiling_policy": "error-if-exact-removal-count-exceeds-ceiling/1"
+    }
+  },
+  "randomness": {
+    "master_seed": "fedcba9876543210",
+    "seed_derivation_version": "hmac-sha256-u64be-v2"
+  },
+  "output": {
+    "root": "runs/structural",
+    "layout_version": "ebm-audit-run-layout/1",
+    "overwrite": false,
+    "private_directory_mode": "0700"
+  }
+}

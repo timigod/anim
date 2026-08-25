@@ -1,0 +1,13 @@
+{
+  "schema_version": "ebm-audit-pysaebm-observable-profile/1.0",
+  "subject_id": "pysaebm-observable-outcome-profile-v1",
+  "data_classification": "SYNTHETIC_ONLY",
+  "execution_status": "PRIVATE_ACCEPTANCE_REQUIRED",
+  "adr_relative_path": "docs/adr/ADR-0012-pysaebm-observable-outcome-profile.md",
+  "authority_relative_path": "examples/development/profile-characterization-authority.json",
+  "source_template_relative_path": "examples/config/synthetic.audit.yaml",
+  "output_relative_path": "outputs/private/pysaebm-observable-outcome-profile-v1",
+  "plan_completed_at_utc": "2026-07-28T19:00:00Z",
+  "diagnostic_completed_at_utc": "2026-07-28T19:00:01Z",
+  "worker_timeout_seconds": 300.0
+}

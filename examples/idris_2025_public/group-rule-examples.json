@@ -1,0 +1,107 @@
+{
+  "schema_version": "ebm-audit-idris-public-group-rule-examples/1.0",
+  "status": "EXAMPLES_NOT_DEFAULTS",
+  "note": "Public structure and mapping syntax only. Confirm local semantics and predeclare any sensitivity; never search thresholds for a preferred event order.",
+  "examples": [
+    {
+      "example_id": "reported-age-ranges",
+      "evidence_boundary": "The paper reports ages 20 through 35 as the younger control group and ages 36 through 59 as an assumed preclinical disease proxy. This is not a universal control/disease definition.",
+      "group_spec": {
+        "group_spec_id": "reported-age-ranges-example",
+        "source": "declarative_rule",
+        "source_column_or_rule": {
+          "kind": "declarative_rule",
+          "rule_id": "reported-age-ranges-example-v1",
+          "source_columns": [
+            "age_years"
+          ],
+          "role_rules": [
+            {
+              "role": "reference",
+              "match": "all",
+              "clauses": [
+                {
+                  "source_column": "age_years",
+                  "operator": "gte",
+                  "value": {
+                    "type": "integer",
+                    "value": 20
+                  }
+                },
+                {
+                  "source_column": "age_years",
+                  "operator": "lte",
+                  "value": {
+                    "type": "integer",
+                    "value": 35
+                  }
+                }
+              ]
+            },
+            {
+              "role": "at_risk",
+              "match": "all",
+              "clauses": [
+                {
+                  "source_column": "age_years",
+                  "operator": "gte",
+                  "value": {
+                    "type": "integer",
+                    "value": 36
+                  }
+                },
+                {
+                  "source_column": "age_years",
+                  "operator": "lte",
+                  "value": {
+                    "type": "integer",
+                    "value": 59
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "label_to_role": [],
+        "required_roles": [
+          "reference",
+          "at_risk"
+        ],
+        "rationale": "Reported public study structure only; requires local scientific confirmation."
+      }
+    },
+    {
+      "example_id": "researcher-confirmed-label-alias",
+      "evidence_boundary": "Syntax example for an existing local grouping column. The source name and labels are placeholders, not inferred private values.",
+      "group_spec": {
+        "group_spec_id": "confirmed-local-label-example",
+        "source": "column",
+        "source_column_or_rule": {
+          "kind": "column",
+          "source_column": "confirmed_group_alias"
+        },
+        "label_to_role": [
+          {
+            "label": {
+              "type": "string",
+              "value": "REPLACE_WITH_CONFIRMED_REFERENCE_LABEL"
+            },
+            "role": "reference"
+          },
+          {
+            "label": {
+              "type": "string",
+              "value": "REPLACE_WITH_CONFIRMED_AT_RISK_LABEL"
+            },
+            "role": "at_risk"
+          }
+        ],
+        "required_roles": [
+          "reference",
+          "at_risk"
+        ],
+        "rationale": "Mapping syntax only; replace every placeholder after local review."
+      }
+    }
+  ]
+}

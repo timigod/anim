@@ -1,0 +1,314 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Contract-closure scenario fixture evidence (never substantive)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "evidence_scope", "scientific_acceptance_eligible", "freeze_evidence_eligible", "heldout_score_eligible", "family_id", "subtype_scope", "planned_count", "valid_count", "planned_case_ids", "valid_case_ids", "provenance", "source_records", "family_evaluation", "payload"],
+  "properties": {
+    "schema_version": {"const": "ebm-audit-scenario-fixture-evidence/1.0"},
+    "evidence_scope": {"const": "CONTRACT_CLOSURE_FIXTURE_ONLY"},
+    "scientific_acceptance_eligible": {"const": false},
+    "freeze_evidence_eligible": {"const": false},
+    "heldout_score_eligible": {"const": false},
+    "family_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ScenarioFamilyId"},
+    "subtype_scope": {"enum": ["NONE", "COMBINED_CORRELATED_AND_EXACT_DUPLICATE"]},
+    "planned_count": {"type": "integer", "minimum": 1},
+    "valid_count": {"type": "integer", "minimum": 0},
+    "planned_case_ids": {"$ref": "#/$defs/UniqueMachineIdVector"},
+    "valid_case_ids": {"$ref": "#/$defs/UniqueMachineIdVector"},
+    "provenance": {"$ref": "#/$defs/EvidenceProvenance"},
+    "source_records": {"$ref": "#/$defs/ScenarioSourceRecords"},
+    "family_evaluation": {"$ref": "#/$defs/ScenarioContractFixtureFamilyEvaluation"},
+    "payload": {}
+  },
+  "allOf": [
+    {"if": {"properties": {"family_id": {"const": "easy_known_truth"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/EasyKnownTruthEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "moderate_mina_shape"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/ModerateEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "small_sample"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/SmallSampleEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "noise_ladder"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/NoiseEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "weak_pre_post_separation"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/WeakSeparationEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "incomplete_time_coverage"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/IncompleteCoverageEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "tightly_spaced_events"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/TightlySpacedEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "slow_overlapping_transitions"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/SlowTransitionEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "outlier_sabotage"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/OutlierEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "mcar_missingness"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/McarEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "mar_missingness"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/MarEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "correlated_duplicate_events"}}}, "then": {"properties": {"subtype_scope": {"const": "COMBINED_CORRELATED_AND_EXACT_DUPLICATE"}, "payload": {"$ref": "#/$defs/CorrelatedDuplicateEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "minority_alternate_sequence"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/MinorityAlternateEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "opposing_sequences_50_50"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/OpposingEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "near_simultaneous_events"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/NearSimultaneousEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "covariate_confounding"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/CovariateEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "group_boundary_sensitivity"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/GroupBoundaryEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "control_contamination"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/ControlContaminationEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "heavy_tailed_skewed"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/HeavyTailEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "wrong_event_direction"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/WrongDirectionEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "pure_no_signal"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/PureNoSignalEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "label_permutation_null"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/LabelPermutationEvidence"}}}},
+    {"if": {"properties": {"family_id": {"const": "within_group_feature_permutation_null"}}}, "then": {"properties": {"subtype_scope": {"const": "NONE"}, "payload": {"$ref": "#/$defs/FeaturePermutationEvidence"}}}}
+  ],
+  "$defs": {
+    "Sha256Hex": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "Sha256Digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "RuleState": {"enum": ["PASS", "WARN", "FAIL", "NOT_ASSESSABLE"]},
+    "FloatVector": {"type": "array", "minItems": 1, "items": {"type": "number"}},
+    "ProbabilityVector": {"type": "array", "minItems": 1, "items": {"type": "number", "minimum": 0, "maximum": 1}},
+    "BoolVector": {"type": "array", "minItems": 1, "items": {"type": "boolean"}},
+    "UIntVector": {"type": "array", "minItems": 1, "items": {"type": "integer", "minimum": 0}},
+    "RuleStateVector": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/RuleState"}},
+    "UniqueMachineIdVector": {"type": "array", "uniqueItems": true, "items": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"}},
+    "EvidenceProvenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["benchmark_subject_digest", "scenario_definitions_sha256", "sealed_case_manifest_sha256", "sealed_results_sha256", "rule_outcomes_sha256"],
+      "properties": {"benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"}, "scenario_definitions_sha256": {"$ref": "#/$defs/Sha256Hex"}, "sealed_case_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"}, "sealed_results_sha256": {"$ref": "#/$defs/Sha256Hex"}, "rule_outcomes_sha256": {"$ref": "#/$defs/Sha256Hex"}}
+    },
+    "ScenarioSourceRecords": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sealed_case_manifest", "ordered_truth_objects", "ordered_generated_scientific_data", "ordered_resolved_generator_configurations", "ordered_resolved_generator_mechanisms", "ordered_component_seed_manifests", "sealed_results_index", "ordered_canonical_scientific_payloads", "ordered_fit_payload_preimages", "ordered_fit_response_bindings", "ordered_case_metric_owner_records", "ordered_case_metric_input_projections", "ordered_case_scientific_records", "ordered_rule_outcomes"],
+      "properties": {
+        "sealed_case_manifest": {"$ref": "evaluator-receipts.schema.json#/$defs/SealedCaseManifest"},
+        "ordered_truth_objects": {"type": "array", "minItems": 1, "items": {"$ref": "synthetic-truth.schema.json"}},
+        "ordered_generated_scientific_data": {"type": "array", "minItems": 1, "items": {"$ref": "synthetic-scientific-data.schema.json"}},
+        "ordered_resolved_generator_configurations": {"type": "array", "minItems": 1, "items": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ResolvedGeneratorConfiguration"}},
+        "ordered_resolved_generator_mechanisms": {"type": "array", "minItems": 1, "items": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ResolvedGeneratorMechanism"}},
+        "ordered_component_seed_manifests": {"type": "array", "minItems": 1, "items": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ComponentSeedManifest"}},
+        "sealed_results_index": {"$ref": "evaluator-receipts.schema.json#/$defs/SealedResultsIndex"},
+        "ordered_canonical_scientific_payloads": {"type": "array", "minItems": 1, "items": {"$ref": "canonical-records.schema.json#/$defs/CanonicalScientificPayload"}},
+        "ordered_fit_payload_preimages": {"type": "array", "minItems": 1, "items": {"$ref": "worker-protocol.schema.json#/$defs/WorkerFitPayloadDigestPreimage"}},
+        "ordered_fit_response_bindings": {"type": "array", "minItems": 1, "items": {"$ref": "evaluator-receipts.schema.json#/$defs/FitSuccessEvaluatorWorkerResponseBinding"}},
+        "ordered_case_metric_owner_records": {"type": "array", "minItems": 1, "items": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/ScenarioContractFixtureFitArrayOwnerRecord"}}},
+        "ordered_case_metric_input_projections": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/ScenarioContractFixtureMetricInputProjection"}},
+        "ordered_case_scientific_records": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/ScenarioContractFixtureCaseRecord"}},
+        "ordered_rule_outcomes": {"$ref": "evaluator-receipts.schema.json#/$defs/RuleOutcomesDigestPreimage"}
+      }
+    },
+    "ScenarioContractFixtureCaseRecord": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "evidence_scope", "scientific_acceptance_eligible", "digest_state", "benchmark_subject_digest", "family_id", "case_id", "sealed_case_manifest_index", "truth_object_sha256", "operation_instance_id", "canonical_scientific_payload_sha256", "metric_input_projection_digest", "metric_source_digest", "case_evidence", "scenario_case_scientific_record_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-scenario-contract-fixture-case-record/1.0"},
+        "evidence_scope": {"const": "CONTRACT_CLOSURE_FIXTURE_ONLY"},
+        "scientific_acceptance_eligible": {"const": false},
+        "digest_state": {"enum": ["PERSISTED", "DIGEST_PREIMAGE"]},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "family_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ScenarioFamilyId"},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "sealed_case_manifest_index": {"type": "integer", "minimum": 0},
+        "truth_object_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "operation_instance_id": {"$ref": "#/$defs/Sha256Digest"},
+        "canonical_scientific_payload_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "metric_input_projection_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "metric_source_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "case_evidence": {"$ref": "#/$defs/CaseEvidence"},
+        "scenario_case_scientific_record_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      }
+    },
+    "ScenarioContractFixtureCaseOwnerBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["evidence_scope", "scientific_acceptance_eligible", "case_id", "sealed_case_manifest_index", "truth_object_sha256", "sealed_result_index", "sealed_result_record_sha256", "canonical_scientific_payload_sha256", "metric_input_projection_digest", "metric_source_digest", "scenario_case_scientific_record_sha256"],
+      "properties": {
+        "evidence_scope": {"const": "CONTRACT_CLOSURE_FIXTURE_ONLY"},
+        "scientific_acceptance_eligible": {"const": false},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "sealed_case_manifest_index": {"type": "integer", "minimum": 0},
+        "truth_object_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "sealed_result_index": {"type": "integer", "minimum": 0},
+        "sealed_result_record_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "canonical_scientific_payload_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "metric_input_projection_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "metric_source_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "scenario_case_scientific_record_sha256": {"$ref": "#/$defs/Sha256Hex"}
+      }
+    },
+    "ScenarioContractFixtureFitArrayOwnerRecord": {
+      "type": "object", "additionalProperties": false,
+      "$comment": "Contract-fixture array owner resolved at fixed pointers in one exact fit-payload and canonical-chain preimage. Its dimensions are validated at runtime against the case event and participant dimensions. It is not substantive benchmark evidence.",
+      "required": ["schema_version", "evidence_scope", "scientific_acceptance_eligible", "record_kind", "case_id", "member_name", "fit_payload_array_pointer", "fit_payload_artifact_pointer", "canonical_payload_array_pointer", "dtype", "shape", "semantic_version", "artifact_relative_path", "file_bytes_base64", "values"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-scenario-contract-fixture-fit-array-owner/1.0"},
+        "evidence_scope": {"const": "CONTRACT_CLOSURE_FIXTURE_ONLY"},
+        "scientific_acceptance_eligible": {"const": false},
+        "record_kind": {"const": "CONTRACT_FIXTURE_FIT_ARRAY_OWNER"},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "member_name": {"enum": ["pairwise_precedence", "position_probabilities", "training_row_indexes", "training_stage_posterior"]},
+        "fit_payload_array_pointer": {"type": "string", "pattern": "^/array_catalog/[a-z][a-z0-9_]*$"},
+        "fit_payload_artifact_pointer": {"type": "string", "pattern": "^/backend_artifacts/(0|[1-9][0-9]*)$"},
+        "canonical_payload_array_pointer": {"type": "string", "pattern": "^/ordered_chain_payloads/(0|[1-9][0-9]*)/arrays/[a-z][a-z0-9_]*$"},
+        "dtype": {"enum": ["bool", "int32", "int64", "float64"]},
+        "shape": {"type": "array", "minItems": 1, "maxItems": 2, "items": {"type": "integer", "minimum": 0}},
+        "semantic_version": {"type": "string", "minLength": 1},
+        "artifact_relative_path": {"type": "string", "pattern": "^arrays/[a-z][a-z0-9_]*\\.bin$"},
+        "file_bytes_base64": {"type": "string", "pattern": "^[A-Za-z0-9+/]*={0,2}$"},
+        "values": {"type": "array", "items": {"oneOf": [{"type": "boolean"}, {"type": "number"}]}}
+      },
+      "allOf": [
+        {"if": {"properties": {"member_name": {"const": "pairwise_precedence"}}}, "then": {"properties": {"fit_payload_array_pointer": {"const": "/array_catalog/pairwise_precedence"}, "dtype": {"const": "float64"}, "shape": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "integer", "minimum": 2}}, "semantic_version": {"const": "pairwise-precedence/1"}, "artifact_relative_path": {"const": "arrays/pairwise_precedence.bin"}, "values": {"type": "array", "minItems": 4, "items": {"type": "number", "minimum": 0, "maximum": 1}}}}},
+        {"if": {"properties": {"member_name": {"const": "position_probabilities"}}}, "then": {"properties": {"fit_payload_array_pointer": {"const": "/array_catalog/position_probabilities"}, "dtype": {"const": "float64"}, "shape": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "integer", "minimum": 2}}, "semantic_version": {"const": "position-probabilities/1"}, "artifact_relative_path": {"const": "arrays/position_probabilities.bin"}, "values": {"type": "array", "minItems": 4, "items": {"type": "number", "minimum": 0, "maximum": 1}}}}},
+        {"if": {"properties": {"member_name": {"const": "training_row_indexes"}}}, "then": {"properties": {"fit_payload_array_pointer": {"const": "/array_catalog/training_row_indexes"}, "dtype": {"const": "int64"}, "shape": {"type": "array", "minItems": 1, "maxItems": 1, "items": {"type": "integer", "minimum": 1}}, "semantic_version": {"const": "training-row-indexes/1"}, "artifact_relative_path": {"const": "arrays/training_row_indexes.bin"}, "values": {"type": "array", "minItems": 1, "items": {"type": "integer", "minimum": 0}}}}},
+        {"if": {"properties": {"member_name": {"const": "training_stage_posterior"}}}, "then": {"properties": {"fit_payload_array_pointer": {"const": "/array_catalog/training_stage_posterior"}, "dtype": {"const": "float64"}, "shape": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "integer", "minimum": 1}}, "semantic_version": {"const": "training-stage-posterior/1"}, "artifact_relative_path": {"const": "arrays/training_stage_posterior.bin"}, "values": {"type": "array", "minItems": 3, "items": {"type": "number", "minimum": 0, "maximum": 1}}}}}
+      ]
+    },
+    "ScenarioContractFixtureMetricSourceLocator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["member_name", "selector", "fit_payload_array_pointer", "fit_payload_artifact_pointer", "canonical_payload_array_pointer"],
+      "properties": {
+        "member_name": {"enum": ["pairwise_precedence", "position_probabilities", "training_row_indexes", "training_stage_posterior"]},
+        "selector": {"const": "ALL"},
+        "fit_payload_array_pointer": {"type": "string", "pattern": "^/array_catalog/[a-z][a-z0-9_]*$"},
+        "fit_payload_artifact_pointer": {"type": "string", "pattern": "^/backend_artifacts/(0|[1-9][0-9]*)$"},
+        "canonical_payload_array_pointer": {"type": "string", "pattern": "^/ordered_chain_payloads/(0|[1-9][0-9]*)/arrays/[a-z][a-z0-9_]*$"}
+      }
+    },
+    "ScenarioContractFixtureMetricInputPrimitive": {
+      "type": "object", "additionalProperties": false,
+      "required": ["primitive_id", "owner_kind", "owner_record_digest", "ordered_owner_digests", "fit_payload_digest", "fit_response_binding_sha256", "source_locator", "derivation_id", "value"],
+      "properties": {
+        "primitive_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "owner_kind": {"const": "CONTRACT_FIXTURE_FIT_ARRAY_OWNER_RECORD"},
+        "owner_record_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "ordered_owner_digests": {"type": "array", "minItems": 1, "maxItems": 1, "items": {"$ref": "#/$defs/Sha256Digest"}},
+        "fit_payload_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "fit_response_binding_sha256": {"$ref": "#/$defs/Sha256Digest"},
+        "source_locator": {"$ref": "#/$defs/ScenarioContractFixtureMetricSourceLocator"},
+        "derivation_id": {"const": "exact-array-vector/1"},
+        "value": {"type": "array", "items": {"oneOf": [{"type": "boolean"}, {"type": "number"}]}}
+      }
+    },
+    "ScenarioContractEventIdBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["truth_event_id", "canonical_event_id"],
+      "properties": {
+        "truth_event_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/EventId"},
+        "canonical_event_id": {"$ref": "canonical-records.schema.json#/$defs/MachineId"}
+      }
+    },
+    "ScenarioContractEventIdMapping": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "mapping_method_id", "ordered_bindings"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-scenario-contract-event-id-mapping/1.0"},
+        "mapping_method_id": {"const": "synthetic-e-id-lowercase-machine-id/1"},
+        "ordered_bindings": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/ScenarioContractEventIdBinding"}}
+      }
+    },
+    "ScenarioContractFixtureMetricInputProjection": {
+      "type": "object", "additionalProperties": false,
+      "$comment": "Audit projection rebuilt by the evaluator from fixed source locators and exact array artifacts already authenticated by the fit-payload, response-binding, canonical-payload, and sealed-result chain. Supplied values or locators never establish evidence.",
+      "required": ["schema_version", "evidence_scope", "scientific_acceptance_eligible", "benchmark_subject_digest", "family_id", "subtype", "case_id", "sealed_case_manifest_index", "truth_object_sha256", "operation_instance_id", "chain_execution_id", "attempt_id", "chain_id", "seed", "event_id_mapping", "ordered_primitives"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-scenario-contract-fixture-case-metric-input/1.0"},
+        "evidence_scope": {"const": "CONTRACT_CLOSURE_FIXTURE_ONLY"},
+        "scientific_acceptance_eligible": {"const": false},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "family_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ScenarioFamilyId"},
+        "subtype": {"enum": ["NONE", "CORRELATED", "EXACT_DUPLICATE_POST_NOISE"]},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "sealed_case_manifest_index": {"type": "integer", "minimum": 0},
+        "truth_object_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "operation_instance_id": {"$ref": "#/$defs/Sha256Digest"},
+        "chain_execution_id": {"$ref": "#/$defs/Sha256Digest"},
+        "attempt_id": {"$ref": "#/$defs/Sha256Digest"},
+        "chain_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "seed": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/UInt64Hex"},
+        "event_id_mapping": {"$ref": "#/$defs/ScenarioContractEventIdMapping"},
+        "ordered_primitives": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/ScenarioContractFixtureMetricInputPrimitive"}}
+      }
+    },
+    "ScenarioContractFixtureFamilyEvaluation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "evidence_scope", "scientific_acceptance_eligible", "digest_state", "benchmark_subject_digest", "family_id", "predicate_id", "planned_count", "valid_count", "ordered_case_bindings", "payload", "scenario_family_evaluation_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-scenario-contract-fixture-family-evaluation/1.0"},
+        "evidence_scope": {"const": "CONTRACT_CLOSURE_FIXTURE_ONLY"},
+        "scientific_acceptance_eligible": {"const": false},
+        "digest_state": {"enum": ["PERSISTED", "DIGEST_PREIMAGE"]},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "family_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ScenarioFamilyId"},
+        "predicate_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "planned_count": {"type": "integer", "minimum": 1},
+        "valid_count": {"type": "integer", "minimum": 0},
+        "ordered_case_bindings": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/ScenarioContractFixtureCaseOwnerBinding"}},
+        "payload": {"$ref": "#/$defs/FamilyPayload"},
+        "scenario_family_evaluation_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      }
+    },
+    "FamilyPayload": {
+      "oneOf": [
+        {"$ref": "#/$defs/EasyKnownTruthEvidence"}, {"$ref": "#/$defs/ModerateEvidence"}, {"$ref": "#/$defs/SmallSampleEvidence"},
+        {"$ref": "#/$defs/NoiseEvidence"}, {"$ref": "#/$defs/WeakSeparationEvidence"}, {"$ref": "#/$defs/IncompleteCoverageEvidence"},
+        {"$ref": "#/$defs/TightlySpacedEvidence"}, {"$ref": "#/$defs/SlowTransitionEvidence"}, {"$ref": "#/$defs/OutlierEvidence"},
+        {"$ref": "#/$defs/McarEvidence"}, {"$ref": "#/$defs/MarEvidence"}, {"$ref": "#/$defs/CorrelatedDuplicateEvidence"},
+        {"$ref": "#/$defs/MinorityAlternateEvidence"}, {"$ref": "#/$defs/OpposingEvidence"}, {"$ref": "#/$defs/NearSimultaneousEvidence"},
+        {"$ref": "#/$defs/CovariateEvidence"}, {"$ref": "#/$defs/GroupBoundaryEvidence"}, {"$ref": "#/$defs/ControlContaminationEvidence"},
+        {"$ref": "#/$defs/HeavyTailEvidence"}, {"$ref": "#/$defs/WrongDirectionEvidence"}, {"$ref": "#/$defs/PureNoSignalEvidence"},
+        {"$ref": "#/$defs/LabelPermutationEvidence"}, {"$ref": "#/$defs/FeaturePermutationEvidence"}
+      ]
+    },
+    "CaseEvidence": {
+      "oneOf": [
+        {"$ref": "#/$defs/EasyCaseEvidence"}, {"$ref": "#/$defs/ModerateCaseEvidence"}, {"$ref": "#/$defs/SmallCaseEvidence"},
+        {"$ref": "#/$defs/NoiseCaseEvidence"}, {"$ref": "#/$defs/WeakCaseEvidence"}, {"$ref": "#/$defs/IncompleteCaseEvidence"},
+        {"$ref": "#/$defs/TightlyCaseEvidence"}, {"$ref": "#/$defs/SlowCaseEvidence"}, {"$ref": "#/$defs/OutlierCaseEvidence"},
+        {"$ref": "#/$defs/McarCaseEvidence"}, {"$ref": "#/$defs/MarCaseEvidence"}, {"$ref": "#/$defs/CorrelatedCaseEvidence"},
+        {"$ref": "#/$defs/MinorityCaseEvidence"}, {"$ref": "#/$defs/OpposingCaseEvidence"}, {"$ref": "#/$defs/NearCaseEvidence"},
+        {"$ref": "#/$defs/CovariateCaseEvidence"}, {"$ref": "#/$defs/BoundaryCaseEvidence"}, {"$ref": "#/$defs/ContaminationCaseEvidence"},
+        {"$ref": "#/$defs/HeavyCaseEvidence"}, {"$ref": "#/$defs/DirectionCaseEvidence"}, {"$ref": "#/$defs/PureCaseEvidence"},
+        {"$ref": "#/$defs/LabelCaseEvidence"}, {"$ref": "#/$defs/FeatureCaseEvidence"}
+      ]
+    },
+    "EasyCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind"], "properties": {"evidence_kind": {"const": "EASY_KNOWN_TRUTH"}}},
+    "ModerateCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind"], "properties": {"evidence_kind": {"const": "MODERATE_MINA_SHAPE"}}},
+    "SmallCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "entropy_delta_small_minus_large", "cross_chain_delta_small_minus_large", "forced_precision_flag"], "properties": {"evidence_kind": {"const": "SMALL_SAMPLE"}, "entropy_delta_small_minus_large": {"type": "number"}, "cross_chain_delta_small_minus_large": {"type": "number"}, "forced_precision_flag": {"type": "boolean"}}},
+    "NoiseCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind"], "properties": {"evidence_kind": {"const": "NOISE_LADDER"}}},
+    "WeakCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "entropy_delta_weak_minus_moderate", "kendall_distance_delta_weak_minus_moderate", "ineligible_strong_flag"], "properties": {"evidence_kind": {"const": "WEAK_PRE_POST_SEPARATION"}, "entropy_delta_weak_minus_moderate": {"type": "number"}, "kendall_distance_delta_weak_minus_moderate": {"type": "number"}, "ineligible_strong_flag": {"type": "boolean"}}},
+    "IncompleteCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "affected_tail_entropy_delta", "coverage_limitation_reported"], "properties": {"evidence_kind": {"const": "INCOMPLETE_TIME_COVERAGE"}, "affected_tail_entropy_delta": {"type": "number"}, "coverage_limitation_reported": {"type": "boolean"}}},
+    "TightlyCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "target_pair_precedence", "arbitrary_within_pair_truth_claim"], "properties": {"evidence_kind": {"const": "TIGHTLY_SPACED_EVENTS"}, "target_pair_precedence": {"type": "number", "minimum": 0, "maximum": 1}, "arbitrary_within_pair_truth_claim": {"type": "boolean"}}},
+    "SlowCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "entropy_delta_slow_minus_narrow", "kendall_distance_delta_slow_minus_narrow"], "properties": {"evidence_kind": {"const": "SLOW_OVERLAPPING_TRANSITIONS"}, "entropy_delta_slow_minus_narrow": {"type": "number"}, "kendall_distance_delta_slow_minus_narrow": {"type": "number"}}},
+    "OutlierCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "bad_or_wrong_data_claim_flag"], "properties": {"evidence_kind": {"const": "OUTLIER_SABOTAGE"}, "bad_or_wrong_data_claim_flag": {"type": "boolean"}}},
+    "McarCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "mask_digest_equal", "missing_counts_equal", "prebackend_terminal_correct", "predicted_removed_rows", "actual_removed_rows", "preprocessing_refit_equal", "backend_nan_flag"], "properties": {"evidence_kind": {"const": "MCAR_MISSINGNESS"}, "mask_digest_equal": {"type": "boolean"}, "missing_counts_equal": {"type": "boolean"}, "prebackend_terminal_correct": {"type": "boolean"}, "predicted_removed_rows": {"type": "integer", "minimum": 0}, "actual_removed_rows": {"type": "integer", "minimum": 0}, "preprocessing_refit_equal": {"type": "boolean"}, "backend_nan_flag": {"type": "boolean"}}},
+    "MarCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "mask_digest_equal", "missing_counts_equal", "terminal_contract_equal", "training_row_manifest_equal", "silent_loss_flag", "hidden_imputation_flag"], "properties": {"evidence_kind": {"const": "MAR_MISSINGNESS"}, "mask_digest_equal": {"type": "boolean"}, "missing_counts_equal": {"type": "boolean"}, "terminal_contract_equal": {"type": "boolean"}, "training_row_manifest_equal": {"type": "boolean"}, "silent_loss_flag": {"type": "boolean"}, "hidden_imputation_flag": {"type": "boolean"}}},
+    "CorrelatedCaseEvidence": {"oneOf": [
+      {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "target_pair_precedence", "arbitrary_within_pair_truth_claim"], "properties": {"evidence_kind": {"const": "CORRELATED"}, "target_pair_precedence": {"type": "number", "minimum": 0, "maximum": 1}, "arbitrary_within_pair_truth_claim": {"type": "boolean"}}},
+      {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "target_pair_precedence", "partial_truth_scored_without_tiebreak", "arbitrary_within_pair_truth_claim"], "properties": {"evidence_kind": {"const": "EXACT_DUPLICATE_POST_NOISE"}, "target_pair_precedence": {"type": "number", "minimum": 0, "maximum": 1}, "partial_truth_scored_without_tiebreak": {"type": "boolean"}, "arbitrary_within_pair_truth_claim": {"type": "boolean"}}}
+    ]},
+    "MinorityCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "single_sequence_limitation_reported", "entropy_delta_mixture_minus_single"], "properties": {"evidence_kind": {"const": "MINORITY_ALTERNATE_SEQUENCE"}, "single_sequence_limitation_reported": {"type": "boolean"}, "entropy_delta_mixture_minus_single": {"type": "number"}}},
+    "OpposingCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "opposing_pair_absolute_precedence_from_half", "internally_concentrated_flag", "stronger_than_null_flag"], "properties": {"evidence_kind": {"const": "OPPOSING_SEQUENCES_50_50"}, "opposing_pair_absolute_precedence_from_half": {"type": "number", "minimum": 0, "maximum": 1}, "internally_concentrated_flag": {"type": "boolean"}, "stronger_than_null_flag": {"type": "boolean"}}},
+    "NearCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "block_pair_precedence", "block_aware_scoring"], "properties": {"evidence_kind": {"const": "NEAR_SIMULTANEOUS_EVENTS"}, "block_pair_precedence": {"type": "number", "minimum": 0, "maximum": 1}, "block_aware_scoring": {"type": "boolean"}}},
+    "CovariateCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "adjusted_minus_unadjusted_kendall_agreement", "reference_only_fit_flag", "resample_leakage_count"], "properties": {"evidence_kind": {"const": "COVARIATE_CONFOUNDING"}, "adjusted_minus_unadjusted_kendall_agreement": {"type": "number"}, "reference_only_fit_flag": {"type": "boolean"}, "resample_leakage_count": {"type": "integer", "minimum": 0}}},
+    "BoundaryCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "group_count_accounting_equal", "decision_attribution", "selected_threshold_flag"], "properties": {"evidence_kind": {"const": "GROUP_BOUNDARY_SENSITIVITY"}, "group_count_accounting_equal": {"type": "boolean"}, "decision_attribution": {"const": "DESCRIPTIVE_ASSOCIATION"}, "selected_threshold_flag": {"type": "boolean"}}},
+    "ContaminationCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "contamination_fraction", "kendall_agreement", "position_entropy", "label_manifest_equal"], "properties": {"evidence_kind": {"const": "CONTROL_CONTAMINATION"}, "contamination_fraction": {"type": "number", "minimum": 0, "maximum": 1}, "kendall_agreement": {"type": "number", "minimum": 0, "maximum": 1}, "position_entropy": {"type": "number", "minimum": 0, "maximum": 1}, "label_manifest_equal": {"type": "boolean"}}},
+    "HeavyCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "hidden_modification_flag", "suppressed_warning_flag", "nonfinite_admitted_flag", "visible_terminal_flag"], "properties": {"evidence_kind": {"const": "HEAVY_TAILED_SKEWED"}, "hidden_modification_flag": {"type": "boolean"}, "suppressed_warning_flag": {"type": "boolean"}, "nonfinite_admitted_flag": {"type": "boolean"}, "visible_terminal_flag": {"type": "boolean"}}},
+    "DirectionCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "correct_minus_wrong_kendall_agreement", "direction_sensitivity_reported", "direction_validity_claim"], "properties": {"evidence_kind": {"const": "WRONG_EVENT_DIRECTION"}, "correct_minus_wrong_kendall_agreement": {"type": "number"}, "direction_sensitivity_reported": {"type": "boolean"}, "direction_validity_claim": {"type": "boolean"}}},
+    "PureCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "opportunity_id", "candidate_decision_sha256", "candidate_state"], "properties": {"evidence_kind": {"const": "PURE_NO_SIGNAL"}, "opportunity_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"}, "candidate_decision_sha256": {"$ref": "#/$defs/Sha256Hex"}, "candidate_state": {"enum": ["CANDIDATE_STRONG_EVIDENCE", "CANDIDATE_NOT_STRONG_EVIDENCE", "CANDIDATE_STRONG_EVIDENCE_NOT_ASSESSABLE"]}}},
+    "LabelCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "group_counts_preserved", "preprocessing_refit_equal", "source_binding_equal", "calibration_diagnostic_reported", "excluded_from_pure_no_signal_fpr_denominator", "ineligible_strong_flag"], "properties": {"evidence_kind": {"const": "LABEL_PERMUTATION_NULL"}, "group_counts_preserved": {"type": "boolean"}, "preprocessing_refit_equal": {"type": "boolean"}, "source_binding_equal": {"type": "boolean"}, "calibration_diagnostic_reported": {"type": "boolean"}, "excluded_from_pure_no_signal_fpr_denominator": {"type": "boolean"}, "ineligible_strong_flag": {"type": "boolean"}}},
+    "FeatureCaseEvidence": {"type": "object", "additionalProperties": false, "required": ["evidence_kind", "group_marginals_preserved", "missing_counts_preserved", "participant_event_alignment_changed", "preprocessing_refit_equal", "source_binding_equal", "calibration_diagnostic_reported", "excluded_from_pure_no_signal_fpr_denominator", "ineligible_strong_flag"], "properties": {"evidence_kind": {"const": "WITHIN_GROUP_FEATURE_PERMUTATION_NULL"}, "group_marginals_preserved": {"type": "boolean"}, "missing_counts_preserved": {"type": "boolean"}, "participant_event_alignment_changed": {"type": "boolean"}, "preprocessing_refit_equal": {"type": "boolean"}, "source_binding_equal": {"type": "boolean"}, "calibration_diagnostic_reported": {"type": "boolean"}, "excluded_from_pure_no_signal_fpr_denominator": {"type": "boolean"}, "ineligible_strong_flag": {"type": "boolean"}}},
+    "EasyKnownTruthEvidence": {"type": "object", "additionalProperties": false, "required": ["order_rule_states", "stage_rule_states", "truth_scoring_mode"], "properties": {"order_rule_states": {"$ref": "#/$defs/RuleStateVector"}, "stage_rule_states": {"$ref": "#/$defs/RuleStateVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "ModerateEvidence": {"type": "object", "additionalProperties": false, "required": ["moderate_rule_states", "truth_scoring_mode"], "properties": {"moderate_rule_states": {"$ref": "#/$defs/RuleStateVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "SmallSampleEvidence": {"type": "object", "additionalProperties": false, "required": ["entropy_delta_small_minus_large", "cross_chain_delta_small_minus_large", "forced_precision_flags", "truth_scoring_mode"], "properties": {"entropy_delta_small_minus_large": {"$ref": "#/$defs/FloatVector"}, "cross_chain_delta_small_minus_large": {"$ref": "#/$defs/FloatVector"}, "forced_precision_flags": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "NoiseEvidence": {"type": "object", "additionalProperties": false, "required": ["noise_ladder_rule_states", "truth_scoring_mode"], "properties": {"noise_ladder_rule_states": {"$ref": "#/$defs/RuleStateVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "WeakSeparationEvidence": {"type": "object", "additionalProperties": false, "required": ["entropy_delta_weak_minus_moderate", "kendall_distance_delta_weak_minus_moderate", "ineligible_strong_flags", "truth_scoring_mode"], "properties": {"entropy_delta_weak_minus_moderate": {"$ref": "#/$defs/FloatVector"}, "kendall_distance_delta_weak_minus_moderate": {"$ref": "#/$defs/FloatVector"}, "ineligible_strong_flags": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "IncompleteCoverageEvidence": {"type": "object", "additionalProperties": false, "required": ["affected_tail_entropy_delta", "coverage_limitation_reported", "truth_scoring_mode"], "properties": {"affected_tail_entropy_delta": {"$ref": "#/$defs/FloatVector"}, "coverage_limitation_reported": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "TightlySpacedEvidence": {"type": "object", "additionalProperties": false, "required": ["target_pair_precedence", "arbitrary_within_pair_truth_claims", "truth_scoring_mode"], "properties": {"target_pair_precedence": {"$ref": "#/$defs/ProbabilityVector"}, "arbitrary_within_pair_truth_claims": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "SlowTransitionEvidence": {"type": "object", "additionalProperties": false, "required": ["entropy_delta_slow_minus_narrow", "kendall_distance_delta_slow_minus_narrow", "truth_scoring_mode"], "properties": {"entropy_delta_slow_minus_narrow": {"$ref": "#/$defs/FloatVector"}, "kendall_distance_delta_slow_minus_narrow": {"$ref": "#/$defs/FloatVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "OutlierEvidence": {"type": "object", "additionalProperties": false, "required": ["influence_rule_states", "bad_or_wrong_data_claim_flags", "truth_scoring_mode"], "properties": {"influence_rule_states": {"$ref": "#/$defs/RuleStateVector"}, "bad_or_wrong_data_claim_flags": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "McarEvidence": {"type": "object", "additionalProperties": false, "required": ["mask_digest_equal", "missing_counts_equal", "prebackend_terminal_correct", "predicted_removed_rows", "actual_removed_rows", "preprocessing_refit_equal", "backend_nan_flags", "truth_scoring_mode"], "properties": {"mask_digest_equal": {"$ref": "#/$defs/BoolVector"}, "missing_counts_equal": {"$ref": "#/$defs/BoolVector"}, "prebackend_terminal_correct": {"$ref": "#/$defs/BoolVector"}, "predicted_removed_rows": {"$ref": "#/$defs/UIntVector"}, "actual_removed_rows": {"$ref": "#/$defs/UIntVector"}, "preprocessing_refit_equal": {"$ref": "#/$defs/BoolVector"}, "backend_nan_flags": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "MarEvidence": {"type": "object", "additionalProperties": false, "required": ["mask_digest_equal", "missing_counts_equal", "terminal_contract_equal", "training_row_manifest_equal", "silent_loss_flags", "hidden_imputation_flags", "truth_scoring_mode"], "properties": {"mask_digest_equal": {"$ref": "#/$defs/BoolVector"}, "missing_counts_equal": {"$ref": "#/$defs/BoolVector"}, "terminal_contract_equal": {"$ref": "#/$defs/BoolVector"}, "training_row_manifest_equal": {"$ref": "#/$defs/BoolVector"}, "silent_loss_flags": {"$ref": "#/$defs/BoolVector"}, "hidden_imputation_flags": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "CorrelatedDuplicateEvidence": {
+      "type": "object", "additionalProperties": false, "required": ["correlated", "exact_duplicate_post_noise"],
+      "properties": {
+        "correlated": {"type": "object", "additionalProperties": false, "required": ["case_ids", "target_pair_precedence", "arbitrary_within_pair_truth_claims", "truth_scoring_mode"], "properties": {"case_ids": {"$ref": "#/$defs/UniqueMachineIdVector"}, "target_pair_precedence": {"$ref": "#/$defs/ProbabilityVector"}, "arbitrary_within_pair_truth_claims": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+        "exact_duplicate_post_noise": {"type": "object", "additionalProperties": false, "required": ["case_ids", "target_pair_precedence", "partial_truth_scored_without_tiebreak", "arbitrary_within_pair_truth_claims", "truth_scoring_mode"], "properties": {"case_ids": {"$ref": "#/$defs/UniqueMachineIdVector"}, "target_pair_precedence": {"$ref": "#/$defs/ProbabilityVector"}, "partial_truth_scored_without_tiebreak": {"$ref": "#/$defs/BoolVector"}, "arbitrary_within_pair_truth_claims": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "PARTIAL_ORDER_EQUIVALENCE"}}}
+      }
+    },
+    "MinorityAlternateEvidence": {"type": "object", "additionalProperties": false, "required": ["single_sequence_limitation_reported", "entropy_delta_mixture_minus_single", "truth_scoring_mode"], "properties": {"single_sequence_limitation_reported": {"$ref": "#/$defs/BoolVector"}, "entropy_delta_mixture_minus_single": {"$ref": "#/$defs/FloatVector"}, "truth_scoring_mode": {"const": "MIXTURE_NON_IDENTIFIABLE"}}},
+    "OpposingEvidence": {"type": "object", "additionalProperties": false, "required": ["opposing_pair_absolute_precedence_from_half", "internally_concentrated_flags", "stronger_than_null_flags", "truth_scoring_mode"], "properties": {"opposing_pair_absolute_precedence_from_half": {"$ref": "#/$defs/ProbabilityVector"}, "internally_concentrated_flags": {"$ref": "#/$defs/BoolVector"}, "stronger_than_null_flags": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "MIXTURE_NON_IDENTIFIABLE"}}},
+    "NearSimultaneousEvidence": {"type": "object", "additionalProperties": false, "required": ["block_pair_precedence", "block_aware_scoring", "truth_scoring_mode"], "properties": {"block_pair_precedence": {"$ref": "#/$defs/ProbabilityVector"}, "block_aware_scoring": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "PARTIAL_ORDER_EQUIVALENCE"}}},
+    "CovariateEvidence": {"type": "object", "additionalProperties": false, "required": ["adjusted_minus_unadjusted_kendall_agreement", "reference_only_fit_flags", "resample_leakage_count", "truth_scoring_mode"], "properties": {"adjusted_minus_unadjusted_kendall_agreement": {"$ref": "#/$defs/FloatVector"}, "reference_only_fit_flags": {"$ref": "#/$defs/BoolVector"}, "resample_leakage_count": {"$ref": "#/$defs/UIntVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "GroupBoundaryEvidence": {"type": "object", "additionalProperties": false, "required": ["ordered_rule_ids", "group_count_accounting_equal", "decision_attribution", "selected_threshold_flags", "truth_scoring_mode"], "properties": {"ordered_rule_ids": {"const": ["boundary_q50", "boundary_q35", "boundary_q65"]}, "group_count_accounting_equal": {"$ref": "#/$defs/BoolVector"}, "decision_attribution": {"type": "array", "minItems": 1, "items": {"const": "DESCRIPTIVE_ASSOCIATION"}}, "selected_threshold_flags": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "ControlContaminationEvidence": {"type": "object", "additionalProperties": false, "required": ["contamination_fraction", "kendall_agreement", "position_entropy", "label_manifest_equal", "truth_scoring_mode"], "properties": {"contamination_fraction": {"$ref": "#/$defs/ProbabilityVector"}, "kendall_agreement": {"$ref": "#/$defs/ProbabilityVector"}, "position_entropy": {"$ref": "#/$defs/ProbabilityVector"}, "label_manifest_equal": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "HeavyTailEvidence": {"type": "object", "additionalProperties": false, "required": ["hidden_modification_flags", "suppressed_warning_flags", "nonfinite_admitted_flags", "visible_terminal_flags", "truth_scoring_mode"], "properties": {"hidden_modification_flags": {"$ref": "#/$defs/BoolVector"}, "suppressed_warning_flags": {"$ref": "#/$defs/BoolVector"}, "nonfinite_admitted_flags": {"$ref": "#/$defs/BoolVector"}, "visible_terminal_flags": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "WrongDirectionEvidence": {"type": "object", "additionalProperties": false, "required": ["correct_minus_wrong_kendall_agreement", "direction_sensitivity_reported", "direction_validity_claims", "truth_scoring_mode"], "properties": {"correct_minus_wrong_kendall_agreement": {"$ref": "#/$defs/FloatVector"}, "direction_sensitivity_reported": {"$ref": "#/$defs/BoolVector"}, "direction_validity_claims": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "STRICT_TOTAL_ORDER"}}},
+    "PureNoSignalEvidence": {"type": "object", "additionalProperties": false, "required": ["fpr_evidence", "truth_scoring_mode"], "properties": {"fpr_evidence": {"$ref": "scientific-invariant.schema.json#/$defs/FalsePositiveEvidenceBundle"}, "truth_scoring_mode": {"const": "NO_RECOVERABLE_SIGNAL"}}},
+    "LabelPermutationEvidence": {"type": "object", "additionalProperties": false, "required": ["group_counts_preserved", "preprocessing_refit_equal", "source_binding_equal", "calibration_diagnostic_reported", "excluded_from_pure_no_signal_fpr_denominator", "ineligible_strong_flags", "truth_scoring_mode"], "properties": {"group_counts_preserved": {"$ref": "#/$defs/BoolVector"}, "preprocessing_refit_equal": {"$ref": "#/$defs/BoolVector"}, "source_binding_equal": {"$ref": "#/$defs/BoolVector"}, "calibration_diagnostic_reported": {"$ref": "#/$defs/BoolVector"}, "excluded_from_pure_no_signal_fpr_denominator": {"$ref": "#/$defs/BoolVector"}, "ineligible_strong_flags": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "REFITTED_NULL_TRANSFORMATION"}}},
+    "FeaturePermutationEvidence": {"type": "object", "additionalProperties": false, "required": ["group_marginals_preserved", "missing_counts_preserved", "participant_event_alignment_changed", "preprocessing_refit_equal", "source_binding_equal", "calibration_diagnostic_reported", "excluded_from_pure_no_signal_fpr_denominator", "ineligible_strong_flags", "truth_scoring_mode"], "properties": {"group_marginals_preserved": {"$ref": "#/$defs/BoolVector"}, "missing_counts_preserved": {"$ref": "#/$defs/BoolVector"}, "participant_event_alignment_changed": {"$ref": "#/$defs/BoolVector"}, "preprocessing_refit_equal": {"$ref": "#/$defs/BoolVector"}, "source_binding_equal": {"$ref": "#/$defs/BoolVector"}, "calibration_diagnostic_reported": {"$ref": "#/$defs/BoolVector"}, "excluded_from_pure_no_signal_fpr_denominator": {"$ref": "#/$defs/BoolVector"}, "ineligible_strong_flags": {"$ref": "#/$defs/BoolVector"}, "truth_scoring_mode": {"const": "REFITTED_NULL_TRANSFORMATION"}}}
+  }
+}

@@ -1,0 +1,1039 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ebm-audit.invalid/schemas/run-status.schema.json",
+  "title": "Published incomplete run status",
+  "type": "object",
+  "additionalProperties": false,
+  "dependentRequired": {
+    "development_null": [
+      "development_null_science_receipt_digest"
+    ],
+    "development_null_science_receipt_digest": [
+      "development_null"
+    ]
+  },
+  "required": [
+    "run_status_schema_version",
+    "command_result_schema_version",
+    "run_completion_status",
+    "process_exit_code",
+    "candidate_execution_status",
+    "candidate_execution_exit_code",
+    "candidate_execution_primary_failure_class",
+    "audit_report_status",
+    "science_completion_gate_status",
+    "science_completion_reason_codes",
+    "offline",
+    "input_declaration",
+    "profile_id",
+    "plan_schema_version",
+    "plan_digest",
+    "prepared_dataset_digest",
+    "dataset_summary_digest",
+    "terminal_index_digest",
+    "scientific_evidence_digest",
+    "participant_influence_planned_origin_count",
+    "participant_influence_attempt_count",
+    "participant_influence_record_count",
+    "participant_influence_contribution_counts",
+    "participant_influence_status",
+    "participant_stage_status",
+    "private_participant_stage_evidence_count",
+    "requested_candidate_count",
+    "terminal_record_count",
+    "success_count",
+    "non_success_terminal_count",
+    "privacy_failure_count",
+    "terminal_status_counts",
+    "report_artifact_count",
+    "report_artifacts",
+    "manifest_emitted",
+    "standalone_report_rehydration_available",
+    "publication"
+  ],
+  "properties": {
+    "run_status_schema_version": {
+      "const": "ebm-audit-run-status/6.0"
+    },
+    "command_result_schema_version": {
+      "const": "ebm-audit-cli-run-result/6.0"
+    },
+    "run_completion_status": {
+      "enum": [
+        "PARTIAL",
+        "FAILED",
+        "PRIVACY_FAILED"
+      ]
+    },
+    "process_exit_code": {
+      "enum": [
+        10,
+        11,
+        12,
+        14,
+        15
+      ]
+    },
+    "candidate_execution_status": {
+      "enum": [
+        "COMPLETE",
+        "PARTIAL",
+        "FAILED",
+        "PRIVACY_FAILED"
+      ]
+    },
+    "candidate_execution_exit_code": {
+      "enum": [
+        0,
+        10,
+        11,
+        12,
+        14,
+        15
+      ]
+    },
+    "candidate_execution_primary_failure_class": {
+      "oneOf": [
+        {
+          "enum": [
+            "INVALID_INPUT_OR_SPECIFICATION",
+            "WORKER_OR_CAPABILITY_UNAVAILABLE",
+            "BACKEND_OR_PROTOCOL_FAILURE"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "audit_report_status": {
+      "const": "INCOMPLETE"
+    },
+    "science_completion_gate_status": {
+      "const": "BLOCKED"
+    },
+    "science_completion_reason_codes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/ReasonCode"
+      }
+    },
+    "offline": {
+      "const": true
+    },
+    "input_declaration": {
+      "enum": [
+        "DECLARED_SYNTHETIC",
+        "PRIVATE_LOCAL_INPUT"
+      ]
+    },
+    "profile_id": {
+      "enum": [
+        "quick",
+        "full",
+        "release"
+      ]
+    },
+    "plan_schema_version": {
+      "const": "ebm-audit-analysis-plan/3.0"
+    },
+    "plan_digest": {
+      "$ref": "#/$defs/Digest"
+    },
+    "prepared_dataset_digest": {
+      "$ref": "#/$defs/Digest"
+    },
+    "dataset_summary_digest": {
+      "$ref": "#/$defs/Digest"
+    },
+    "terminal_index_digest": {
+      "$ref": "#/$defs/Digest"
+    },
+    "scientific_evidence_digest": {
+      "$ref": "#/$defs/Digest"
+    },
+    "development_null": {
+      "$ref": "development-null-receipt.schema.json#/$defs/DevelopmentNullReceipt"
+    },
+    "development_null_science_receipt_digest": {
+      "$ref": "#/$defs/Digest"
+    },
+    "participant_influence_planned_origin_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "participant_influence_attempt_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "participant_influence_record_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "participant_influence_contribution_counts": {
+      "$ref": "influence-evidence.schema.json#/$defs/ContributionCounts"
+    },
+    "participant_influence_status": {
+      "enum": [
+        "AVAILABLE",
+        "NOT_ASSESSABLE",
+        "PARTIAL"
+      ]
+    },
+    "participant_stage_status": {
+      "enum": [
+        "AVAILABLE",
+        "NOT_ASSESSABLE",
+        "PARTIAL"
+      ]
+    },
+    "private_participant_stage_evidence_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "requested_candidate_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "terminal_record_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "success_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "non_success_terminal_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "privacy_failure_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "terminal_status_counts": {
+      "$ref": "#/$defs/TerminalStatusCounts"
+    },
+    "report_artifact_count": {
+      "type": "integer",
+      "enum": [
+        7,
+        8,
+        9
+      ]
+    },
+    "report_artifacts": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 9,
+      "items": {
+        "$ref": "#/$defs/ReportArtifact"
+      }
+    },
+    "manifest_emitted": {
+      "const": false
+    },
+    "standalone_report_rehydration_available": {
+      "const": false
+    },
+    "publication": {
+      "$ref": "#/$defs/PublicationReceipt"
+    }
+  },
+  "allOf": [
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "run_completion_status": {
+              "const": "PARTIAL"
+            },
+            "process_exit_code": {
+              "const": 12
+            },
+            "candidate_execution_status": {
+              "const": "COMPLETE"
+            },
+            "candidate_execution_exit_code": {
+              "const": 0
+            },
+            "candidate_execution_primary_failure_class": {
+              "type": "null"
+            },
+            "success_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "non_success_terminal_count": {
+              "const": 0
+            },
+            "privacy_failure_count": {
+              "const": 0
+            }
+          }
+        },
+        {
+          "properties": {
+            "run_completion_status": {
+              "const": "PARTIAL"
+            },
+            "process_exit_code": {
+              "const": 12
+            },
+            "candidate_execution_status": {
+              "const": "PARTIAL"
+            },
+            "candidate_execution_exit_code": {
+              "const": 12
+            },
+            "candidate_execution_primary_failure_class": {
+              "type": "null"
+            },
+            "success_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "non_success_terminal_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "privacy_failure_count": {
+              "const": 0
+            }
+          }
+        },
+        {
+          "properties": {
+            "run_completion_status": {
+              "const": "PRIVACY_FAILED"
+            },
+            "process_exit_code": {
+              "const": 14
+            },
+            "candidate_execution_status": {
+              "const": "PRIVACY_FAILED"
+            },
+            "candidate_execution_exit_code": {
+              "const": 14
+            },
+            "candidate_execution_primary_failure_class": {
+              "type": "null"
+            },
+            "non_success_terminal_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "privacy_failure_count": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "run_completion_status": {
+              "const": "FAILED"
+            },
+            "process_exit_code": {
+              "const": 10
+            },
+            "candidate_execution_status": {
+              "const": "FAILED"
+            },
+            "candidate_execution_exit_code": {
+              "const": 10
+            },
+            "candidate_execution_primary_failure_class": {
+              "const": "INVALID_INPUT_OR_SPECIFICATION"
+            },
+            "success_count": {
+              "const": 0
+            },
+            "non_success_terminal_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "privacy_failure_count": {
+              "const": 0
+            }
+          }
+        },
+        {
+          "properties": {
+            "run_completion_status": {
+              "const": "FAILED"
+            },
+            "process_exit_code": {
+              "const": 11
+            },
+            "candidate_execution_status": {
+              "const": "FAILED"
+            },
+            "candidate_execution_exit_code": {
+              "const": 11
+            },
+            "candidate_execution_primary_failure_class": {
+              "const": "WORKER_OR_CAPABILITY_UNAVAILABLE"
+            },
+            "success_count": {
+              "const": 0
+            },
+            "non_success_terminal_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "privacy_failure_count": {
+              "const": 0
+            }
+          }
+        },
+        {
+          "properties": {
+            "run_completion_status": {
+              "const": "FAILED"
+            },
+            "process_exit_code": {
+              "const": 15
+            },
+            "candidate_execution_status": {
+              "const": "FAILED"
+            },
+            "candidate_execution_exit_code": {
+              "const": 15
+            },
+            "candidate_execution_primary_failure_class": {
+              "const": "BACKEND_OR_PROTOCOL_FAILURE"
+            },
+            "success_count": {
+              "const": 0
+            },
+            "non_success_terminal_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "privacy_failure_count": {
+              "const": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "if": {
+        "required": [
+          "development_null"
+        ]
+      },
+      "then": {
+        "properties": {
+          "report_artifact_count": {
+            "enum": [
+              8,
+              9
+            ]
+          },
+          "report_artifacts": {
+            "oneOf": [
+              {
+                "type": "array",
+                "minItems": 8,
+                "maxItems": 8,
+                "prefixItems": [
+                  {
+                    "$ref": "#/$defs/ScientificEvidenceArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/DevelopmentNullScienceReceiptArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/BaselineAssessmentArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/ReportJsonArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/UniversesCsvArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/MeaningEvidenceCsvArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/ReportProvenanceCsvArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/ReportHtmlArtifact"
+                  }
+                ],
+                "items": false
+              },
+              {
+                "type": "array",
+                "minItems": 9,
+                "maxItems": 9,
+                "prefixItems": [
+                  {
+                    "$ref": "#/$defs/ScientificEvidenceArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/DevelopmentNullScienceReceiptArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/BaselineAssessmentArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/BaselineReproductionArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/ReportJsonArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/UniversesCsvArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/MeaningEvidenceCsvArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/ReportProvenanceCsvArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/ReportHtmlArtifact"
+                  }
+                ],
+                "items": false
+              }
+            ]
+          },
+          "publication": {
+            "properties": {
+              "inventory": {
+                "contains": {
+                  "properties": {
+                    "path": {
+                      "const": "evidence/development-null-science-receipt.json"
+                    }
+                  },
+                  "required": [
+                    "path"
+                  ]
+                },
+                "minContains": 1,
+                "maxContains": 1
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "report_artifact_count": {
+            "enum": [
+              7,
+              8
+            ]
+          },
+          "report_artifacts": {
+            "oneOf": [
+              {
+                "type": "array",
+                "minItems": 7,
+                "maxItems": 7,
+                "prefixItems": [
+                  {
+                    "$ref": "#/$defs/ScientificEvidenceArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/BaselineAssessmentArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/ReportJsonArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/UniversesCsvArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/MeaningEvidenceCsvArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/ReportProvenanceCsvArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/ReportHtmlArtifact"
+                  }
+                ],
+                "items": false
+              },
+              {
+                "type": "array",
+                "minItems": 8,
+                "maxItems": 8,
+                "prefixItems": [
+                  {
+                    "$ref": "#/$defs/ScientificEvidenceArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/BaselineAssessmentArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/BaselineReproductionArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/ReportJsonArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/UniversesCsvArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/MeaningEvidenceCsvArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/ReportProvenanceCsvArtifact"
+                  },
+                  {
+                    "$ref": "#/$defs/ReportHtmlArtifact"
+                  }
+                ],
+                "items": false
+              }
+            ]
+          },
+          "publication": {
+            "properties": {
+              "inventory": {
+                "not": {
+                  "contains": {
+                    "properties": {
+                      "path": {
+                        "const": "evidence/development-null-science-receipt.json"
+                      }
+                    },
+                    "required": [
+                      "path"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "publication": {
+          "properties": {
+            "inventory": {
+              "contains": {
+                "properties": {
+                  "path": {
+                    "const": "evidence/baseline-assessment.json"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              },
+              "minContains": 1,
+              "maxContains": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "report_artifacts": {
+            "contains": {
+              "properties": {
+                "path": {
+                  "const": "evidence/baseline-reproduction.json"
+                }
+              },
+              "required": [
+                "path"
+              ]
+            }
+          }
+        },
+        "required": [
+          "report_artifacts"
+        ]
+      },
+      "then": {
+        "properties": {
+          "publication": {
+            "properties": {
+              "inventory": {
+                "contains": {
+                  "properties": {
+                    "path": {
+                      "const": "evidence/baseline-reproduction.json"
+                    }
+                  },
+                  "required": [
+                    "path"
+                  ]
+                },
+                "minContains": 1,
+                "maxContains": 1
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "publication": {
+            "properties": {
+              "inventory": {
+                "not": {
+                  "contains": {
+                    "properties": {
+                      "path": {
+                        "const": "evidence/baseline-reproduction.json"
+                      }
+                    },
+                    "required": [
+                      "path"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "ReasonCode": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_.-]*$"
+    },
+    "TerminalStatusCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "CONVERGENCE_WARN",
+        "INVALID_INPUT",
+        "UNSUPPORTED_CAPABILITY",
+        "INVALID_SPECIFICATION",
+        "BACKEND_ERROR",
+        "TIMEOUT",
+        "CONVERGENCE_FAILED",
+        "CONVERGENCE_NOT_ASSESSABLE",
+        "PRIVACY_VIOLATION",
+        "PROTOCOL_ERROR"
+      ],
+      "properties": {
+        "CONVERGENCE_WARN": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "INVALID_INPUT": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "UNSUPPORTED_CAPABILITY": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "INVALID_SPECIFICATION": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "BACKEND_ERROR": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "TIMEOUT": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "CONVERGENCE_FAILED": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "CONVERGENCE_NOT_ASSESSABLE": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "PRIVACY_VIOLATION": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "PROTOCOL_ERROR": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "ReportArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "sha256": {
+          "$ref": "#/$defs/Digest"
+        }
+      }
+    },
+    "ScientificEvidenceArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/ReportArtifact"
+        },
+        {
+          "properties": {
+            "path": {
+              "const": "evidence/scientific-evidence-projection.json"
+            }
+          }
+        }
+      ]
+    },
+    "DevelopmentNullScienceReceiptArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/ReportArtifact"
+        },
+        {
+          "properties": {
+            "path": {
+              "const": "evidence/development-null-science-receipt.json"
+            }
+          }
+        }
+      ]
+    },
+    "BaselineAssessmentArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/ReportArtifact"
+        },
+        {
+          "properties": {
+            "path": {
+              "const": "evidence/baseline-assessment.json"
+            }
+          }
+        }
+      ]
+    },
+    "BaselineReproductionArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/ReportArtifact"
+        },
+        {
+          "properties": {
+            "path": {
+              "const": "evidence/baseline-reproduction.json"
+            }
+          }
+        }
+      ]
+    },
+    "ReportJsonArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/ReportArtifact"
+        },
+        {
+          "properties": {
+            "path": {
+              "const": "report/report.json"
+            }
+          }
+        }
+      ]
+    },
+    "UniversesCsvArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/ReportArtifact"
+        },
+        {
+          "properties": {
+            "path": {
+              "const": "report/universes.csv"
+            }
+          }
+        }
+      ]
+    },
+    "MeaningEvidenceCsvArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/ReportArtifact"
+        },
+        {
+          "properties": {
+            "path": {
+              "const": "report/meaning-evidence.csv"
+            }
+          }
+        }
+      ]
+    },
+    "ReportProvenanceCsvArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/ReportArtifact"
+        },
+        {
+          "properties": {
+            "path": {
+              "const": "report/provenance.csv"
+            }
+          }
+        }
+      ]
+    },
+    "ReportHtmlArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/ReportArtifact"
+        },
+        {
+          "properties": {
+            "path": {
+              "const": "report/report.html"
+            }
+          }
+        }
+      ]
+    },
+    "PublicationInventoryEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "byte_length"
+      ],
+      "properties": {
+        "path": {
+          "oneOf": [
+            {
+              "enum": [
+                "config.resolved.yaml",
+                "data-summary.json",
+                "failures.jsonl",
+                "warnings.jsonl",
+                "state/candidate-terminal-index.json",
+                "evidence/baseline-assessment.json",
+                "evidence/baseline-reproduction.json",
+                "evidence/scientific-evidence-projection.json",
+                "evidence/development-null-science-receipt.json",
+                "report/report.json",
+                "report/universes.csv",
+                "report/meaning-evidence.csv",
+                "report/provenance.csv",
+                "report/report.html"
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "^results/candidate-[0-9]{8}\\.json$"
+            },
+            {
+              "type": "string",
+              "pattern": "^cache/results/candidate-[0-9]{8}\\.json$"
+            },
+            {
+              "type": "string",
+              "pattern": "^state/candidate-terminals/[0-9]{8}\\.json$"
+            },
+            {
+              "type": "string",
+              "pattern": "^private/science/participant-stage-comparisons/[0-9]{8}\\.json$"
+            }
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/Digest"
+        },
+        "byte_length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "PublicationReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "state",
+        "staging_run_root_id",
+        "final_precondition",
+        "scope",
+        "inventory",
+        "inventory_digest"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ebm-audit-run-publication/1.0"
+        },
+        "state": {
+          "const": "STAGED_READY_FOR_PUBLICATION"
+        },
+        "staging_run_root_id": {
+          "$ref": "#/$defs/Digest"
+        },
+        "final_precondition": {
+          "const": "ABSENT"
+        },
+        "scope": {
+          "const": "NON_AUTHENTICATION_ARTIFACTS_EXCLUDING_RUN_STATUS"
+        },
+        "inventory": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1000000,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/PublicationInventoryEntry"
+          }
+        },
+        "inventory_digest": {
+          "$ref": "#/$defs/Digest"
+        }
+      }
+    }
+  }
+}

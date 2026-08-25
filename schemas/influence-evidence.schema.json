@@ -1,0 +1,472 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.ebm-audit.invalid/influence-evidence.schema.json",
+  "title": "EBM Audit sealed participant-influence evidence v2",
+  "oneOf": [
+    { "$ref": "#/$defs/InfluenceAttempt" },
+    { "$ref": "#/$defs/InfluenceLayerEvidence" }
+  ],
+  "$defs": {
+    "Digest": {
+      "$ref": "canonical-records.schema.json#/$defs/Sha256Digest"
+    },
+    "NullableDigest": {
+      "oneOf": [
+        { "$ref": "#/$defs/Digest" },
+        { "type": "null" }
+      ]
+    },
+    "NonnegativeInteger": {
+      "$ref": "canonical-records.schema.json#/$defs/SafeInteger"
+    },
+    "PositiveInteger": {
+      "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger"
+    },
+    "ParticipantAlias": {
+      "type": "string",
+      "pattern": "^P-[0-9]{3,}$"
+    },
+    "TerminalStatus": {
+      "enum": [
+        "SUCCESS",
+        "CONVERGENCE_WARN",
+        "INVALID_INPUT",
+        "UNSUPPORTED_CAPABILITY",
+        "INVALID_SPECIFICATION",
+        "BACKEND_ERROR",
+        "TIMEOUT",
+        "CONVERGENCE_FAILED",
+        "CONVERGENCE_NOT_ASSESSABLE",
+        "PRIVACY_VIOLATION",
+        "PROTOCOL_ERROR"
+      ]
+    },
+    "CompletedTerminalStatus": {
+      "enum": [
+        "SUCCESS",
+        "CONVERGENCE_WARN"
+      ]
+    },
+    "RetainedInfluenceTerminalStatus": {
+      "enum": [
+        "SUCCESS",
+        "CONVERGENCE_WARN",
+        "CONVERGENCE_FAILED",
+        "CONVERGENCE_NOT_ASSESSABLE"
+      ]
+    },
+    "ContributionState": {
+      "enum": [
+        "INTERPRETIVE",
+        "DESCRIPTIVE_ONLY",
+        "METRIC_NOT_ASSESSABLE",
+        "FAILED"
+      ]
+    },
+    "ReasonOwner": {
+      "enum": [
+        "SOURCE",
+        "REMOVAL",
+        "INFLUENCE_DERIVATION"
+      ]
+    },
+    "ReasonRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "owner",
+        "reason_code"
+      ],
+      "properties": {
+        "owner": { "$ref": "#/$defs/ReasonOwner" },
+        "reason_code": {
+          "$ref": "canonical-records.schema.json#/$defs/StableCode"
+        }
+      }
+    },
+    "ComparisonEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "origin_id",
+        "subject_analysis_spec_id",
+        "comparator_analysis_spec_id",
+        "derivation_rule_id",
+        "semantics"
+      ],
+      "properties": {
+        "origin_id": { "$ref": "#/$defs/Digest" },
+        "subject_analysis_spec_id": { "$ref": "#/$defs/Digest" },
+        "comparator_analysis_spec_id": { "$ref": "#/$defs/Digest" },
+        "derivation_rule_id": {
+          "const": "derived-origin-to-source/1"
+        },
+        "semantics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "order_event_alignment",
+            "native_stage_comparability"
+          ],
+          "properties": {
+            "order_event_alignment": {
+              "const": "identical-event-set"
+            },
+            "native_stage_comparability": {
+              "const": "comparable"
+            }
+          }
+        }
+      }
+    },
+    "InfluenceAttempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_schema_version",
+        "evidence_rule_id",
+        "plan_digest",
+        "terminal_index_digest",
+        "origin_id",
+        "analysis_declaration_id",
+        "source_declaration_digest",
+        "experiment_set_id",
+        "experiment_mode",
+        "comparison_edge",
+        "candidate_ordinal",
+        "removal_analysis_spec_id",
+        "source_analysis_spec_id",
+        "removal_spec_id",
+        "removal_method_id",
+        "removal_kind",
+        "removal_slot_ordinal",
+        "named_group_spec_id",
+        "refit_preprocessing",
+        "fixed_non_removed_cohort_policy",
+        "removed_aliases",
+        "preparation_binding_digest",
+        "removal_result_id",
+        "source_result_id",
+        "removal_universe_id",
+        "source_universe_id",
+        "removal_terminal_status",
+        "source_terminal_status",
+        "removal_candidate_record_digest",
+        "source_candidate_record_digest",
+        "contribution_state",
+        "reason_rows",
+        "influence_record",
+        "attempt_digest"
+      ],
+      "properties": {
+        "record_schema_version": {
+          "const": "ebm-audit-influence-attempt/2.0"
+        },
+        "evidence_rule_id": {
+          "const": "influence-source-fit-comparison/1"
+        },
+        "plan_digest": { "$ref": "#/$defs/Digest" },
+        "terminal_index_digest": { "$ref": "#/$defs/Digest" },
+        "origin_id": { "$ref": "#/$defs/Digest" },
+        "analysis_declaration_id": {
+          "$ref": "canonical-records.schema.json#/$defs/MachineId"
+        },
+        "source_declaration_digest": { "$ref": "#/$defs/Digest" },
+        "experiment_set_id": {
+          "$ref": "canonical-records.schema.json#/$defs/MachineId"
+        },
+        "experiment_mode": { "const": "influence" },
+        "comparison_edge": { "$ref": "#/$defs/ComparisonEdge" },
+        "candidate_ordinal": { "$ref": "#/$defs/NonnegativeInteger" },
+        "removal_analysis_spec_id": { "$ref": "#/$defs/Digest" },
+        "source_analysis_spec_id": { "$ref": "#/$defs/Digest" },
+        "removal_spec_id": { "$ref": "#/$defs/Digest" },
+        "removal_method_id": {
+          "const": "exact-participant-or-named-group-removal/1"
+        },
+        "removal_kind": {
+          "enum": [
+            "leave-one-participant-out",
+            "named-group-removal"
+          ]
+        },
+        "removal_slot_ordinal": { "$ref": "#/$defs/NonnegativeInteger" },
+        "named_group_spec_id": {
+          "oneOf": [
+            {
+              "$ref": "canonical-records.schema.json#/$defs/MachineId"
+            },
+            { "type": "null" }
+          ]
+        },
+        "refit_preprocessing": { "const": true },
+        "fixed_non_removed_cohort_policy": {
+          "const": "fixed-non-removed-baseline-cohort-or-unsupported/1"
+        },
+        "removed_aliases": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/ParticipantAlias" }
+        },
+        "preparation_binding_digest": { "$ref": "#/$defs/Digest" },
+        "removal_result_id": { "$ref": "#/$defs/Digest" },
+        "source_result_id": { "$ref": "#/$defs/Digest" },
+        "removal_universe_id": { "$ref": "#/$defs/NullableDigest" },
+        "source_universe_id": { "$ref": "#/$defs/NullableDigest" },
+        "removal_terminal_status": { "$ref": "#/$defs/TerminalStatus" },
+        "source_terminal_status": { "$ref": "#/$defs/TerminalStatus" },
+        "removal_candidate_record_digest": { "$ref": "#/$defs/Digest" },
+        "source_candidate_record_digest": { "$ref": "#/$defs/Digest" },
+        "contribution_state": { "$ref": "#/$defs/ContributionState" },
+        "reason_rows": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/ReasonRow" }
+        },
+        "influence_record": {
+          "oneOf": [
+            {
+              "$ref": "canonical-records.schema.json#/$defs/InfluenceRecord"
+            },
+            { "type": "null" }
+          ]
+        },
+        "attempt_digest": { "$ref": "#/$defs/Digest" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "removal_kind": {
+                "const": "leave-one-participant-out"
+              }
+            },
+            "required": ["removal_kind"]
+          },
+          "then": {
+            "properties": {
+              "named_group_spec_id": { "type": "null" },
+              "removed_aliases": {
+                "minItems": 1,
+                "maxItems": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "named_group_spec_id": {
+                "$ref": "canonical-records.schema.json#/$defs/MachineId"
+              },
+              "removed_aliases": { "maxItems": 0 },
+              "removal_universe_id": { "type": "null" },
+              "removal_terminal_status": {
+                "const": "UNSUPPORTED_CAPABILITY"
+              },
+              "contribution_state": { "const": "FAILED" },
+              "influence_record": { "type": "null" },
+              "reason_rows": {
+                "minItems": 1,
+                "contains": {
+                  "type": "object",
+                  "required": ["owner", "reason_code"],
+                  "properties": {
+                    "owner": { "const": "REMOVAL" },
+                    "reason_code": {
+                      "const": "PREPARATION.NAMED_GROUP_REMOVAL_UNSUPPORTED"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "contribution_state": {
+                "enum": [
+                  "INTERPRETIVE",
+                  "DESCRIPTIVE_ONLY"
+                ]
+              }
+            },
+            "required": ["contribution_state"]
+          },
+          "then": {
+            "properties": {
+              "removal_universe_id": { "$ref": "#/$defs/Digest" },
+              "source_universe_id": { "$ref": "#/$defs/Digest" },
+              "removal_terminal_status": {
+                "$ref": "#/$defs/RetainedInfluenceTerminalStatus"
+              },
+              "source_terminal_status": {
+                "$ref": "#/$defs/RetainedInfluenceTerminalStatus"
+              },
+              "influence_record": {
+                "$ref": "canonical-records.schema.json#/$defs/InfluenceRecord"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "influence_record": { "type": "null" },
+              "reason_rows": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "contribution_state": {
+                "const": "INTERPRETIVE"
+              }
+            },
+            "required": ["contribution_state"]
+          },
+          "then": {
+            "properties": {
+              "removal_terminal_status": { "const": "SUCCESS" },
+              "source_terminal_status": { "const": "SUCCESS" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "contribution_state": { "const": "DESCRIPTIVE_ONLY" },
+              "removal_terminal_status": { "const": "CONVERGENCE_FAILED" }
+            },
+            "required": ["contribution_state", "removal_terminal_status"]
+          },
+          "then": {
+            "properties": {
+              "source_terminal_status": { "const": "SUCCESS" },
+              "influence_record": {
+                "type": "object",
+                "properties": {
+                  "baseline_convergence_state": { "const": "CONVERGENCE_PASS" },
+                  "removal_convergence_state": { "const": "CONVERGENCE_FAIL" }
+                }
+              },
+              "reason_rows": {
+                "contains": {
+                  "type": "object",
+                  "required": ["owner", "reason_code"],
+                  "properties": {
+                    "owner": { "const": "INFLUENCE_DERIVATION" },
+                    "reason_code": { "const": "INFLUENCE.CONVERGENCE_FAILED" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "contribution_state": { "const": "DESCRIPTIVE_ONLY" },
+              "removal_terminal_status": { "const": "CONVERGENCE_NOT_ASSESSABLE" }
+            },
+            "required": ["contribution_state", "removal_terminal_status"]
+          },
+          "then": {
+            "properties": {
+              "source_terminal_status": { "const": "SUCCESS" },
+              "influence_record": {
+                "type": "object",
+                "properties": {
+                  "baseline_convergence_state": { "const": "CONVERGENCE_PASS" },
+                  "removal_convergence_state": { "const": "CONVERGENCE_NOT_ASSESSABLE" }
+                }
+              },
+              "reason_rows": {
+                "contains": {
+                  "type": "object",
+                  "required": ["owner", "reason_code"],
+                  "properties": {
+                    "owner": { "const": "INFLUENCE_DERIVATION" },
+                    "reason_code": { "const": "INFLUENCE.CONVERGENCE_NOT_ASSESSABLE" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "$comment": "Runtime recomputes comparison-edge ownership, removal-spec identity, terminal bindings, alias ownership, InfluenceRecord envelope equality, canonical reason order, and attempt_digest."
+    },
+    "ContributionCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "INTERPRETIVE",
+        "DESCRIPTIVE_ONLY",
+        "METRIC_NOT_ASSESSABLE",
+        "FAILED"
+      ],
+      "properties": {
+        "INTERPRETIVE": { "$ref": "#/$defs/NonnegativeInteger" },
+        "DESCRIPTIVE_ONLY": { "$ref": "#/$defs/NonnegativeInteger" },
+        "METRIC_NOT_ASSESSABLE": { "$ref": "#/$defs/NonnegativeInteger" },
+        "FAILED": { "$ref": "#/$defs/NonnegativeInteger" }
+      }
+    },
+    "InfluenceLayerEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "layer_schema_version",
+        "evidence_rule_id",
+        "uncertainty_layer",
+        "pooling_policy",
+        "plan_digest",
+        "terminal_index_digest",
+        "planned_origin_count",
+        "planned_origin_ids",
+        "attempt_count",
+        "influence_record_count",
+        "contribution_counts",
+        "attempts",
+        "classification_status",
+        "layer_digest"
+      ],
+      "properties": {
+        "layer_schema_version": {
+          "const": "ebm-audit-influence-layer-evidence/2.0"
+        },
+        "evidence_rule_id": {
+          "const": "influence-source-fit-comparison/1"
+        },
+        "uncertainty_layer": {
+          "const": "PARTICIPANT_INFLUENCE"
+        },
+        "pooling_policy": { "const": "NON_POOLABLE" },
+        "plan_digest": { "$ref": "#/$defs/Digest" },
+        "terminal_index_digest": { "$ref": "#/$defs/Digest" },
+        "planned_origin_count": { "$ref": "#/$defs/NonnegativeInteger" },
+        "planned_origin_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/Digest" }
+        },
+        "attempt_count": { "$ref": "#/$defs/NonnegativeInteger" },
+        "influence_record_count": {
+          "$ref": "#/$defs/NonnegativeInteger"
+        },
+        "contribution_counts": {
+          "$ref": "#/$defs/ContributionCounts"
+        },
+        "attempts": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/InfluenceAttempt" }
+        },
+        "classification_status": {
+          "const": "FROZEN_REVIEWED_WITH_DEVELOPMENT_SENSITIVITY_UNVERIFIED"
+        },
+        "layer_digest": { "$ref": "#/$defs/Digest" }
+      },
+      "$comment": "Runtime requires planned_origin_count, planned_origin_ids, attempt_count, attempts, influence_record_count, and contribution_counts to be exact recomputations; planned_origin_ids and attempts are in canonical origin order with exactly one attempt per planned influence origin. layer_digest excludes itself and is recomputed from the complete closed body."
+    }
+  }
+}

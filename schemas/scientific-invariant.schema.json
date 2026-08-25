@@ -1,0 +1,2134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Executable scientific cross-artifact invariants and false-positive evidence",
+  "$ref": "#/$defs/ScientificInvariantRegistry",
+  "$defs": {
+    "Sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "Sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "UInt64Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{16}$"
+    },
+    "MachineId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"
+    },
+    "InvariantDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invariant_id",
+        "algorithm",
+        "subject_schema_refs",
+        "failure_state"
+      ],
+      "properties": {
+        "invariant_id": {
+          "type": "string",
+          "pattern": "^scientific\\.[a-z0-9-]+/v1$"
+        },
+        "algorithm": {
+          "enum": [
+            "GENERATED_DATA_DIMENSIONS_MATCH",
+            "PARTICIPANT_INDEXES_ZERO_BASED_CONTIGUOUS",
+            "GENERATED_DATA_MATRIX_SHAPES_MATCH",
+            "TRUTH_DIMENSIONS_MATCH_DATA",
+            "EVENT_VECTORS_AND_PERMUTATIONS_ALIGN",
+            "MISSINGNESS_MASK_AND_NULL_CELLS_ALIGN",
+            "PROBABILITY_VECTORS_AND_MATRICES_VALID",
+            "TRUTH_MECHANISM_AND_SIGNAL_STATE_CONSISTENT",
+            "PURE_NO_SIGNAL_ONLY_FPR_ELIGIBLE",
+            "GENERATOR_FIELD_REGISTRY_EXACT_71",
+            "PARAMETER_DRAW_INDEXES_CONTIGUOUS_AND_COUNTED",
+            "COMPONENT_SEED_REGISTRY_EXACT_14",
+            "DEPENDENCY_STAGES_EXACT_7",
+            "ORACLE_FIXTURE_DIMENSIONS_NORMALIZATION_AND_TIES",
+            "COMPARATOR_OPERATIONS_CONTIGUOUS_AND_TARGET_CLOSED",
+            "NULL_CALIBRATION_IDENTITY_EXACT_MATCH",
+            "CANDIDATE_STRONG_EVIDENCE_DECISION_DERIVED",
+            "FALSE_POSITIVE_AGGREGATE_DERIVED"
+          ]
+        },
+        "subject_schema_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "failure_state": {
+          "const": "HARD_FAILURE"
+        }
+      }
+    },
+    "ScientificInvariantRegistry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "evaluation_order",
+        "invariants",
+        "counterexample_policy"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ebm-audit-scientific-invariants/1.0"
+        },
+        "evaluation_order": {
+          "const": [
+            "validate_subject_schemas",
+            "evaluate_invariants_in_declared_order",
+            "reject_on_first_failure",
+            "retain_complete_failure_receipt"
+          ]
+        },
+        "invariants": {
+          "type": "array",
+          "minItems": 18,
+          "maxItems": 18,
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.generated-data-dimensions/v1"
+                    },
+                    "algorithm": {
+                      "const": "GENERATED_DATA_DIMENSIONS_MATCH"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.participant-indexes/v1"
+                    },
+                    "algorithm": {
+                      "const": "PARTICIPANT_INDEXES_ZERO_BASED_CONTIGUOUS"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.data-matrix-shapes/v1"
+                    },
+                    "algorithm": {
+                      "const": "GENERATED_DATA_MATRIX_SHAPES_MATCH"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.truth-dimensions/v1"
+                    },
+                    "algorithm": {
+                      "const": "TRUTH_DIMENSIONS_MATCH_DATA"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.event-vector-alignment/v1"
+                    },
+                    "algorithm": {
+                      "const": "EVENT_VECTORS_AND_PERMUTATIONS_ALIGN"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.missingness-alignment/v1"
+                    },
+                    "algorithm": {
+                      "const": "MISSINGNESS_MASK_AND_NULL_CELLS_ALIGN"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.probability-validity/v1"
+                    },
+                    "algorithm": {
+                      "const": "PROBABILITY_VECTORS_AND_MATRICES_VALID"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.truth-signal-consistency/v1"
+                    },
+                    "algorithm": {
+                      "const": "TRUTH_MECHANISM_AND_SIGNAL_STATE_CONSISTENT"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.fpr-eligibility/v1"
+                    },
+                    "algorithm": {
+                      "const": "PURE_NO_SIGNAL_ONLY_FPR_ELIGIBLE"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.generator-field-registry/v1"
+                    },
+                    "algorithm": {
+                      "const": "GENERATOR_FIELD_REGISTRY_EXACT_71"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.parameter-draw-count/v1"
+                    },
+                    "algorithm": {
+                      "const": "PARAMETER_DRAW_INDEXES_CONTIGUOUS_AND_COUNTED"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.component-seed-registry/v1"
+                    },
+                    "algorithm": {
+                      "const": "COMPONENT_SEED_REGISTRY_EXACT_14"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.dependency-stage-registry/v1"
+                    },
+                    "algorithm": {
+                      "const": "DEPENDENCY_STAGES_EXACT_7"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.oracle-fixture-contract/v1"
+                    },
+                    "algorithm": {
+                      "const": "ORACLE_FIXTURE_DIMENSIONS_NORMALIZATION_AND_TIES"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.comparator-transaction/v1"
+                    },
+                    "algorithm": {
+                      "const": "COMPARATOR_OPERATIONS_CONTIGUOUS_AND_TARGET_CLOSED"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.null-calibration-identity/v1"
+                    },
+                    "algorithm": {
+                      "const": "NULL_CALIBRATION_IDENTITY_EXACT_MATCH"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.candidate-strong-decision/v1"
+                    },
+                    "algorithm": {
+                      "const": "CANDIDATE_STRONG_EVIDENCE_DECISION_DERIVED"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/InvariantDefinition"
+                },
+                {
+                  "properties": {
+                    "invariant_id": {
+                      "const": "scientific.false-positive-evaluation/v1"
+                    },
+                    "algorithm": {
+                      "const": "FALSE_POSITIVE_AGGREGATE_DERIVED"
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "items": false
+        },
+        "counterexample_policy": {
+          "const": "Every registered negative counterexample must be rejected by schema validation or by its named invariant algorithm; any accepted counterexample is a freeze-gate failure."
+        }
+      }
+    },
+    "NullCalibrationIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "benchmark_subject_digest",
+        "backend_identity_digest",
+        "worker_name",
+        "worker_version",
+        "backend_name",
+        "backend_version",
+        "backend_source_commit",
+        "backend_source_digest",
+        "worker_executable_digest",
+        "worker_code_digest",
+        "protocol_version",
+        "algorithm_id",
+        "settings_digest",
+        "environment_digest",
+        "platform_qualification_id",
+        "candidate_sha256",
+        "ordered_statistic_route",
+        "pure_generator_procedure_version",
+        "label_permutation_procedure_version",
+        "within_group_feature_permutation_procedure_version",
+        "convergence_eligibility_rule",
+        "benchmark_profile_id",
+        "profile_settings_digest",
+        "null_rule_version",
+        "report_rule_version",
+        "benchmark_contract_sha256"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ebm-audit-null-calibration-identity/v1"
+        },
+        "benchmark_subject_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "backend_identity_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "worker_name": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "worker_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "backend_name": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "backend_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "backend_source_commit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "backend_source_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "worker_executable_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "worker_code_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "protocol_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "algorithm_id": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "settings_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "environment_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "platform_qualification_id": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "candidate_sha256": {
+          "$ref": "#/$defs/Sha256Hex"
+        },
+        "ordered_statistic_route": {
+          "const": [
+            "pairwise_concentration/v1",
+            "position_concentration/v1"
+          ]
+        },
+        "pure_generator_procedure_version": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "label_permutation_procedure_version": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "within_group_feature_permutation_procedure_version": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "convergence_eligibility_rule": {
+          "const": "CONVERGENCE_PASS_only"
+        },
+        "benchmark_profile_id": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "profile_settings_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "null_rule_version": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "report_rule_version": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "benchmark_contract_sha256": {
+          "$ref": "#/$defs/Sha256Hex"
+        }
+      },
+      "x-ebm-invariants": [
+        "null-calibration-identity-complete/v1",
+        "null-calibration-identity-exact-match-across-opportunity-and-nested-fits/v1"
+      ]
+    },
+    "RefitStepsRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "digest_state",
+        "null_calibration_identity_digest",
+        "ordered_step_ids",
+        "refit_steps_digest"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ebm-audit-refit-steps/1.0"
+        },
+        "digest_state": {
+          "enum": ["PERSISTED", "DIGEST_PREIMAGE"]
+        },
+        "null_calibration_identity_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "ordered_step_ids": {
+          "const": [
+            "prepared-input binding",
+            "authenticated worker invocation",
+            "fit-result validation",
+            "convergence derivation",
+            "pairwise concentration",
+            "position concentration"
+          ]
+        },
+        "refit_steps_digest": {
+          "oneOf": [
+            {"$ref": "#/$defs/Sha256Digest"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "RefitStepsDigestPreimage": {
+      "allOf": [
+        {"$ref": "#/$defs/RefitStepsRecord"},
+        {
+          "properties": {
+            "digest_state": {"const": "DIGEST_PREIMAGE"},
+            "refit_steps_digest": {"type": "null"}
+          }
+        }
+      ]
+    },
+    "RefitStepsEvidence": {
+      "allOf": [
+        {"$ref": "#/$defs/RefitStepsRecord"},
+        {
+          "properties": {
+            "digest_state": {"const": "PERSISTED"},
+            "refit_steps_digest": {"$ref": "#/$defs/Sha256Digest"}
+          }
+        }
+      ]
+    },
+    "CandidateObservedOperationRoleEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "operation_role",
+        "opportunity_id",
+        "source_input_digest",
+        "transformation_digest",
+        "null_family_id",
+        "replicate_index",
+        "fit_seed",
+        "complete_refit"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ebm-audit-candidate-operation-role-evidence/1.0"
+        },
+        "operation_role": {"const": "OBSERVED"},
+        "opportunity_id": {"$ref": "#/$defs/MachineId"},
+        "source_input_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "transformation_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "null_family_id": {"type": "null"},
+        "replicate_index": {"type": "null"},
+        "fit_seed": {"$ref": "#/$defs/UInt64Hex"},
+        "complete_refit": {"const": true}
+      }
+    },
+    "CandidateNullOperationRoleEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "operation_role",
+        "opportunity_id",
+        "source_input_digest",
+        "transformation_digest",
+        "null_family_id",
+        "replicate_index",
+        "fit_seed",
+        "complete_refit"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ebm-audit-candidate-operation-role-evidence/1.0"
+        },
+        "operation_role": {"const": "NULL"},
+        "opportunity_id": {"$ref": "#/$defs/MachineId"},
+        "source_input_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "transformation_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "null_family_id": {
+          "enum": [
+            "pure_no_signal",
+            "label_permutation_null",
+            "within_group_feature_permutation_null"
+          ]
+        },
+        "replicate_index": {"type": "integer", "minimum": 0, "maximum": 58},
+        "fit_seed": {"$ref": "#/$defs/UInt64Hex"},
+        "complete_refit": {"const": true}
+      }
+    },
+    "CandidateObservedFitEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmark_subject_digest",
+        "fit_state",
+        "convergence_state",
+        "pairwise_concentration",
+        "position_concentration",
+        "refit_steps_evidence",
+        "operation_role_evidence",
+        "hard_failure"
+      ],
+      "properties": {
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "fit_state": {"enum": ["SUCCESS", "FAILURE"]},
+        "convergence_state": {
+          "enum": [
+            "CONVERGENCE_PASS",
+            "CONVERGENCE_WARN",
+            "CONVERGENCE_FAIL",
+            "CONVERGENCE_NOT_ASSESSABLE"
+          ]
+        },
+        "pairwise_concentration": {"oneOf": [{"type": "number"}, {"type": "null"}]},
+        "position_concentration": {"oneOf": [{"type": "number"}, {"type": "null"}]},
+        "refit_steps_evidence": {"$ref": "#/$defs/RefitStepsEvidence"},
+        "operation_role_evidence": {
+          "$ref": "#/$defs/CandidateObservedOperationRoleEvidence"
+        },
+        "hard_failure": {"type": "boolean"}
+      }
+    },
+    "CandidateNullFitEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmark_subject_digest",
+        "null_family_id",
+        "replicate_index",
+        "fit_state",
+        "convergence_state",
+        "pairwise_concentration",
+        "position_concentration",
+        "refit_steps_evidence",
+        "operation_role_evidence",
+        "hard_failure"
+      ],
+      "properties": {
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "null_family_id": {"enum": ["pure_no_signal", "label_permutation_null", "within_group_feature_permutation_null"]},
+        "replicate_index": {"type": "integer", "minimum": 0, "maximum": 58},
+        "fit_state": {"enum": ["SUCCESS", "FAILURE"]},
+        "convergence_state": {
+          "enum": [
+            "CONVERGENCE_PASS",
+            "CONVERGENCE_WARN",
+            "CONVERGENCE_FAIL",
+            "CONVERGENCE_NOT_ASSESSABLE"
+          ]
+        },
+        "pairwise_concentration": {"oneOf": [{"type": "number"}, {"type": "null"}]},
+        "position_concentration": {"oneOf": [{"type": "number"}, {"type": "null"}]},
+        "refit_steps_evidence": {"$ref": "#/$defs/RefitStepsEvidence"},
+        "operation_role_evidence": {
+          "$ref": "#/$defs/CandidateNullOperationRoleEvidence"
+        },
+        "hard_failure": {"type": "boolean"}
+      }
+    },
+    "CandidateStatisticTest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "null_family_id",
+        "statistic_id",
+        "observed_statistic",
+        "null_replicate_count",
+        "null_success_count",
+        "null_convergence_pass_count",
+        "null_exceedance_count",
+        "p_empirical",
+        "null_median",
+        "null_effect",
+        "identity_match",
+        "refit_steps_equal",
+        "criterion_state",
+        "ordered_null_statistics"
+      ],
+      "properties": {
+        "null_family_id": {
+          "enum": [
+            "pure_no_signal",
+            "label_permutation_null",
+            "within_group_feature_permutation_null"
+          ]
+        },
+        "statistic_id": {
+          "enum": [
+            "pairwise_concentration/v1",
+            "position_concentration/v1"
+          ]
+        },
+        "observed_statistic": {"oneOf": [{"type": "number"}, {"type": "null"}]},
+        "ordered_null_statistics": {
+          "type": "array",
+          "minItems": 59,
+          "maxItems": 59,
+          "items": {"oneOf": [{"type": "number"}, {"type": "null"}]}
+        },
+        "null_replicate_count": {
+          "const": 59
+        },
+        "null_success_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 59
+        },
+        "null_convergence_pass_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 59
+        },
+        "null_exceedance_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 59
+        },
+        "p_empirical": {"oneOf": [{"type": "number", "minimum": 0, "maximum": 1}, {"type": "null"}]},
+        "null_median": {"oneOf": [{"type": "number"}, {"type": "null"}]},
+        "null_effect": {"oneOf": [{"type": "number"}, {"type": "null"}]},
+        "identity_match": {
+          "type": "boolean"
+        },
+        "refit_steps_equal": {
+          "type": "boolean"
+        },
+        "criterion_state": {
+          "enum": [
+            "STRONG_CRITERION",
+            "NOT_STRONG_CRITERION",
+            "NOT_ASSESSABLE"
+          ]
+        }
+      }
+    },
+    "CandidateStrongEvidenceDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "rule_id",
+        "benchmark_subject_digest",
+        "null_calibration_identity",
+        "null_calibration_identity_digest",
+        "opportunity_id",
+        "observed_fit_state",
+        "observed_convergence_state",
+        "observed_fit_evidence",
+        "ordered_null_fit_evidence",
+        "ordered_tests",
+        "failed_precondition_codes",
+        "state"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ebm-audit-candidate-strong-evidence-decision/1.0"
+        },
+        "rule_id": {
+          "const": "candidate-strong-evidence/v1"
+        },
+        "benchmark_subject_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "null_calibration_identity": {
+          "$ref": "#/$defs/NullCalibrationIdentity"
+        },
+        "null_calibration_identity_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "opportunity_id": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "observed_fit_state": {
+          "enum": [
+            "SUCCESS",
+            "FAILURE"
+          ]
+        },
+        "observed_convergence_state": {
+          "enum": [
+            "CONVERGENCE_PASS",
+            "CONVERGENCE_WARN",
+            "CONVERGENCE_FAIL",
+            "CONVERGENCE_NOT_ASSESSABLE"
+          ]
+        },
+        "observed_fit_evidence": {"$ref": "#/$defs/CandidateObservedFitEvidence"},
+        "ordered_null_fit_evidence": {
+          "type": "array",
+          "minItems": 177,
+          "maxItems": 177,
+          "items": {"$ref": "#/$defs/CandidateNullFitEvidence"}
+        },
+        "ordered_tests": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/CandidateStatisticTest"
+                },
+                {
+                  "properties": {
+                    "null_family_id": {
+                      "const": "pure_no_signal"
+                    },
+                    "statistic_id": {
+                      "const": "pairwise_concentration/v1"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/CandidateStatisticTest"
+                },
+                {
+                  "properties": {
+                    "null_family_id": {
+                      "const": "pure_no_signal"
+                    },
+                    "statistic_id": {
+                      "const": "position_concentration/v1"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/CandidateStatisticTest"
+                },
+                {
+                  "properties": {
+                    "null_family_id": {
+                      "const": "label_permutation_null"
+                    },
+                    "statistic_id": {
+                      "const": "pairwise_concentration/v1"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/CandidateStatisticTest"
+                },
+                {
+                  "properties": {
+                    "null_family_id": {
+                      "const": "label_permutation_null"
+                    },
+                    "statistic_id": {
+                      "const": "position_concentration/v1"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/CandidateStatisticTest"
+                },
+                {
+                  "properties": {
+                    "null_family_id": {
+                      "const": "within_group_feature_permutation_null"
+                    },
+                    "statistic_id": {
+                      "const": "pairwise_concentration/v1"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/CandidateStatisticTest"
+                },
+                {
+                  "properties": {
+                    "null_family_id": {
+                      "const": "within_group_feature_permutation_null"
+                    },
+                    "statistic_id": {
+                      "const": "position_concentration/v1"
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "items": false
+        },
+        "failed_precondition_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "OBSERVED_FIT_NOT_SUCCESS",
+              "OBSERVED_CONVERGENCE_NOT_PASS",
+              "NULL_FIT_COUNT_NOT_59",
+              "NULL_FIT_NOT_SUCCESS",
+              "NULL_CONVERGENCE_NOT_PASS",
+              "NONFINITE_STATISTIC",
+              "NULL_CALIBRATION_IDENTITY_MISMATCH",
+              "REFIT_STEPS_DIFFER",
+              "MISSING_OR_DUPLICATE_EVIDENCE",
+              "HARD_FAILURE"
+            ]
+          }
+        },
+        "state": {
+          "enum": [
+            "CANDIDATE_STRONG_EVIDENCE",
+            "CANDIDATE_NOT_STRONG_EVIDENCE",
+            "CANDIDATE_STRONG_EVIDENCE_NOT_ASSESSABLE"
+          ]
+        }
+      },
+      "x-ebm-invariants": [
+        "candidate-test-empirical-p-equals-one-plus-exceedances-over-60/v1",
+        "candidate-test-null-effect-equals-observed-minus-null-median/v1",
+        "candidate-assessability-requires-observed-and-all-177-null-fits-success-convergence-pass-finite-exact-identity-and-equal-refit-steps/v1",
+        "candidate-state-is-not-assessable-iff-any-precondition-fails-else-strong-iff-all-six-tests-have-positive-effect-and-p-at-most-0.05/v1",
+        "candidate-decision-forbidden-input-independence/v1"
+      ]
+    },
+    "FalsePositiveOpportunityRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "opportunity_index",
+        "opportunity_id",
+        "sealed_case_manifest_index",
+        "null_calibration_identity_digest",
+        "candidate_decision_sha256",
+        "candidate_decision_state"
+      ],
+      "properties": {
+        "opportunity_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 59
+        },
+        "opportunity_id": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "sealed_case_manifest_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 59
+        },
+        "null_calibration_identity_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "candidate_decision_sha256": {
+          "$ref": "#/$defs/Sha256Hex"
+        },
+        "candidate_decision_state": {
+          "enum": [
+            "CANDIDATE_STRONG_EVIDENCE",
+            "CANDIDATE_NOT_STRONG_EVIDENCE",
+            "CANDIDATE_STRONG_EVIDENCE_NOT_ASSESSABLE"
+          ]
+        }
+      }
+    },
+    "FalsePositiveOpportunityManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "digest_state",
+        "benchmark_subject_digest",
+        "sealed_case_manifest_sha256",
+        "null_calibration_identity_digest",
+        "ordered_opportunities",
+        "false_positive_opportunity_manifest_sha256"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ebm-audit-false-positive-opportunity-manifest/1.0"
+        },
+        "digest_state": {
+          "enum": [
+            "PERSISTED",
+            "DIGEST_PREIMAGE"
+          ]
+        },
+        "benchmark_subject_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "sealed_case_manifest_sha256": {
+          "$ref": "#/$defs/Sha256Hex"
+        },
+        "null_calibration_identity_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "ordered_opportunities": {
+          "type": "array",
+          "minItems": 60,
+          "maxItems": 60,
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 0
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 2
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 3
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 4
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 5
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 6
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 7
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 8
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 9
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 10
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 11
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 12
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 13
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 14
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 15
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 16
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 17
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 18
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 19
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 20
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 21
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 22
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 23
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 24
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 25
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 26
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 27
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 28
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 29
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 30
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 31
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 32
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 33
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 34
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 35
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 36
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 37
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 38
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 39
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 40
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 41
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 42
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 43
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 44
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 45
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 46
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 47
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 48
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 49
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 50
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 51
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 52
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 53
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 54
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 55
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 56
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 57
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 58
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FalsePositiveOpportunityRecord"
+                },
+                {
+                  "properties": {
+                    "opportunity_index": {
+                      "const": 59
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "items": false
+        },
+        "false_positive_opportunity_manifest_sha256": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Sha256Hex"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "digest_state": {
+                "const": "PERSISTED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "false_positive_opportunity_manifest_sha256": {
+                "$ref": "#/$defs/Sha256Hex"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "digest_state": {
+                "const": "DIGEST_PREIMAGE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "false_positive_opportunity_manifest_sha256": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ],
+      "x-ebm-invariants": [
+        "fpr-opportunities-exact-indexes-0-through-59-and-unique-case-ids/v1",
+        "fpr-opportunities-all-pure-no-signal-truth-eligible-sealed-and-one-identity/v1",
+        "fpr-candidate-digests-and-states-match-sealed-candidate-decisions/v1"
+      ]
+    },
+    "FalsePositiveOpportunityManifestDigestPreimage": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/FalsePositiveOpportunityManifest"
+        },
+        {
+          "properties": {
+            "digest_state": {
+              "const": "DIGEST_PREIMAGE"
+            },
+            "false_positive_opportunity_manifest_sha256": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "digest_state",
+            "false_positive_opportunity_manifest_sha256"
+          ]
+        }
+      ]
+    },
+    "FalsePositiveEvaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "rule_id",
+        "benchmark_subject_digest",
+        "null_calibration_identity_digest",
+        "false_positive_opportunity_manifest_sha256",
+        "planned_opportunity_count",
+        "valid_opportunity_count",
+        "not_assessable_count",
+        "false_positive_count",
+        "point_false_positive_rate",
+        "one_sided_confidence",
+        "upper_bound_method",
+        "clopper_pearson_upper_bound",
+        "false_positive_rate_max",
+        "state"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ebm-audit-false-positive-evaluation/1.0"
+        },
+        "rule_id": {
+          "const": "null-strong-label-false-positive/v1"
+        },
+        "benchmark_subject_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "null_calibration_identity_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "false_positive_opportunity_manifest_sha256": {
+          "$ref": "#/$defs/Sha256Hex"
+        },
+        "planned_opportunity_count": {
+          "const": 60
+        },
+        "valid_opportunity_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "not_assessable_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "false_positive_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "point_false_positive_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "one_sided_confidence": {
+          "const": 0.95
+        },
+        "upper_bound_method": {
+          "const": "CLOPPER_PEARSON_EXACT"
+        },
+        "clopper_pearson_upper_bound": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "false_positive_rate_max": {
+          "const": 0.05
+        },
+        "state": {
+          "enum": [
+            "PASS",
+            "FAIL"
+          ]
+        }
+      },
+      "x-ebm-invariants": [
+        "fpr-counts-derived-from-exact-opportunity-manifest/v1",
+        "fpr-point-rate-equals-false-positive-count-divided-by-60/v1",
+        "fpr-clopper-pearson-upper-bound-equals-beta-inverse-0.95-x-plus-1-60-minus-x/v1",
+        "fpr-pass-iff-valid-60-not-assessable-0-point-rate-at-most-0.05-and-upper-bound-at-most-0.05/v1"
+      ]
+    },
+    "FalsePositiveEvidenceBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "null_calibration_identity",
+        "sealed_case_manifest",
+        "ordered_truth_objects",
+        "opportunity_manifest",
+        "ordered_candidate_decisions",
+        "evaluation"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ebm-audit-false-positive-evidence-bundle/1.0"
+        },
+        "null_calibration_identity": {
+          "$ref": "#/$defs/NullCalibrationIdentity"
+        },
+        "sealed_case_manifest": {
+          "$ref": "evaluator-receipts.schema.json#/$defs/SealedCaseManifest"
+        },
+        "ordered_truth_objects": {
+          "type": "array",
+          "minItems": 60,
+          "maxItems": 60,
+          "items": {
+            "$ref": "synthetic-truth.schema.json"
+          }
+        },
+        "opportunity_manifest": {
+          "$ref": "#/$defs/FalsePositiveOpportunityManifest"
+        },
+        "ordered_candidate_decisions": {
+          "type": "array",
+          "minItems": 60,
+          "maxItems": 60,
+          "items": {
+            "$ref": "#/$defs/CandidateStrongEvidenceDecision"
+          }
+        },
+        "evaluation": {
+          "$ref": "#/$defs/FalsePositiveEvaluation"
+        }
+      }
+    }
+  }
+}

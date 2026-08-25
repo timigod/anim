@@ -1,0 +1,2099 @@
+{
+  "registry_schema_version": "ebm-audit-protocol-registry/1.26",
+  "protocol_version": "ebm-audit-worker/v2",
+  "direct_score_producer_contract": {
+    "contract_version": "ebm-audit-direct-score-producer/1.0",
+    "activation_status": "ACTIVE",
+    "supersession_ref": "evaluator/score_contract_supersession.json",
+    "active_producers": [
+      {
+        "producer_id": "direct-synthetic-conformance-score-producer/1",
+        "owner_module": "src/ebm_audit/evaluator/heldout_score.py",
+        "input_owner": "SealedHeldoutAttempt",
+        "score_receipt_schema_ref": "evaluator-receipts.schema.json#/$defs/DirectConformanceScoreReceipt",
+        "validation_receipt_schema_ref": "evaluator-receipts.schema.json#/$defs/DirectConformanceValidationReceipt",
+        "subject_kind": "SYNTHETIC_ONLY_CONFORMANCE_EBM",
+        "research_backend_acceptance_eligible": false,
+        "legacy_backend_acceptance_reachable": false
+      }
+    ],
+    "historical_producers": [
+      {
+        "producer_id": "legacy-backend-acceptance-score-producer/1",
+        "activation_status": "HISTORICAL_SUPERSEDED",
+        "direct_route_reachable": false
+      }
+    ],
+    "closure_rule": "Exactly one ACTIVE producer exists. It consumes only the evaluator-owned sealed attempt, derives all score and validation vectors itself, and has no transition into BackendAcceptanceReceipt."
+  },
+  "audit_config_identity_contract": {
+    "contract_version": "ebm-audit-audit-config-identities/3.0",
+    "identity_registry": [
+      { "identity_id": "audit-config-public", "domain": "ebm-audit/audit-config-public/3", "owner_schema_ref": "audit-config.schema.json#/$defs/AuditConfigPublicProjection" },
+      { "identity_id": "resolved-audit-config", "domain": "ebm-audit/resolved-audit-config/3", "owner_schema_ref": "audit-config.schema.json#/$defs/ResolvedPublicConfig" },
+      { "identity_id": "source-variant-registry", "domain": "ebm-audit/source-variant-registry/2", "owner_schema_ref": "audit-config.schema.json#/$defs/SourceVariantDefinition", "owner_shape": "ordered-array" },
+      { "identity_id": "product-seed", "domain": "ebm-audit/product-seed/2", "owner_schema_ref": "audit-config.schema.json#/$defs/ProductSeedPreimage", "derivation": "hmac-sha256-u64be-v2" },
+      { "identity_id": "lossless-audit-table", "domain": "ebm-audit/lossless-audit-table/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/LosslessAuditTableDigestPreimage" },
+      { "identity_id": "audit-dataset", "domain": "ebm-audit/audit-dataset/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/AuditDatasetCatalog" },
+      { "identity_id": "validated-dataset-summary", "domain": "ebm-audit/validated-dataset-summary/1", "owner_schema_ref": "audit-config.schema.json#/$defs/ValidatedDatasetSummaryPreimage" },
+      { "identity_id": "prepared-audit-dataset", "domain": "ebm-audit/prepared-audit-dataset/1", "owner_schema_ref": "audit-config.schema.json#/$defs/PreparedAuditDatasetBindingPreimage" }
+    ],
+    "axis_semantic_target_registry": [
+      { "semantic_target": "dataset-variant", "primary_analysis_spec_path": "/dataset_variant_intent", "allowed_analysis_spec_paths": ["/dataset_variant_intent"] },
+      { "semantic_target": "cohort-rule", "primary_analysis_spec_path": "/cohort_rule", "allowed_analysis_spec_paths": ["/cohort_rule"] },
+      { "semantic_target": "event-set", "primary_analysis_spec_path": "/event_set", "allowed_analysis_spec_paths": ["/event_set", "/event_directions", "/preprocessing", "/missingness_policy"] },
+      { "semantic_target": "event-directions", "primary_analysis_spec_path": "/event_directions", "allowed_analysis_spec_paths": ["/event_directions"] },
+      { "semantic_target": "preprocessing", "primary_analysis_spec_path": "/preprocessing", "allowed_analysis_spec_paths": ["/preprocessing"] },
+      { "semantic_target": "outlier-policy", "primary_analysis_spec_path": "/outlier_policy", "allowed_analysis_spec_paths": ["/outlier_policy"] },
+      { "semantic_target": "missingness-policy", "primary_analysis_spec_path": "/missingness_policy", "allowed_analysis_spec_paths": ["/missingness_policy"] },
+      { "semantic_target": "covariate-adjustment", "primary_analysis_spec_path": "/covariate_adjustment", "allowed_analysis_spec_paths": ["/covariate_adjustment"] },
+      { "semantic_target": "backend-settings", "primary_analysis_spec_path": "/backend", "allowed_analysis_spec_paths": ["/backend"] },
+      { "semantic_target": "mcmc", "primary_analysis_spec_path": "/mcmc", "allowed_analysis_spec_paths": ["/mcmc"] }
+    ],
+    "source_variant_method_registry": [
+      { "variant_kind": "baseline-input", "method_ids": ["exact-input-bytes/1"] },
+      { "variant_kind": "external-missingness", "method_ids": ["external-missingness-variant/1"] },
+      { "variant_kind": "bootstrap-resample", "method_ids": ["participant-bootstrap-with-replacement/1"] },
+      { "variant_kind": "participant-subsample", "method_ids": ["participant-subsample-without-replacement/1"] },
+      { "variant_kind": "influence-removal", "method_ids": ["exact-participant-or-named-group-removal/1"] },
+      { "variant_kind": "null-transformation", "method_ids": ["pure-no-signal-synthetic/1", "label-permutation/1", "featurewise-within-group-participant-permutation/1"] }
+    ],
+    "recomputation_invariants": [
+      { "rule_id": "resolved-audit-config-digest-recomputed/1", "enforcement_phase": "config-resolution", "algorithm": "Validate the path-free public owner, independently recompute every component identity and the final resolved digest, and reject caller-supplied or detached digests." },
+      { "rule_id": "source-variant-registry-acyclic-exact/1", "enforcement_phase": "config-validation", "algorithm": "Require exactly one baseline root and require every non-root source_variant_id_ref to name an earlier row with the exact registered kind-method binding." },
+      { "rule_id": "product-seed-owner-validated-and-derived/2", "enforcement_phase": "post-plan-preparation", "algorithm": "Resolve one exact AnalysisPlan/3 candidate first. For bootstrap, subsample, or null, reconstruct exactly one closed ProductSeedPreimage from that candidate's complete AnalysisSpec/3 operation_intent and derive under ebm-audit/product-seed/2 with hmac-sha256-u64be-v2 before realization; reject caller-supplied preimages, derived row selections, data digests, manifests, or detached fields. Ordinary and influence require null operation_seed. Derive each model-chain seed from the same plan-owned AnalysisSpec content name, operation kind, and seedless chain ordinal, then construct the complete seeded UniverseSpec and its universe identity. The content name is deterministic evidence, never execution authority. Only after all candidate outcomes are known may the receipt embed that universe; this order prevents an identity cycle." },
+      { "rule_id": "lossless-audit-dataset-catalog-exact/1", "enforcement_phase": "input-admission", "algorithm": "Require the retained source admission, exact bytes, complete input format, complete role declaration, source shape, ordered physical-column catalog, and all dataset role specifications to agree. Retain every row and cell; do not select a cohort or apply missingness, preprocessing, identity-token, or model operations. Recompute the lossless table digest and the complete AuditDatasetCatalog digest." },
+      { "rule_id": "validated-dataset-summary-digest-recomputed/1", "enforcement_phase": "input-admission", "algorithm": "After lossless admission, schema-validate the closed aggregate owner and recompute its domain-separated digest. Private row indexes and direct identifiers are not owner fields." },
+      { "rule_id": "prepared-audit-dataset-binding-exact/1", "enforcement_phase": "input-admission", "algorithm": "Issue a prepared capability only from the exact run authorization, source admission, AuditDatasetCatalog digest, and validated summary digest. Later planning and preparation accept only the identity-keyed capability, never a detached record or reconstructed object." },
+      { "rule_id": "budget-and-influence-ceiling-fail-closed/1", "enforcement_phase": "plan-compilation", "algorithm": "Compute the ordinary candidate count, conservative fit ceiling, and maximum exact removals in any one influence scope from complete AnalysisSpec/3 candidates, seedless chain slots, safe planning cardinalities, and declared profile ceilings before realization. Compare them independently to ordinary_universe_limit, max_total_fits, and influence_max_removals, preserving every overflow in canonical reason-code order. Data-dependent validity never rewrites the plan, and truncation, prefix selection, and partial-plan execution are forbidden." }
+    ]
+  },
+  "analysis_planning_identity_contract": {
+    "contract_version": "ebm-audit-analysis-planning-identities/3.0",
+    "implementation": "src/ebm_audit/universe/identities.py",
+    "runtime_dispatch_activation": "ACTIVE",
+    "rules": [
+      { "rule_id": "analysis-plan-candidate-order-and-identity-exact/2", "owner_schema_ref": "analysis-universe.schema.json#/$defs/AnalysisPlan", "algorithm": "Activation requires genuine RunEligibleAuditConfig, PreparedAuditDataset, a pre-data validation-issued PublicIntentManifest owned by the exact run authorization and authenticated worker Describe bindings, and validation-issued planning-summary capabilities; raw mappings and AnalysisSpec content digests are never acceptance evidence. PlanningAuthority separately binds the exact prepared dataset. The sole compiler deterministically rebuilds the entire plan and each complete execution-only AnalysisSpec/3 from those authorities, exact-compares canonical bytes, authorizes every caller-chosen public identifier inside those specs and every complete setting value, and uses one schema- and path-aware extractor for both manifest issuance and final-plan privacy checks. Only typed caller- or data-derived strings, including public IDs, dynamic setting names, authorized string values, and free caller text, are compared with private source-column, raw-label, physical-variant-label, provenance, participant, and path tokens. Fixed schema tags, namespaces, versions, statuses, enum values, rule literals, opaque digests, and compiler-generated IDs are structural and never scanned. The shared AnalysisSpec/3 content-name helper is pure and deterministic but issues no capability. String settings require bounded NFC control-free closed enum/const schemas and explicit path/URI rejection; arrays require a safe item ceiling and scalar items; every selected complete value must be JCS-equal to one manifest-authorized value. Manifest authorization never replaces the private-token scan. Identical execution objects from any experiment set, mode, baseline/comparison declaration, rationale, inclusion reason, or operation label collapse to one candidate and one fit ceiling. Recompute every source_declaration_digest, origin_id, declaration resolution, direct plan baseline, and derived origin comparison edge; require exact closed provenance coverage, globally unique origins, unique axis IDs, the primary origin to be the minimum origin_id, and remaining origins in exact origin_id order. A declaration-family ID may repeat across its replicated or influence expansion origins; declaration resolutions are keyed and ordered by origin_id, so one family may expand to many origins and many origins may converge on one deduplicated AnalysisSpec. Ordinary source declarations remain uniquely source-resolvable. Require contiguous candidate ordinals, candidate_id equal analysis_spec_id, independently derived static outcomes/reasons, exact seedless chain slots, exact operation-to-variant binding, derived sources to name an ordinary source with an unchanged analysis pipeline, exact source resolution, and no source cycles." },
+      { "rule_id": "analysis-plan-counts-partitions-and-ceiling-exact/2", "owner_schema_ref": "analysis-universe.schema.json#/$defs/AnalysisPlan", "algorithm": "Recompute total and deterministic by-experiment-set, by-axis, and by-operation partitions in v2 terms. Verify each bootstrap, subsample, null replicate and influence removal ordinal within its exact experiment/source/variant/method-or-removal scope and the matching validation-issued safe cardinality; null scopes additionally include null_family_id so same-method families retain independent ordinal sequences. Recompute the ordinary-candidate count, conservative fit ceiling, and maximum exact removals in any one declared influence scope. Compare those three quantities independently to ordinary_universe_limit, max_total_fits, and influence_max_removals, retain every exceeded ceiling in canonical reason-code order, and never truncate an influence scope. BUDGET_EXCEEDED may be persisted and reported, but cannot enter preparation or execution." },
+      { "rule_id": "analysis-plan-self-hash-matches-preimage/2", "owner_schema_ref": "analysis-universe.schema.json#/$defs/AnalysisPlan", "algorithm": "Validate the row-free planning-config owner, project the exact AnalysisPlan/3 digest preimage, recompute under ebm-audit/analysis-plan/3, and require plan_digest equality." },
+      { "rule_id": "preparation-receipt-coverage-order-and-fit-counts-exact/2", "owner_schema_ref": "analysis-universe.schema.json#/$defs/PreparationReceipt", "algorithm": "PlanningAuthority accepts one exact WITHIN_BUDGET AnalysisPlan/3 and synchronizes first issuance so sequential and concurrent callers receive the identical successful PreparationTransaction and identical ordered candidate capability objects. It builds and fully revalidates the complete transaction before atomic publication; a failed attempt publishes no transaction or candidate capability through the authority and a later call may retry. The transaction contains exactly one PreparationReceipt/2 with one ordered discriminated record per candidate. PREPARED owns one complete UniverseSpec/3 and no reasons. PLAN_INELIGIBLE copies the candidate's exact planning_reasons and applies no preparation rules. PREPARATION_INVALID and PREPARATION_UNSUPPORTED own no universe; every failure reason names an applied operation/state-compatible preparation rule and one of that rule's exact allowed_reason_codes. Random-operation failures retain the exact derived operation_seed so retry cannot redraw. Recompute prepared/unprepared candidates, actual fits, and unprepared fits; actual fits equal prepared seeded chain rows and actual plus unprepared fits equals the unchanged plan ceiling. Recompute receipt_digest under preparation-receipt/2 only after all candidate records exist. No caller-supplied partial receipt or per-candidate preparation authority is accepted." },
+      { "rule_id": "post-plan-universe-binding-and-identity-exact/3", "owner_schema_ref": "analysis-universe.schema.json#/$defs/UniverseSpec", "algorithm": "Every PREPARED candidate requires one sealed typed PrivatePreparationReplay and deterministic recomputation of its exact source, cohort, pre-operation, operation-output, training, evaluation, removal, affected-cell, fitted-parameter, accounting, input/output digest, and seeded draw transitions. Opaque bytes, raw mappings, fabricated objects, and multiplicity-only evidence fail. Ordinary/null operation membership equals pre-operation membership; bootstrap/subsample membership is a role-preserving subset; influence equals pre-operation minus exact removals; non-influence removals are empty; training instances derive from operation instances under only declared loss policies. Bootstrap/subsample draws are replayed from the operation seed and canonical input; stratified execution additionally requires exact private stratum quotas and allocation. Publish only the domain-separated evaluation membership digest and safe staged S/C/P/Oi/Ou/Ti/Tu/E and role totals, then derive universe_id under analysis-universe/3 and chain_execution_id under chain-execution/3. candidate_ordinal, candidate_id, analysis_spec_id, plan schema, and plan digest must match the exact Plan/3 row." }
+    ]
+  },
+  "private_preparation_replay_contract": {
+    "contract_version": "ebm-audit-private-preparation-replay/2.0",
+    "activation_status": "ACTIVE",
+    "failure_rule": "Every PREPARED UniverseSpec/3 is issued and independently verified from the typed private replay in the same PlanningAuthority-owned complete receipt transaction. No public record, digest, or caller mapping can substitute for that replay.",
+    "stage_transition_rule_id": "declared-stage-transition-private-replay/2",
+    "evaluation_membership_domain": "ebm-audit/evaluation-membership/1",
+    "operation_instance_manifest_domain": "ebm-audit/operation-participant-instance-manifest/1",
+    "privacy_rule": "Exact run-local participant tokens, row indexes, role codes, occurrence ordinals, removals, strata, affected cells, fitted parameters, and transition evidence stay private and non-serializable; only closed digests and safe aggregate counts may enter UniverseSpec."
+  },
+  "grouped_operation_execution_contract": {
+    "contract_version": "ebm-audit-grouped-operation-execution/1.0",
+    "activation_status": "DEFERRED_TO_F0_EXECUTION_GRAPH_MIGRATION",
+    "group_key": ["case_id", "analysis_spec_id", "analysis_spec_ordinal"],
+    "alias_order": "ascending-operation-matrix-id-utf8",
+    "required_owner": "F0 must issue exactly one grouped operation owner per unique group_key with every bound operation_matrix_id retained once in alias_order.",
+    "failure_rule": "Until that owner is implemented, execution resolution fails OPERATION.GROUPED_OWNER_DEFERRED whenever one AnalysisSpec ordinal has more than one operation-matrix alias. The v2 case configuration and digest may represent the aliases but cannot expand them into duplicate fits."
+  },
+  "candidate_result_and_terminal_contract": {
+    "contract_version": "ebm-audit-candidate-result-and-terminal/2.0",
+    "result_owner_schema_ref": "canonical-records.schema.json#/$defs/ResultRecord",
+    "terminal_owner_schema_ref": "run-artifacts.schema.json#/$defs/CandidateTerminal",
+    "terminal_index_owner_schema_ref": "run-artifacts.schema.json#/$defs/CandidateTerminalIndex",
+    "coverage_owner_schema_ref": "run-artifacts.schema.json#/$defs/RunArtifactState",
+    "coverage_rule": "planned_candidates is the exact ordered AnalysisPlan/3 candidate sequence. While EXECUTING, candidate_terminals is an exact prefix of that sequence. At ALL_UNIVERSES_TERMINAL and later it has the same length and contains every candidate exactly once in ordinal order. Every terminal is derived from one schema-valid ResultRecord/2 and exact result artifact bytes; caller-supplied universe-only coverage is forbidden.",
+    "unprepared_status_mapping": {
+      "PLAN_INELIGIBLE_WITH_EVENT_COUNT_OR_DIRECTION_REASON": "INVALID_SPECIFICATION",
+      "PLAN_INELIGIBLE_WITH_ONLY_MCMC_UNAVAILABLE_REASON": "UNSUPPORTED_CAPABILITY",
+      "PREPARATION_INVALID": "INVALID_SPECIFICATION",
+      "PREPARATION_UNSUPPORTED": "UNSUPPORTED_CAPABILITY"
+    },
+    "unprepared_precedence": "Any PLAN.EVENT_COUNT_BELOW_TWO or PLAN.EVENT_DIRECTIONS_UNRESOLVED reason selects INVALID_SPECIFICATION even when PLAN.MCMC_UNAVAILABLE_FOR_MVP is also retained. All reasons remain in the result body.",
+    "unprepared_input_identity_contract": {
+      "domain": "ebm-audit/scientific-data/1",
+      "owner_schema_ref": "canonical-records.schema.json#/$defs/ScientificDataDigestPreimage",
+      "canonical_required_branches": [
+        "PLAN_INELIGIBLE_WITH_ONLY_MCMC_UNAVAILABLE_REASON",
+        "PREPARATION_UNSUPPORTED"
+      ],
+      "null_required_branches": [
+        "PLAN_INELIGIBLE_WITH_EVENT_COUNT_OR_DIRECTION_REASON",
+        "PREPARATION_INVALID"
+      ],
+      "algorithm": "For either valid unsupported branch, the unprepared authority privately retains the exact canonical ScientificDataDigestPreimage, schema-validates it, recomputes input_digest under ebm-audit/scientific-data/1, and re-canonicalizes from the exact prepared-dataset capability and private namespace before result construction. For either invalid pre-canonical branch, input_digest is present and null; PREPARATION_INVALID must reproduce canonicalization failure, while event-count/direction plan invalidity cannot satisfy the canonical preimage's minimum event/direction contract. The exact-file byte digest remains a distinct private source_byte_digest and can never populate input_digest.",
+      "production_result_builder_status": "ABSENT",
+      "required_downstream_integration_test": "tests/integration/test_unprepared_result_authorization_finalization.py::test_exact_unprepared_authorization_constructs_and_persists_only_its_bound_result"
+    },
+    "prepared_status_mapping": "A validate-terminal result exactly equals its one authenticated negative validate status. A fit-terminal result exactly equals the first present status in the fixed negative_status_precedence over final per-chain fit evidence. Core-observed failure class/code is mapped before that selection. INVALID_INPUT is reserved for an admitted-input failure or a genuine authenticated worker INVALID_INPUT response; it is never a preparation or planning fallback.",
+    "result_finalization_invariant": {
+      "rule_id": "result-record-finalization-evidence-exact/1",
+      "schema_hook": "x-ebm-result-finalization-invariants",
+      "implementation": "src/ebm_audit/results/finalization.py:finalize_prepared_candidate",
+      "readback_validator": "src/ebm_audit/protocol/identities.py:validate_result_record_finalization",
+      "required": true,
+      "enforcement_points": ["before-result-id-issuance", "before-result-persistence", "before-cache-admission", "before-candidate-terminal-construction"],
+      "fit_attempt_rule": "Evidence is ordered by contiguous chain_plan_position starting at zero. Each chain has exactly ordinal [0] or [0,1], at most two attempts, one chain_execution_id, unique attempt identities, and no ordinal-1 without ordinal-0. Core derives chain_execution_id under ebm-audit/chain-execution/3 from the prepared universe, chain ID, and seed, then derives attempt_id under ebm-audit/chain-attempt/3 from that chain identity and ordinal; caller-shaped identities fail. Ordinal 1 requires ordinal 0 to be a core-observed PROCESS_FAILURE with code BACKEND.WORKER_START_FAILED or BACKEND.WORKER_PROCESS_FAILED; both attempts have the same retry_equivalence_digest and distinct attempt-specific request identities.",
+      "core_failure_status_mapping": {
+        "TIMEOUT": "TIMEOUT",
+        "PRIVACY_VIOLATION": "PRIVACY_VIOLATION",
+        "PROCESS_FAILURE": "BACKEND_ERROR",
+        "RESPONSE_MISSING": "PROTOCOL_ERROR",
+        "RESPONSE_INVALID": "PROTOCOL_ERROR",
+        "PROTOCOL_FAILURE": "PROTOCOL_ERROR",
+        "UNEXPECTED_CORE_ERROR": "PROTOCOL_ERROR"
+      },
+      "negative_status_precedence": ["PRIVACY_VIOLATION", "PROTOCOL_ERROR", "TIMEOUT", "BACKEND_ERROR", "INVALID_INPUT", "INVALID_SPECIFICATION", "UNSUPPORTED_CAPABILITY"],
+      "scientific_finalization_rule": "COMPLETED and CONVERGENCE_NON_SUCCESS require successful validation, one final SUCCESS attempt for every retained chain, and exact chain position, execution ID, and final attempt bindings. Convergence assessment then maps exactly to final status. No schema-only or caller-labelled result may bypass this validator.",
+      "core_failure_resolution_rule": "Before accepting a core-observed evidence reference, schema-validate its carried privacy-safe CoreObservedFailureDigestPreimage, recompute ebm-audit/core-observed-failure/2, and require class, code, authenticated request digest, and stored failure digest to equal the reference. A detached class/code label or digest-only pointer is not evidence.",
+      "runtime_authority_rule": "Only the core finalizer may issue the non-copyable in-process FinalizedResult capability. During atomic integration, one narrow unexported verifier consumes and retains the exact preparation-owned CandidateResultAuthorization and projects the finalizer state; the temporary fail-closed seam is not a second public preparation capability. That state binds exact validation, ordered fit attempts, and cache-lineage owner before finalization; finalization is atomic and memoizes exactly one FinalizedResult for that owner. Every descriptive COMPLETED FinalizedResult, whether SUCCESS or CONVERGENCE_WARN, retains the exact ordered tuple of all successful AuthenticatedWorkerExecutionEvidence owners, and every read revalidates their chain position, result evidence, response body, and object identity. Interpretive baseline authority remains limited to SUCCESS. It constructs every serialized worker-evidence reference from an exact AuthenticatedWorkerExecutionEvidence or WorkerInvocationObservation capability, derives retry permission directly from the sealed initial observation, recomputes nested owner digests, and runs the pure readback validator over canonical bytes. A ResultRecord mapping remains readback material and cannot authorize identity issuance, persistence, cache admission, CandidateTerminal construction, or evidence sealing.",
+      "cache_authority_rule": "VerifiedCacheLineage is constructed only from exact successful fit-execution capabilities. Core derives every chain cache key under ebm-audit/chain-cache/4, derives the fixed convergence-rule digest, derives the universe cache key under ebm-audit/universe-cache/3, and exact-compares the ordered keys again against the current finalized universe. HIT additionally requires an exact cache-admissible COMPLETED source FinalizedResult; arbitrary keys, negative sources, unbound lineage, and caller-rehashed mappings fail.",
+      "persistence_authority_rule": "ResultPersistenceJournal opens only from one exact PlanCandidateAuthorization and one exact genuine PreparationTransaction. The Plan authorization retains the PlanningAuthority's private preparation-publication token, and that token must be the identical object retained by the transaction; equal plan bytes, IDs, digests, or a same-content authorization from a sibling PlanningAuthority cannot pair the two owners. The transaction's ordered candidate authorizations must exactly cover that Plan/3. Persistence accepts only an exact FinalizedResult whose retained CandidateResultAuthorization is the identical object at its transaction ordinal. That identity is rechecked before any result or cache artifact write and on every journal read or seal; equal IDs, a sibling transaction, and the null contract-harness seam fail closed. Result persistence then writes canonical result bytes create-once through PrivateArtifactStore, safely rereads the exact 0600 regular file below 0700 no-symlink directories, derives the exact-file result digest from that reread, persists the result-derived CandidateTerminal, and only then appends one opaque terminal-and-persisted-owner entry. Every later terminal read, cache read, coverage decision, and terminal-index seal rereads the exact owner graph and disk artifacts. Only after exact terminal-index sealing may the journal issue one nonserializable SealedResultEvidenceSet retaining the exact transaction, ordered candidate authorizations, Plan/3 owner, terminal authorization, sealed index, every exact finalized/persisted/cache result, and every descriptive-chain execution owner in order. Evidence sealing structurally closes further result or cache persistence; no raw array or cross-process reconstruction can recreate the capability.",
+      "candidate_execution_disposition_authority_rule": "classify_candidate_execution accepts only one exact current SealedResultEvidenceSet and derives every requested, terminal, success, non-success, privacy, and closed terminal-status count from that owner. It issues one noncopyable SealedCandidateExecutionDisposition, revalidates the complete sealed owner graph on every read, and reuses only a still-live disposition without retaining a dead capability or run graph. Baseline status, benchmark results, mandatory-gate counts, unexpected-core counts, caller status, and caller counts are not candidate-execution inputs. Candidate execution can produce only COMPLETE, PARTIAL, FAILED, or PRIVACY_FAILED with terminal-derived failure classes INVALID_INPUT_OR_SPECIFICATION, WORKER_OR_CAPABILITY_UNAVAILABLE, or BACKEND_OR_PROTOCOL_FAILURE. Pre-plan, incomplete-run, and unexpected-core aborts remain separate CLI abort semantics. MANIFEST_SEALED has no producer until a future exact SealedRunGateDisposition owns benchmark and all other run-gate facts; defaults, report presence, or baseline authority cannot substitute.",
+      "baseline_assessment_authority_rule": "The total VerifiedBaselineAssessment is issued only from one exact SealedResultEvidenceSet. It resolves the Plan/3 baseline_analysis_spec_id at its actual candidate ordinal and binds that exact finalized/persisted terminal plus terminal-index digest. SUCCESS requires and wraps the exact VerifiedBaselineReproduction derived from that same FinalizedResult. Any exact non-success terminal issues BASELINE_NOT_ASSESSABLE with no reproduction identity and validated_language_eligibility false. Report-language and future run-gate consumption require the assessment's retained SealedResultEvidenceSet to be the identical current run set, then recheck its exact preparation transaction, Plan authority, terminal authority, sealed index, and baseline finalized/persisted result and status. The assessment can unlock validated language only; it cannot change candidate-execution COMPLETE, PARTIAL, FAILED, or PRIVACY_FAILED. Caller mappings, matching IDs/digests, a foreign genuine assessment, a reproduction from another result, or a detached owner graph cannot issue current-run authority.",
+      "cache_persistence_rule": "Cache persistence is write-side only and accepts exactly finalized_result_cache_admission_bytes from a COMPLETED FinalizedResult bound to its exact retained VerifiedCacheLineage after that result has exact persistence authority. It does not recreate FinalizedResult, VerifiedCacheLineage, or HIT authority from files. Attaching an existing run root remains fail-closed until execution orchestration supplies an authenticated persisted-execution bundle bound to retained request/execution evidence and the current Plan/3 owner."
+    },
+    "convergence_status_mapping": {
+      "CONVERGENCE_PASS": "SUCCESS",
+      "CONVERGENCE_WARN": "CONVERGENCE_WARN",
+      "CONVERGENCE_FAIL": "CONVERGENCE_FAILED",
+      "CONVERGENCE_NOT_ASSESSABLE": "CONVERGENCE_NOT_ASSESSABLE"
+    },
+    "nullable_universe_rule": "Only an UNPREPARED ResultRecord body and its derived CandidateTerminal may have universe_id null. Every execution, convergence, or completed branch requires the exact prepared UniverseSpec/3 universe_id. Unprepared branches contain no worker, backend, chain, convergence, or cache fields."
+  },
+  "universe3_atomic_migration_inventory": {
+    "inventory_version": "ebm-audit-universe3-atomic-migration/1.0",
+    "state": "FAIL_CLOSED_PENDING_ATOMIC_RUNTIME_INTEGRATION",
+    "contract_fail_closed_total": 59,
+    "contract_fail_closed_categories": {
+      "run_artifact_runtime_and_tests": 39,
+      "lifecycle_runtime_and_tests": 12,
+      "evaluator_fixtures": 6,
+      "universe_identity_paths": 2
+    },
+    "environment_absence_total": 11,
+    "environment_absence_category": "PYSAEBM_WORKER_ENVIRONMENT_UNAVAILABLE",
+    "classification_rule": "The 59 contract failures are atomic migration points and must remain fail-closed until the complete runtime package adopts Plan/3, PreparationReceipt/2, UniverseSpec/3, ResultRecord/2, lifecycle 2.0, and candidate-terminal coverage. The 11 PySA failures are separately classified environment absence and are not contract migration failures, passes, or evidence of backend correctness."
+  },
+  "worker_invocation_evidence_contract": {
+    "contract_version": "ebm-audit-worker-invocation-evidence/2.0",
+    "fit_request_id_rule": {
+      "rule_id": "fit-request-id-derived-from-attempt/1",
+      "domain": "ebm-audit/fit-request-id/1",
+      "owner_schema_ref": "canonical-records.schema.json#/$defs/Sha256Digest",
+      "owner_projection": "exact WorkerRequest.payload.attempt_id lowercase prefixed SHA-256 string",
+      "algorithm": "SHA-256 of ASCII domain, NUL, and lowercase attempt_id ASCII; take the first 16 digest bytes, force RFC 4122 variant bits and version-4 bits, then format as the canonical lowercase UUID."
+    },
+    "retry_equivalence_rule": {
+      "rule_id": "fit-identical-retry-equivalence-exact/1",
+      "domain": "ebm-audit/retry-equivalence/1",
+      "owner_schema_ref": "worker-protocol.schema.json#/$defs/RetryEquivalentFitRequestProjection",
+      "projection": "start with the complete ScientificFitRequestProjection after its four transport exclusions, then remove exactly payload.attempt_id and payload.attempt_ordinal",
+      "eligible_failure_class": "PROCESS_FAILURE",
+      "eligible_failure_points": ["PROCESS_START", "PROCESS_CRASH"],
+      "eligible_failure_codes": ["BACKEND.WORKER_START_FAILED", "BACKEND.WORKER_PROCESS_FAILED"],
+      "original_attempt_ordinal": 0,
+      "only_retry_attempt_ordinal": 1,
+      "maximum_retry_count": 1,
+      "algorithm": "Retry only a core-observed PROCESS_FAILURE at process start or process crash. The retry is attempt ordinal 1, has a newly derived attempt_id, fit request UUID, scientific_request_digest, request metadata digest, and attempt-specific cache identity, and has the same retry_equivalence_digest as ordinal 0. TIMEOUT, worker response, validation, scientific, convergence, privacy, protocol, and unexpected-core failures are not retry-eligible."
+    },
+    "authenticated_request_evidence_rule": {
+      "rule_id": "authenticated-request-evidence-digest-recomputed/2",
+      "domain": "ebm-audit/authenticated-worker-request-evidence/2",
+      "owner_schema_ref": "worker-protocol.schema.json#/$defs/AuthenticatedWorkerRequestEvidenceProjection",
+      "algorithm": "Issue only after complete request framing. Recompute the closed path-free projection from the exact canonical request bytes and require its request, scientific, and execution-input identities to equal that frame."
+    },
+    "core_observed_failure_rule": {
+      "rule_id": "core-observed-failure-digest-recomputed/2",
+      "domain": "ebm-audit/core-observed-failure/2",
+      "owner_schema_ref": "worker-protocol.schema.json#/$defs/CoreObservedFailureDigestPreimage",
+      "algorithm": "Issue only for a core-observed exception after an authenticated request frame exists. Bind the closed failure class and code, authenticated request evidence, authenticated selected-owner identities when available, nullable fully framed response identity, and closed scalar privacy-safe evidence. Never synthesize worker response metadata."
+    },
+    "authenticated_execution_evidence_rule": {
+      "rule_id": "authenticated-execution-evidence-digest-recomputed/2",
+      "domain": "ebm-audit/authenticated-worker-execution-evidence/2",
+      "owner_schema_ref": "worker-protocol.schema.json#/$defs/AuthenticatedWorkerExecutionEvidenceProjection",
+      "algorithm": "Issue only after complete immutable request, response, and invocation bundles pass validation. Require the exact active command, payload, status, and typed command-evidence-reference matrix; describe and self-test references are null, validate and fit references name their exact evidence kind, schema version, and digest, and stage has no active branch."
+    },
+    "selected_algorithm_binding_rule": {
+      "rule_id": "selected-algorithm-binding-digest-recomputed/2",
+      "domain": "ebm-audit/selected-algorithm-binding/2",
+      "owner_schema_ref": "analysis-universe.schema.json#/$defs/SelectedAlgorithmBinding",
+      "algorithm": "AuthenticatedWorkerDescription is the sole canonical projection owner. Planning and invocation consume the exact ten-field projection and independently compare it with their configured owners before recomputing this digest."
+    }
+  },
+  "execution_identity_graph_contract": {
+    "contract_version": "ebm-audit-execution-identity-graph/3.0",
+    "activation_status": "ACTIVE",
+    "required_graph_version": "ebm-audit-execution-identity-graph/3",
+    "implemented_graph_version": "ebm-audit-execution-identity-graph/3",
+    "guarded_rule_ids": [
+      "canonical-scientific-payload-digest-recomputed/1",
+      "fit-terminal-binding-digest-exact/1",
+      "sealed-result-comparator-applicability-exact/1",
+      "sealed-results-order-unique/1",
+      "sealed-results-header-binding-exact/1",
+      "score-aggregate-outcome-derived/1",
+      "score-fpr-opportunity-counts-exact/1",
+      "score-fpr-evaluation-binding-exact/1",
+      "backend-acceptance-cas-receipt-atomic/1"
+    ],
+    "owner_domain_interface_status": "ACTIVE_PLAN_BOUND_UNIVERSE_3",
+    "activation_rule": "This source-controlled protocol authority is not a caller or runtime flag. All nine dependent rules require the exact active graph before owner selection. The evaluator independently authenticates the complete AnalysisPlan/3 owner and complete PreparationReceipt/2 owner under distinct private-root HMAC domains, recomputes their existing plan_digest and receipt_digest, and resolves exactly one candidate and preparation record by candidate_ordinal. HeldoutAttemptIdentityPreimage/4 fixes the exact analysis_plan_digest; SealedOperationPlan/2 fixes that same plan digest and the exact preparation_receipt_digest. The selected PREPARED UniverseSpec/3 must project exactly to the authenticated FrozenChainPlan/3 UniverseIdentityPreimage/3, Plan/3 fields, candidate content identity, operation seed, registry digest, and ordered chain rows; candidate_id equals analysis_spec_id. Only then may the evaluator derive universe_id under ebm-audit/analysis-universe/3, chain_execution_id under ebm-audit/chain-execution/3, and attempt_id under ebm-audit/chain-attempt/3. Missing, legacy, cross-plan, cross-ordinal, cross-candidate, cross-receipt, reordered, substituted, replayed, or caller-shaped owners fail closed. There is no compatibility flag, alternate authority, or alternate identity path."
+  },
+  "runtime_invariant_execution_contract": {
+    "contract_version": "ebm-audit-runtime-invariant-dispatch/1",
+    "hook_value_rule": "Every x-ebm-invariants value is exactly one registered rule_id; prose and unregistered aliases are forbidden.",
+    "dispatch_rule": "The evaluator dispatches the exact rule_id at enforcement_phase. Unknown, duplicate, missing, skipped, or non-PASS required-rule outcomes fail closed.",
+    "implementation_rule": "Each rule is a required evaluator builtin whose normative algorithm is its rule_id plus any algorithm field in this registry and the closed owner schema. The rule_id fixes digest domains, schema references, expected registry contents, and validator selection; caller input cannot choose them. Registry presence alone is not a PASS receipt.",
+    "atomic_identity_rule": "Before any validate or fit payload, subject, response binding, terminal result, or scientific result is accepted, validate the complete WorkerRequest, DescribeResult, selected SupportedAlgorithm, and response owner. Resolve the algorithm exactly once; validate settings against its exact inline schema; independently recompute settings_schema_digest, settings_digest, stage_semantics_digest, adapter_semantics_digest, requested_output_registry_digest, requested_outputs_digest, capabilities_digest, backend_identity_digest, execution_input_projection_digest, request_metadata_digest, and the command-specific scientific_request_digest from their registered complete owners; and require exact equality across the request, described algorithm, dataset descriptor, response, and evidence fields that carry them. Any stage output contained in a successful fit additionally requires one exact stage_model_reference_digest derived from its complete fit owner. A digest propagated consistently through downstream objects is not proof of its source owner and fails closed.",
+    "pre_freeze_gate": "Before freeze, enumerate every x-ebm-invariants attachment across schema_files, require exact registry membership, require an evaluator implementation dispatch for every attached rule, execute adversarial fixtures, and retain one typed outcome per dispatch.",
+    "reference_dispatcher": "evaluator/fixtures/runtime_invariant_dispatcher.py",
+    "reference_counterexamples": "evaluator/fixtures/runtime-invariant-counterexamples.json",
+    "typed_outcome_schema_version": "ebm-audit-runtime-invariant-outcome/1.0",
+    "typed_outcome_schema_ref": "evaluator-receipts.schema.json#/$defs/RuntimeInvariantDispatchOutcome",
+    "required_reference_rule_count": 87,
+    "required_reference_negative_count": 87,
+    "missing_dispatch_status": "FREEZE_FAILED"
+  },
+  "runtime_owner_resolution": {
+    "default_owner_path": "",
+    "rule_owner_paths": {
+      "source-set-root-coverage-exact/1": "/manifest",
+      "source-set-entry-byte-identity-exact/1": "/manifest",
+      "candidate-tree-entry-byte-identity-exact/1": "/manifest",
+      "validate-command-payload-digest-recomputed/1": "/evidence",
+      "validate-command-subject-digest-recomputed/1": "/evidence",
+      "fit-command-payload-digest-recomputed/1": "/evidence",
+      "fit-command-subject-digest-recomputed/1": "/evidence",
+      "negative-command-subject-digest-recomputed/1": "/evidence",
+      "command-evidence-response-binding-exact/1": "/evidence",
+      "requested-output-registry-order-unique/1": "/actual",
+      "requested-output-required-capabilities-conjunctive/1": "/requested",
+      "self-test-check-registry-order-unique/1": "/actual",
+      "freeze-predicate-evidence-registry-exact/1": "/receipt",
+      "evaluator-response-payload-digest-exact/1": "/binding",
+      "evaluator-response-binding-distinct-from-wire-digest/1": "/binding_preimage",
+      "sealed-case-raw-canonical-input-digests-independent/1": "/case",
+      "sealed-case-generator-audit-configuration-digests-independent/1": "/case",
+      "sealed-case-comparator-plan-applicability-exact/1": "/case",
+      "validate-terminal-binding-digest-exact/1": "/result",
+      "fit-terminal-binding-digest-exact/1": "/result",
+      "sealed-result-comparator-applicability-exact/1": "/result",
+      "canonical-scientific-payload-digest-recomputed/1": "/result",
+      "score-aggregate-outcome-derived/1": "",
+      "score-fpr-opportunity-counts-exact/1": "",
+      "score-fpr-evaluation-binding-exact/1": "",
+      "backend-acceptance-cas-receipt-atomic/1": "",
+      "comparator-member-configuration-identities-present/1": "/case",
+      "comparator-sealed-case-binding-exact/1": "/case",
+      "comparator-shared-component-equality-executable/1": "/evidence",
+      "comparator-chain-binding-equality-executable/1": "/evidence",
+      "comparator-plan-member-binding-exact/1": "/evidence",
+      "comparator-evidence-four-chain-binding-exact/1": "/evidence"
+    },
+    "selection_rule": "The rule_id selects exactly one JSON Pointer. The complete object at that pointer must validate against exactly one registered owner_schema_ref branch before any handler runs. No shallow scan, caller-selected schema, alternate valid sibling, or first-match fallback is permitted."
+  },
+  "pre_candidate_qualification_gate": {
+    "gate_version": "ebm-audit-pre-candidate-development-qualification/2.0",
+    "receipt_schema_ref": "evaluator-receipts.schema.json#/$defs/PreCandidateQualificationReceipt",
+    "development_receipt_schema_ref": "evaluator-receipts.schema.json#/$defs/DevelopmentScenarioEvaluationReceipt",
+    "required_predicates": [
+      {
+        "predicate_id": "development_scenario_results_and_exact_comparator_pairs_recorded",
+        "evidence_type": "FINAL_CANDIDATE_DEVELOPMENT_SCENARIO_RECEIPT"
+      },
+      {
+        "predicate_id": "all_23_scenario_predicates_execute_with_exact_coverage_and_adversarial_fail_closed_checks",
+        "evidence_type": "FINAL_CANDIDATE_DEVELOPMENT_SCENARIO_RECEIPT"
+      }
+    ],
+    "qualification_rule": "DevelopmentScenarioEvaluationReceipt/3 is unavailable and schema-impossible in the current contract because ScenarioFamilyEvaluationReceipt requires RuleOutcome while the registered RuleOutcome evidence preimage is rooted in held-out ScoreEvidenceBundle. The public qualification validator checks only the self-hash and candidate, subject, contract, and unresolved-development-reference bindings of the explicitly blocked PreCandidateQualificationReceipt/2, then rejects qualification. It does not audit or accept development, family-outcome, or comparator completion. A future reviewed type migration must introduce a distinct qualification-only development assessment and digest, seal held-out evidence into ScoreEvidenceBundle first, and only then let validate-substantive-score emit RuleOutcome rooted in score_evidence_root.",
+    "final_identity_change_rule": "Development and heldout use distinct instances of the same BenchmarkSubjectIdentity schema and no equality is presumed. If any final candidate, subject, contract, backend, environment, capabilities, settings, profile, convergence rule, null-calibration rule, or requested-output field differs from the qualified development identity, final development calibration and this gate must run again before heldout strong-label eligibility.",
+    "terminal_rule": "No decisive qualification is issuable by the current contract slice. CandidateFreezeReceipt/3 is fixed blocked with candidate_frozen=false. AcceptanceCandidateTransitionReceipt/2 is fixed blocked with transition_applied=false and the subject remaining EXPERIMENTAL. Later versions require the authoritative family resolver and a durable versioned no-overwrite compare-and-set operation with exact before and after revision/digest plus durable readback."
+  },
+  "heldout_pre_root_binding_contract": {
+    "contract_version": "ebm-audit-blocked-pre-root-diagnostic/1.0",
+    "diagnostic_domain": "ebm-audit/blocked-pre-root-diagnostic/1",
+    "diagnostic_schema_ref": "evaluator-receipts.schema.json#/$defs/BlockedPreRootDiagnostic",
+    "required_pre_root_checks": [
+      "scientific_freeze_source_vector_equals_blocked_diagnostic_source_vector",
+      "qualification_candidate_subject_contract_and_development_receipt_equal_candidate_freeze_v3",
+      "candidate_manifest_digest_equals_blocked_candidate_freeze_identity",
+      "acceptance_transition_is_blocked_until_authoritative_CAS_exists",
+      "candidate_freeze_and_transition_equal_diagnostic_candidate_and_subject",
+      "benchmark_freeze_not_after_qualification_not_after_candidate_freeze_before_transition_not_after_diagnostic",
+      "diagnostic_states_ROOT_NOT_DRAWN_and_creates_no_attempt_or_root_receipt"
+    ],
+    "diagnostic_fields": [
+      "heldout_manifest_template_sha256",
+      "candidate_sha256",
+      "contract_sha256",
+      "generator_sha256",
+      "scenario_definitions_sha256",
+      "metrics_rules_sha256",
+      "report_language_rules_sha256",
+      "benchmark_freeze_receipt_sha256",
+      "candidate_freeze_receipt_sha256",
+      "acceptance_candidate_transition_receipt_sha256",
+      "benchmark_subject_digest"
+    ],
+    "failure_rule": "The structural audit accepts only the explicit blocked diagnostic and checks exact cardinality, digest, link, manifest, source-vector, and time relationships. It takes no HeldoutAttemptIdentityPreimage or RootCommitmentReceipt and cannot authorize or describe a root draw. RootCommitmentReceipt is unsatisfiable in the current schema; a future version requires proven durable acceptance CAS readback and a private-root owner."
+  },
+  "profile_characterization_contract": {
+    "contract_version": "ebm-audit-profile-characterization-contract/3.0",
+    "plan_schema_ref": "evaluator-receipts.schema.json#/$defs/ProfileCharacterizationPlanReceipt",
+    "plan_domain": "ebm-audit/profile-characterization-plan-receipt/3",
+    "plan_analysis_spec_schema_ref": "evaluator-receipts.schema.json#/$defs/ProfileCharacterizationAnalysisSpec",
+    "synthetic_event_binding_schema_ref": "evaluator-receipts.schema.json#/$defs/ProfileSyntheticEventBinding",
+    "synthetic_event_binding_domain": "ebm-audit/profile-synthetic-event-binding/1",
+    "synthetic_event_mapping_method_id": "synthetic-e-id-lowercase-machine-id/1",
+    "synthetic_event_binding_enforcement": {
+      "rule_id": "profile-synthetic-event-binding-exact/1",
+      "enforcement_phase": "profile-characterization-plan-validation",
+      "failure_status": "PROFILE_PLAN_FAILED",
+      "algorithm": "Resolve all six exact public scenario coordinates from the authenticated authority bytes. For each coordinate recompute the ProfileSyntheticEventBinding digest, require exact source-contract, parameter-manifest, and resolved-generator-configuration identities, and derive only E plus two ASCII digits to e plus the same two digits under synthetic-e-id-lowercase-machine-id/1. Require identical source event IDs, separately resolver-owned truth directions, analysis event IDs, separately resolver-owned analysis directions, and exact float64 centers across all six bindings. Every profile AnalysisSpec event_set, event_directions, and missingness event vector must equal that common bound analysis projection. Missing, extra, reordered, detached-owner, copied-literal, transformed-center, truth-direction, analysis-direction, mapping, spec, digest-only, or fully rehashed replacement fails closed."
+    },
+    "evidence_metric_registry_schema_ref": "evaluator-receipts.schema.json#/$defs/ProfileEvidenceMetricRegistry",
+    "execution_source_manifest_schema_ref": "evaluator-receipts.schema.json#/$defs/ProfileExecutionSourceManifest",
+    "execution_source_manifest_domain": "ebm-audit/profile-execution-source-manifest/1",
+    "execution_identity_schema_ref": "evaluator-receipts.schema.json#/$defs/ProfileExecutionIdentity",
+    "execution_identity_domain": "ebm-audit/profile-execution-identity/1",
+    "worker_invocation_semantics_schema_ref": "evaluator-receipts.schema.json#/$defs/ProfileWorkerInvocationSemanticsDigestPreimage",
+    "worker_invocation_semantics_domain": "ebm-audit/profile-worker-invocation-semantics/1",
+    "public_seed_preimage_schema_ref": "evaluator-receipts.schema.json#/$defs/ProfilePublicSeedPreimage",
+    "public_seed_domain": "ebm-audit/profile-public-seed/2",
+    "source_and_execution_identity_rule": "The Plan retains the five complete declared source-set identities as DECLARED_PRE_EXECUTION_NOT_ATTESTED provenance. ProfileExecutionIdentity excludes candidate, contract, selection policy, and the broad source sets. It includes only fit-sensitive public authority, ordered coordinate and event-binding identities, ordered AnalysisSpec identities, backend and environment, required outputs, canonicalization, chain count, execution and observation policy, the narrow six-role source-manifest digest, and exact worker invocation-semantics digest. The execution policy explicitly binds cache_policy and checkpoint_policy to NO_READ_NO_WRITE and retry_policy to DISALLOWED; the profile executor must not inherit the ordinary runner's transient retry allowance. The Plan validates and hashes the declared narrow manifest but does not inspect or attest a candidate tree. Before any fit, a trusted executor must derive every declared entry from the exact candidate tree and match it.",
+    "public_seed_rule": "Derive one public uint64 seed from the ProfileExecutionIdentity digest, authenticated coordinate-specific synthetic-event-binding digest, and chain_id under ebm-audit/profile-public-seed/2. Budget profile and candidate are absent, so all three budgets reuse one coordinate-and-chain seed.",
+    "authority_lifecycle_rule": "Canonical authenticated authorities are keyed by exact authority bytes, exact worker argv tokens, and normalized timeout. A live identity reuses one authority; dead authorities are weakly reclaimable. A sealed Plan retains its authority until collection, while one-shot Plan publication tombstones remain permanent for that authority.",
+    "selection_policy_schema_ref": "evaluator-receipts.schema.json#/$defs/ProfileBudgetSelectionPolicy",
+    "transition_quality_policy_schema_ref": "evaluator-receipts.schema.json#/$defs/ProfileTransitionQualityPolicy",
+    "runtime_comparison_policy_schema_ref": "evaluator-receipts.schema.json#/$defs/ProfileRuntimeComparisonPolicy",
+    "blocked_diagnostic_schema_ref": "evaluator-receipts.schema.json#/$defs/BlockedProfileDiagnostic",
+    "blocked_diagnostic_domain": "ebm-audit/blocked-profile-diagnostic/2",
+    "backend_binding_rule": "The profile-only AnalysisSpec refinement closes nested backend.settings to the six declared pysaebm characterization keys and requested_outputs to the exact canonical nine-output sequence central_order, order_samples, accepted_transition_diagnostics, position_probabilities, pairwise_precedence, fitted_event_distributions, evaluation_stage_posterior, evaluation_hard_stages, evaluation_expected_stage, without changing generic AnalysisSpec/3. likelihood_trace, central-order-only, training-stage substitution, and any evaluation-stage omission fail closed. The plan carries one complete BackendIdentity and its recomputed digest. Every experimental subject must exactly equal that identity's adapter, worker, backend, source, environment, and algorithm fields and must equal the AnalysisSpec adapter, backend name/source digest, algorithm, capabilities, settings digest, and canonically recomputed requested-outputs digest.",
+    "pilot_design_rule": "This is compute-budget selection only: exactly three easy signal datasets and three moderate signal datasets crossed with three budgets and three chains produce 18 universes and 54 chain executions. The same 54 fit results supply transition review; transition review does not authorize another fit matrix. It contains no comparator dataset, matched-null delta, randomization p-value, or moderate scientific pass/fail. The exact ordered direct relations are 5k-to-10k, 2k-to-10k, and 2k-to-5k, with 18 same-chain comparisons each and no transitive inference.",
+    "stage_metric_rule": "Easy and moderate stage MAE use the exact generated fixed evaluation-cohort rows and their THRESHOLD_STAGE truth under the live selected subject's fixed_evaluation_cohort_staging capability. Incompatible stage axes produce NOT_ASSESSABLE and no selection; no training-stage or likelihood-trace substitution is allowed.",
+    "transition_quality_rule": "Every direct relation and 10k itself require REVIEWED_TRANSITION_QUALITY_PASS. The retained pySaEBM characterization has no such pass and its failed convergence profile received DO_NOT_ADVANCE, so its outcome is NO_SELECTION. A future accepted backend requires a versioned machine-executable independent decision owner binding the exact four transition observations and stating each metric's direction, per-metric aggregation, tolerance, endpoint/zero rule, complete denominators, exact plan/evidence/subject binding, and prohibition on preferred-central-order targeting.",
+    "runtime_comparison_rule": "For each direct relation, pair exactly 18 complete finite terminal core-observed runtimes by family_id, scenario_id, replicate_index, and chain_id. Each observation is candidate runtime divided by strictly positive reference runtime. Sort the 18 ratios and apply inverse-empirical-cdf/1 Q(0.5), the ninth one-based ordered value, without interpolation. The relation passes this component only when that value is strictly less than 1 with comparison tolerance 0. Missing, non-finite, non-terminal, incomplete, zero/negative-denominator, or equality evidence fails the relation and defaults upward.",
+    "later_development_moderate_gate": {
+      "separate_from_profile_pilot": true,
+      "atomic_signal_null_pair_count": 8,
+      "universe_count": 16,
+      "chain_count_per_universe": 3,
+      "chain_fit_count": 48,
+      "paired_randomization_p_value_maximum": 0.05,
+      "alignment_delta_minimum": 0.15,
+      "signal_stage_mae_maximum": 0.25,
+      "incomplete_pair_outcome": "FAIL",
+      "included_in_profile_counts": false
+    },
+    "retired_drafts": [
+      {
+        "schema_version": "ebm-audit-profile-characterization-receipt/2.0",
+        "domain": "ebm-audit/profile-characterization-receipt/2",
+        "status": "REJECTED_NEVER_ISSUED",
+        "reason": "Mixed pre-execution intent with caller-shaped result, evidence, metric, runtime, resource, identity, comparison, and qualification claims."
+      },
+      {
+        "schema_version": "ebm-audit-blocked-profile-diagnostic/1.0",
+        "domain": "ebm-audit/blocked-profile-diagnostic/1",
+        "status": "RETIRED_SUPERSEDED",
+        "reason": "It named the six-case public authority as missing before that authority and its authenticated plan issuer existed."
+      },
+      {
+        "schema_version": "ebm-audit-profile-characterization-plan-receipt/1.0",
+        "domain": "ebm-audit/profile-characterization-plan-receipt/1",
+        "status": "RETIRED_SUPERSEDED",
+        "reason": "It could not bind synthetic event IDs to AnalysisSpec-compatible event IDs without an explicit source-owner mapping."
+      },
+      {
+        "schema_version": "ebm-audit-profile-characterization-plan-receipt/2.0",
+        "domain": "ebm-audit/profile-characterization-plan-receipt/2",
+        "status": "RETIRED_SUPERSEDED",
+        "reason": "It bound public seeds to the candidate-specific Plan receipt, omitted fit-sensitive source and worker invocation identities, and retained canonical authenticated authorities permanently."
+      }
+    ],
+    "future_evidence_receipt": {
+      "schema_version": "ebm-audit-profile-characterization-evidence-receipt/3.0",
+      "domain": "ebm-audit/profile-characterization-evidence-receipt/3",
+      "status": "UNAVAILABLE",
+      "authority_rule": "Only a product-owned issuer may resolve and revalidate genuine live case, preparation, execution, result, convergence, runtime, resource, metric, aggregation, comparison, and decision owners. It must enforce the plan's exact evidence/metric registry, per-distance-family and per-direct-relation aggregation, requested-output owners, cardinalities, and fail-closed selection policy. It must also bind a versioned machine-executable independent transition-quality decision owner over the exact four transition observations; that owner states each metric's direction, aggregation, tolerance, endpoint/zero rule, complete denominators, exact plan/evidence/subject binding, and no preferred-central-order targeting. No profile can qualify until that owner exists and passes; failed or unreviewed 10k yields NO_SELECTION. The receipt is an opaque capability and has no caller-mapping validator."
+    }
+  },
+  "freeze_verifier_registry": {
+    "registry_version": "ebm-audit-freeze-verifier-registry/3.0",
+    "candidate_manifest_domain": "ebm-audit/candidate-tree/1",
+    "product_verifier": {
+      "environment_policy_id": "offline-macos-sandbox-v1",
+      "logical_environment": {
+        "ALL_PROXY": "",
+        "HOME": "{VERIFIER_SCRATCH}/home",
+        "HTTP_PROXY": "",
+        "HTTPS_PROXY": "",
+        "LANG": "C",
+        "LC_ALL": "C",
+        "NO_PROXY": "*",
+        "PATH": "/usr/bin:/bin",
+        "PIP_NO_INDEX": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONHASHSEED": "0",
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONNOUSERSITE": "1",
+        "PYTHONPATH": "{CANDIDATE_ROOT}/src",
+        "PYTHONUTF8": "1",
+        "TMPDIR": "{VERIFIER_SCRATCH}/tmp",
+        "UV_NO_INDEX": "1",
+        "UV_OFFLINE": "1"
+      },
+      "execution_boundary": {
+        "boundary_id": "macos-sandbox-exec-verifier-v1",
+        "supported_platform": "Darwin",
+        "launcher_absolute_path": "/usr/bin/sandbox-exec",
+        "profile_template": "(version 1)\n(allow default)\n(deny network*)\n(deny file-write*)\n(allow file-write* (subpath \"{VERIFIER_SCRATCH}\"))\n",
+        "filesystem_rule": "Read access follows the host evaluator account. All file writes are denied except beneath the fresh mode-0700 verifier scratch root.",
+        "network_rule": "All socket and network operations are denied by the operating-system sandbox.",
+        "unsupported_platform_rule": "Fail before verifier execution."
+      },
+      "script_relative_path": "src/ebm_audit/evaluator/freeze_checks.py",
+      "timeout_seconds": 900,
+      "logical_argv_prefix": [
+        "{SANDBOX_EXEC}", "-p", "{SANDBOX_PROFILE}",
+        "{EVALUATOR_PYTHON}", "src/ebm_audit/evaluator/freeze_checks.py"
+      ],
+      "runtime_rule": "{SANDBOX_EXEC} is the exact absolute operating-system sandbox launcher and {EVALUATOR_PYTHON} is the evaluator-owned locked runtime already executing this dispatcher; neither uses PATH or caller input. The committed candidate manifest fixes the verifier script bytes independently. The evaluator creates one fresh mode-0700 scratch root, substitutes the fixed profile and environment placeholders, denies all network operations and all writes outside scratch, then rechecks candidate and evidence bytes before accepting output. An unavailable boundary fails closed before execution.",
+      "logical_argv_suffix_template": ["--predicate", "{predicate_id}", "--candidate-sha256", "{candidate_sha256}", "--evidence-root", "{EVIDENCE_ROOT}", "--scratch-root", "{VERIFIER_SCRATCH}"],
+      "result_schema_ref": "evaluator-receipts.schema.json#/$defs/FreezeVerifierResult",
+      "result_line_rule": "The last non-empty UTF-8 stdout line is the complete strict JSON result. Exit zero, PASS, exact predicate/candidate binding, deterministic stdout/stderr, exact sandbox/runtime/environment/argv identities, unchanged candidate/evidence bytes, and the committed verifier source bytes are all mandatory."
+    },
+    "review_contract": {
+      "reviewer_lanes": ["cross-contract-consistency", "protocol-enforceability", "scientific-methods"],
+      "lane_artifact_paths": [
+        "freeze-evidence/reviews/cross-contract-consistency.json",
+        "freeze-evidence/reviews/protocol-enforceability.json",
+        "freeze-evidence/reviews/scientific-methods.json"
+      ],
+      "proposed_threshold_ids": [
+        "influence-component-classification-thresholds",
+        "null-family-false-positive-rate",
+        "order-instability-classification-thresholds",
+        "per-run-convergence-thresholds",
+        "runtime-memory-ceilings",
+        "sampling-budget-qualification-thresholds"
+      ],
+      "review_check_ids": ["score-atomic-cas-state-machine", "worker-response-benchmark-subject-binding"],
+      "required_lanes_by_predicate": {
+        "independent_read_only_review_complete": ["cross-contract-consistency", "protocol-enforceability", "scientific-methods"],
+        "all_P0_and_P1_findings_resolved": ["cross-contract-consistency", "protocol-enforceability", "scientific-methods"],
+        "all_P2_findings_resolved_or_explicitly_deferred_with_rationale": ["cross-contract-consistency", "protocol-enforceability", "scientific-methods"],
+        "all_proposed_thresholds_justified_changed_or_removed": ["scientific-methods"],
+        "worker_response_to_BenchmarkSubjectIdentity_binding_reviewed": ["protocol-enforceability"],
+        "score_validation_and_atomic_acceptance_state_machine_reviewed": ["cross-contract-consistency", "protocol-enforceability"]
+      }
+    },
+    "state_absence_paths": ["evaluator/heldout-case-seeds.json", "evaluator/heldout-results.json", "evaluator/heldout-root.bin"],
+    "predicate_verifiers": [
+      {"predicate_id":"complete_joint_normative_document_set_digest_vector_recorded","evidence_type":"ARTIFACT_BYTES"},
+      {"predicate_id":"strict_duplicate_aware_yaml_and_json_parse_pass","evidence_type":"EXECUTED_CHECK"},
+      {"predicate_id":"all_structured_digest_domains_and_complete_preimages_closed","evidence_type":"ARTIFACT_BYTES"},
+      {"predicate_id":"independent_read_only_review_complete","evidence_type":"REVIEW_DISPOSITION"},
+      {"predicate_id":"all_P0_and_P1_findings_resolved","evidence_type":"REVIEW_DISPOSITION"},
+      {"predicate_id":"all_P2_findings_resolved_or_explicitly_deferred_with_rationale","evidence_type":"REVIEW_DISPOSITION"},
+      {"predicate_id":"draft_2020_12_executable_schemas_and_meta_validation_pass","evidence_type":"EXECUTED_CHECK"},
+      {"predicate_id":"generic_worker_protocol_contract_tests_pass","evidence_type":"EXECUTED_CHECK"},
+      {"predicate_id":"deterministic_fixture_worker_end_to_end_pass","evidence_type":"EXECUTED_CHECK"},
+      {"predicate_id":"custom_worker_template_end_to_end_pass","evidence_type":"EXECUTED_CHECK"},
+      {"predicate_id":"privacy_safe_bundle_identifier_and_artifact_tests_pass","evidence_type":"EXECUTED_CHECK"},
+      {"predicate_id":"unmodified_backend_characterized_at_2000_5000_and_10000_iterations","evidence_type":"PROFILE_CHARACTERIZATION_EVIDENCE_RECEIPT_V3_UNAVAILABLE"},
+      {"predicate_id":"exact_oracle_implementation_and_declared_fixture_checks_pass","evidence_type":"EXECUTED_CHECK"},
+      {"predicate_id":"generator_golden_vectors_and_independent_implementation_comparison_pass","evidence_type":"EXECUTED_CHECK"},
+      {"predicate_id":"reference_metrics_unit_and_property_tests_pass","evidence_type":"EXECUTED_CHECK"},
+      {"predicate_id":"development_pilot_complete_with_recorded_results","evidence_type":"PROFILE_CHARACTERIZATION_EVIDENCE_RECEIPT_V3_UNAVAILABLE"},
+      {"predicate_id":"all_proposed_thresholds_justified_changed_or_removed","evidence_type":"REVIEW_DISPOSITION"},
+      {"predicate_id":"scenario_predicate_registry_total_and_deterministic","evidence_type":"EXECUTED_CHECK"},
+      {"predicate_id":"all_18_scientific_invariant_algorithms_and_all_46_registered_negative_counterexamples_execute_and_pass","evidence_type":"EXECUTED_CHECK"},
+      {"predicate_id":"heldout_comparator_registry_closed_and_equal_to_development_registry_semantics","evidence_type":"EXECUTED_CHECK"},
+      {"predicate_id":"heldout_operation_arithmetic_exact_and_fit_budget_at_most_50000","evidence_type":"EXECUTED_CHECK"},
+      {"predicate_id":"generator_per_field_draw_types_total_and_exact_duplicate_subtype_stratification_closed","evidence_type":"EXECUTED_CHECK"},
+      {"predicate_id":"worker_response_to_BenchmarkSubjectIdentity_binding_reviewed","evidence_type":"REVIEW_DISPOSITION"},
+      {"predicate_id":"score_validation_and_atomic_acceptance_state_machine_reviewed","evidence_type":"REVIEW_DISPOSITION"},
+      {"predicate_id":"software_privacy_gates_required_and_fixture_operations_fully_enumerated","evidence_type":"EXECUTED_CHECK"},
+      {"predicate_id":"contract_sha256_and_benchmark_freeze_receipt_sha256_recorded_and_self_verified","evidence_type":"ARTIFACT_BYTES"},
+      {"predicate_id":"heldout_manifest_template_sha256_recorded_and_projection_self_verified","evidence_type":"ARTIFACT_BYTES"},
+      {"predicate_id":"heldout_results_seen_is_false_and_no_root_case_seed_or_result_exists","evidence_type":"STATE_OBSERVATION"}
+    ]
+  },
+  "score_contract": {
+    "mandatory_rule_ids": [
+      "all-hard-release-failures-absent",
+      "all-quantitative-rules-complete",
+      "all-rule-coverage-contracts-complete",
+      "all-scenario-family-rules-complete",
+      "heldout-procedure-valid-untuned"
+    ],
+    "mandatory_rule_registry": [
+      {
+        "rule_id": "all-hard-release-failures-absent",
+        "expected_rule_kind": "HARD_GATE",
+        "source_owner_schema_ref": "evaluator-receipts.schema.json#/$defs/ScoreEvidenceBundle",
+        "expected_source_kind": "HARD_RELEASE_FAILURE_CHECK",
+        "expected_source_schema_ref": "evaluator-receipts.schema.json#/$defs/TypedScoreSourceRecordBody",
+        "derivation_id": "score-evidence-repository-source-validation/1",
+        "source_validation": {"validator_id":"preproduct-source-validator-unimplemented-fail-closed/1","validator_implementation_status":"UNIMPLEMENTED","scientific_pass_eligible":false,"relative_path_prefix":"score-sources/mandatory/all-hard-release-failures-absent/"},
+        "expected_source_count": 22,
+        "ordered_source_identities": [
+          "silent_participant_event_or_cell_modification",
+          "unexplained_same_seed_nondeterminism",
+          "row_order_changes_scientific_meaning",
+          "feature_label_misalignment_under_reordering",
+          "failed_invalid_or_unsupported_universes_disappear",
+          "upstream_cache_contamination",
+          "exact_oracle_material_disagreement_without_surfaced_failure",
+          "null_data_receive_unjustified_strong_support_language",
+          "injected_influential_observations_systematically_invisible",
+          "convergence_failure_contributes_as_valid_evidence",
+          "baseline_reproduction_passes_without_supplied_canonical_reference",
+          "raw_direct_identifier_or_raw_event_value_in_default_report_or_log",
+          "network_attempt_in_offline_mode",
+          "warnings_globally_suppressed",
+          "provenance_cannot_identify_data_config_code_backend_and_seed",
+          "diagnosis_prognosis_treatment_causal_regulatory_or_medical_device_claim",
+          "fresh_locked_environment_install_or_run_failure",
+          "heldout_benchmark_subject_missing_changed_or_mismatched",
+          "heldout_pass_and_backend_acceptance_refer_to_different_subjects",
+          "truth_object_or_truth_label_reaches_auditor_fit_or_worker",
+          "null_pipeline_does_not_refit_all_data_dependent_steps",
+          "unresolved_P0_or_P1_review_finding"
+        ]
+      },
+      {
+        "rule_id": "all-quantitative-rules-complete",
+        "expected_rule_kind": "QUANTITATIVE",
+        "source_owner_schema_ref": "evaluator-receipts.schema.json#/$defs/ScoreEvidenceBundle",
+        "expected_source_kind": "QUANTITATIVE_RULE_RECEIPT",
+        "expected_source_schema_ref": "evaluator-receipts.schema.json#/$defs/TypedScoreSourceRecordBody",
+        "derivation_id": "score-evidence-repository-source-validation/1",
+        "source_validation": {"validator_id":"preproduct-source-validator-unimplemented-fail-closed/1","validator_implementation_status":"UNIMPLEMENTED","scientific_pass_eligible":false,"relative_path_prefix":"score-sources/mandatory/all-quantitative-rules-complete/","overrides":[{"source_id":"null_strong_label_false_positive","schema_ref":"scientific-invariant.schema.json#/$defs/FalsePositiveEvidenceBundle","validator_id":"complete-fpr-bundle-derived/1","validator_implementation_status":"IMPLEMENTED","scientific_pass_eligible":true,"relative_path":"core/false-positive-evidence-bundle.json"}]},
+        "expected_source_count": 14,
+        "ordered_source_identities": [
+          "exact_oracle", "easy_known_truth_order", "easy_known_truth_stage",
+          "moderate_mina_shape", "noise_ladder", "influence_sabotage",
+          "null_strong_label_false_positive", "same_seed_environment",
+          "serial_parallel_equivalence", "row_permutation_invariance",
+          "feature_permutation_invariance", "null_relative_label", "convergence",
+          "development_budget_qualification"
+        ]
+      },
+      {
+        "rule_id": "all-rule-coverage-contracts-complete",
+        "expected_rule_kind": "HARD_GATE",
+        "source_owner_schema_ref": "evaluator-receipts.schema.json#/$defs/ScoreEvidenceBundle",
+        "expected_source_kind": "RULE_COVERAGE_RECEIPT",
+        "expected_source_schema_ref": "evaluator-receipts.schema.json#/$defs/TypedScoreSourceRecordBody",
+        "derivation_id": "score-evidence-repository-source-validation/1",
+        "source_validation": {"validator_id":"preproduct-source-validator-unimplemented-fail-closed/1","validator_implementation_status":"UNIMPLEMENTED","scientific_pass_eligible":false,"relative_path_prefix":"score-sources/mandatory/all-rule-coverage-contracts-complete/"},
+        "expected_source_count": 37,
+        "ordered_source_identities": [
+          "quantitative:exact_oracle", "quantitative:easy_known_truth_order",
+          "quantitative:easy_known_truth_stage", "quantitative:moderate_mina_shape",
+          "quantitative:noise_ladder", "quantitative:influence_sabotage",
+          "quantitative:null_strong_label_false_positive", "quantitative:same_seed_environment",
+          "quantitative:serial_parallel_equivalence", "quantitative:row_permutation_invariance",
+          "quantitative:feature_permutation_invariance", "quantitative:null_relative_label",
+          "quantitative:convergence", "quantitative:development_budget_qualification",
+          "scenario:easy_known_truth", "scenario:moderate_mina_shape", "scenario:small_sample",
+          "scenario:noise_ladder", "scenario:weak_pre_post_separation",
+          "scenario:incomplete_time_coverage", "scenario:tightly_spaced_events",
+          "scenario:slow_overlapping_transitions", "scenario:outlier_sabotage",
+          "scenario:mcar_missingness", "scenario:mar_missingness",
+          "scenario:correlated_duplicate_events", "scenario:minority_alternate_sequence",
+          "scenario:opposing_sequences_50_50", "scenario:near_simultaneous_events",
+          "scenario:covariate_confounding", "scenario:group_boundary_sensitivity",
+          "scenario:control_contamination", "scenario:heavy_tailed_skewed",
+          "scenario:wrong_event_direction", "scenario:pure_no_signal",
+          "scenario:label_permutation_null", "scenario:within_group_feature_permutation_null"
+        ]
+      },
+      {
+        "rule_id": "all-scenario-family-rules-complete",
+        "expected_rule_kind": "SCENARIO_FAMILY",
+        "source_owner_schema_ref": "evaluator-receipts.schema.json#/$defs/ScoreEvidenceBundle",
+        "expected_source_kind": "HELDOUT_SCENARIO_FAMILY_RECEIPT",
+        "expected_source_schema_ref": "scenario-evidence.schema.json#/$defs/SubstantiveScenarioFamilyEvidence",
+        "derivation_id": "complete-heldout-scenario-evidence-repository-validation/1",
+        "source_validation": {"validator_id":"complete-heldout-scenario-family-graph-derived/1","validator_implementation_status":"UNIMPLEMENTED","scientific_pass_eligible":false,"reason_code":"SCENARIO.DERIVATION_VALIDATOR_UNIMPLEMENTED","relative_path_owner":"heldout_scenario_receipt.ordered_family_receipts[*].family_evidence_relative_path"},
+        "expected_source_count": 23,
+        "ordered_source_identities": [
+          "easy_known_truth", "moderate_mina_shape", "small_sample", "noise_ladder",
+          "weak_pre_post_separation", "incomplete_time_coverage", "tightly_spaced_events",
+          "slow_overlapping_transitions", "outlier_sabotage", "mcar_missingness",
+          "mar_missingness", "correlated_duplicate_events", "minority_alternate_sequence",
+          "opposing_sequences_50_50", "near_simultaneous_events", "covariate_confounding",
+          "group_boundary_sensitivity", "control_contamination", "heavy_tailed_skewed",
+          "wrong_event_direction", "pure_no_signal", "label_permutation_null",
+          "within_group_feature_permutation_null"
+        ]
+      },
+      {
+        "rule_id": "heldout-procedure-valid-untuned",
+        "expected_rule_kind": "PROCEDURE",
+        "source_owner_schema_ref": "evaluator-receipts.schema.json#/$defs/ScoreEvidenceBundle",
+        "expected_source_kind": "HELDOUT_PROCEDURE_STEP_RECEIPT",
+        "expected_source_schema_ref": "evaluator-receipts.schema.json#/$defs/TypedScoreSourceRecordBody",
+        "derivation_id": "score-evidence-repository-source-validation/1",
+        "source_validation": {"validator_id":"preproduct-source-validator-unimplemented-fail-closed/1","validator_implementation_status":"UNIMPLEMENTED","scientific_pass_eligible":false,"relative_path_prefix":"score-sources/mandatory/heldout-procedure-valid-untuned/"},
+        "expected_source_count": 11,
+        "ordered_source_identities": [
+          "freeze_and_hash_generator_contract_metrics_and_report_rules",
+          "qualify_exact_candidate_and_EXPERIMENTAL_subject_then_freeze_the_unchanged_candidate_under_candidate_freeze_v3",
+          "atomically_compare_and_set_the_exact_frozen_subject_from_EXPERIMENTAL_to_ACCEPTANCE_CANDIDATE",
+          "bind_scientific_freeze_candidate_freeze_acceptance_transition_subject_and_exact_analysis_plan_v3_digests_into_the_private_attempt_template",
+          "draw_256_bit_os_csprng_root",
+          "write_domain_separated_v4_root_commitment_including_benchmark_freeze_candidate_freeze_acceptance_transition_subject_and_exact_analysis_plan_v3_digests_before_case_generation",
+          "derive_heldout_attempt_v4_id_from_candidate_subject_analysis_plan_contract_root_benchmark_freeze_candidate_freeze_acceptance_transition_and_manifest_template",
+          "derive_case_seeds_by_domain_separated_hmac_sha256",
+          "write_and_hash_sealed_case_manifest_and_typed_operation_plan_before_result_inspection",
+          "run_once_and_seal_outputs", "evaluate_without_tuning"
+        ]
+      }
+    ],
+    "backend_gate_registry": [
+      {
+        "gate_id": "baseline-reproduction", "applicability": "APPLICABLE",
+        "source_owner_schema_ref": "canonical-records.schema.json#/$defs/BaselineReproductionRecord",
+        "expected_source_kind": "BASELINE_REPRODUCTION_RECORD",
+        "expected_source_schema_ref": "canonical-records.schema.json#/$defs/BaselineReproductionRecord",
+        "derivation_id": "complete-baseline-evidence-root-rederivation/1",
+        "source_validation": {"validator_id":"complete-baseline-reference-connected-result-reproduction-derived/1","validator_implementation_status":"IMPLEMENTED","scientific_pass_eligible":true,"core_evidence_keys":["baseline_reference","baseline_connected_result","baseline_reproduction"]},
+        "expected_source_count": 1,
+        "ordered_source_identities": ["baseline-reproduction"]
+      },
+      {
+        "gate_id": "fresh-locked-environment", "applicability": "APPLICABLE",
+        "source_owner_schema_ref": "evaluator-receipts.schema.json#/$defs/ScoreEvidenceBundle",
+        "expected_source_kind": "FRESH_LOCKED_ENVIRONMENT_CHECK",
+        "expected_source_schema_ref": "evaluator-receipts.schema.json#/$defs/TypedScoreSourceRecordBody",
+        "derivation_id": "score-evidence-repository-source-validation/1",
+        "source_validation": {"validator_id":"preproduct-source-validator-unimplemented-fail-closed/1","validator_implementation_status":"UNIMPLEMENTED","scientific_pass_eligible":false,"relative_path_prefix":"score-sources/gates/fresh-locked-environment/"},
+        "expected_source_count": 4,
+        "ordered_source_identities": [
+          "dependency-lock-install", "product-entrypoint-run", "offline-mode-enforced",
+          "source-tree-byte-identity"
+        ]
+      },
+      {
+        "gate_id": "genuine-real-backend", "applicability": "APPLICABLE",
+        "source_owner_schema_ref": "evaluator-receipts.schema.json#/$defs/ScoreEvidenceBundle",
+        "expected_source_kind": "GENUINE_REAL_BACKEND_CHECK",
+        "expected_source_schema_ref": "evaluator-receipts.schema.json#/$defs/TypedScoreSourceRecordBody",
+        "derivation_id": "score-evidence-repository-source-validation/1",
+        "source_validation": {"validator_id":"preproduct-source-validator-unimplemented-fail-closed/1","validator_implementation_status":"UNIMPLEMENTED","scientific_pass_eligible":false,"relative_path_prefix":"score-sources/gates/genuine-real-backend/"},
+        "expected_source_count": 4,
+        "ordered_source_identities": [
+          "subject-identity-closed", "backend-source-bound", "worker-protocol-roundtrip",
+          "genuine-backend-fit-executed"
+        ]
+      },
+      {
+        "gate_id": "offline-privacy-gates", "applicability": "APPLICABLE",
+        "source_owner_schema_ref": "evaluator-receipts.schema.json#/$defs/ScoreEvidenceBundle",
+        "expected_source_kind": "OFFLINE_PRIVACY_GATE_CHECK",
+        "expected_source_schema_ref": "evaluator-receipts.schema.json#/$defs/TypedScoreSourceRecordBody",
+        "derivation_id": "score-evidence-repository-source-validation/1",
+        "source_validation": {"validator_id":"preproduct-source-validator-unimplemented-fail-closed/1","validator_implementation_status":"UNIMPLEMENTED","scientific_pass_eligible":false,"relative_path_prefix":"score-sources/gates/offline-privacy-gates/"},
+        "expected_source_count": 9,
+        "ordered_source_identities": [
+          "deterministic_unit_and_property_tests", "protocol_contract_tests",
+          "backend_capability_truthfulness", "default_artifact_identifier_and_raw_value_scan",
+          "worker_request_direct_identifier_scan", "socket_and_dns_block_test",
+          "report_external_asset_scan", "warning_capture_test",
+          "fresh_locked_environment_end_to_end"
+        ]
+      }
+    ],
+    "derivation": "Resolve one authenticated ScoreEvidenceBundle and its exact evaluator-owned repository tree. Structural execution-universe proof runs first, then the closed semantic branch registry fails with SCORE.EXECUTION_SEMANTIC_VALIDATOR_UNIMPLEMENTED because every complete branch owner set is absent. The later false-positive, scenario, baseline, source-validation, EvaluationReceipt, ScoreReceipt, and ScoreValidationReceipt code is unexecuted pre-product scaffolding until that boundary is implemented. Once implemented, missing, substituted, NOT_ASSESSABLE, incomplete, or ineligible evidence fails closed; complete PASS, WARN, and FAIL aggregates may emit an authenticated ScoreValidationReceipt, but only PASS is acceptance-eligible and WARN/FAIL can produce only a REJECTED backend transition. Hard gates never WARN."
+  },
+  "score_source_validation_registry": {
+    "registry_schema_version": "ebm-audit-score-source-validation-registry/1.0",
+    "expansion_order": "mandatory_rule_registry order excluding HELDOUT_SCENARIO_FAMILY_RECEIPT, then backend_gate_registry order excluding BASELINE_REPRODUCTION_RECORD; within each row use ordered_source_identities",
+    "expected_expanded_source_count": 101,
+    "source_key_rule": "rule:<aggregate_id>:<source_id> or gate:<aggregate_id>:<source_id>",
+    "source_record_identity_domain": "ebm-audit/score-source-evidence/1",
+    "unimplemented_validator_id": "preproduct-source-validator-unimplemented-fail-closed/1",
+    "unimplemented_reason_code": "SCORE.SOURCE_VALIDATOR_UNIMPLEMENTED",
+    "hard_failure_count_semantics": "Count exactly the FAIL validation states among the 22 ordered sources of all-hard-release-failures-absent. WARN and NOT_ASSESSABLE are not counted as observed hard failures; NOT_ASSESSABLE still makes the aggregate rule FAIL and blocks complete validation.",
+    "closed_rule": "Expand every exact source ID once. The only implemented override is null_strong_label_false_positive -> complete FalsePositiveEvidenceBundle. Every other pre-product row resolves one persisted UNIMPLEMENTED record and blocks score validation; no stated state can pass."
+  },
+  "score_identity_dependency_dag": {
+    "registry_schema_version": "ebm-audit-score-identity-dependency-dag/1.0",
+    "single_enforcement_point": "validate-substantive-score/1",
+    "ordered_nodes": [
+      "fixed-identities-and-registries",
+      "immutable-upstream-source-files",
+      "score-evidence-root",
+      "rule-and-gate-results",
+      "rule-and-gate-array-digests",
+      "evaluation-receipt",
+      "score-receipt",
+      "score-validation-receipt",
+      "backend-acceptance-receipt",
+      "acceptance-transaction"
+    ],
+    "ordered_edges": [
+      {"from":"fixed-identities-and-registries","to":"immutable-upstream-source-files"},
+      {"from":"fixed-identities-and-registries","to":"score-evidence-root"},
+      {"from":"immutable-upstream-source-files","to":"score-evidence-root"},
+      {"from":"fixed-identities-and-registries","to":"rule-and-gate-results"},
+      {"from":"score-evidence-root","to":"rule-and-gate-results"},
+      {"from":"rule-and-gate-results","to":"rule-and-gate-array-digests"},
+      {"from":"fixed-identities-and-registries","to":"evaluation-receipt"},
+      {"from":"score-evidence-root","to":"evaluation-receipt"},
+      {"from":"rule-and-gate-array-digests","to":"evaluation-receipt"},
+      {"from":"fixed-identities-and-registries","to":"score-receipt"},
+      {"from":"score-evidence-root","to":"score-receipt"},
+      {"from":"rule-and-gate-array-digests","to":"score-receipt"},
+      {"from":"evaluation-receipt","to":"score-receipt"},
+      {"from":"fixed-identities-and-registries","to":"score-validation-receipt"},
+      {"from":"score-evidence-root","to":"score-validation-receipt"},
+      {"from":"rule-and-gate-array-digests","to":"score-validation-receipt"},
+      {"from":"evaluation-receipt","to":"score-validation-receipt"},
+      {"from":"score-receipt","to":"score-validation-receipt"},
+      {"from":"fixed-identities-and-registries","to":"backend-acceptance-receipt"},
+      {"from":"score-evidence-root","to":"backend-acceptance-receipt"},
+      {"from":"rule-and-gate-array-digests","to":"backend-acceptance-receipt"},
+      {"from":"evaluation-receipt","to":"backend-acceptance-receipt"},
+      {"from":"score-receipt","to":"backend-acceptance-receipt"},
+      {"from":"score-validation-receipt","to":"backend-acceptance-receipt"},
+      {"from":"backend-acceptance-receipt","to":"acceptance-transaction"}
+    ],
+    "source_root_core_keys": [
+      "sealed_case_manifest", "sealed_operation_plan", "frozen_chain_plan_index",
+      "sealed_results", "one_shot_execution_receipt", "sealed_output_receipt",
+      "matched_comparator_evidence", "false_positive_evidence_bundle",
+      "baseline_reference", "baseline_connected_result", "baseline_reproduction",
+      "heldout_scenario_receipt", "scenario_source_owner_manifest",
+      "scenario_evidence_tree_manifest"
+    ],
+    "source_root_forbidden_artifact_kinds": [
+      "RULE_OUTCOMES", "BACKEND_GATE_RESULTS", "EVALUATION_RECEIPT",
+      "SCORE_RECEIPT", "SCORE_VALIDATION_RECEIPT",
+      "SCORE_VALIDATION_FAILURE_RECORD", "BACKEND_ACCEPTANCE_RECEIPT",
+      "ACCEPTANCE_INITIAL_STATE", "ACCEPTANCE_TRANSACTION",
+      "CONTRACT_FIXTURE_SCORE_RECEIPT",
+      "CONTRACT_FIXTURE_ACCEPTANCE_RECEIPT",
+      "CONTRACT_FIXTURE_ACCEPTANCE_TRANSACTION",
+      "REPORT_ARTIFACT", "FINAL_LABEL_ARTIFACT"
+    ],
+    "file_set_rule": "The actual source-root files equal the path, byte_length, content_sha256 union of the 14 fixed core references, all 101 registered source references with only the exact FPR alias permitted, and every scenario evidence-tree row. The core includes the authenticated operation plan, frozen-chain-plan index, one-shot execution receipt, sealed results, and sealed-output receipt needed to prove the exact execution universe. Actual directories equal exactly the parent directories implied by those files. Extra derived artifacts, empty directories, symlinks, special files, aliases, and path conflicts fail.",
+    "repository_separation_rule": "The evaluator-selected source-evidence root, product acceptance repository, and contract-fixture acceptance repository are pairwise distinct and no one may be an ancestor of another.",
+    "edge_completeness_rule": "ordered_edges is the complete direct identity-dependency graph implied by the closed score, validation, and acceptance schemas. Edges are ordered by target-node ordinal, then source-node ordinal; an omitted direct binding or an added non-binding edge fails closed."
+  },
+  "score_execution_universe_semantic_validation": {
+    "registry_schema_version": "ebm-audit-score-execution-universe-semantic-validation/1.0",
+    "validator_id": "complete-score-root-universe-semantic-revalidation/1",
+    "validator_implementation_status": "UNIMPLEMENTED",
+    "scientific_pass_eligible": false,
+    "reason_code": "SCORE.EXECUTION_SEMANTIC_VALIDATOR_UNIMPLEMENTED",
+    "structural_checks_implemented": [
+      "exact-one-successful-validate-terminal",
+      "exact-supplied-operation-to-terminal-universe-set",
+      "compile-empty-chain-universe-identity",
+      "authenticated-chain-plan-index-subset",
+      "chain-plan-universe-chain-and-attempt-identities",
+      "one-shot-and-sealed-output-receipt-chain"
+    ],
+    "missing_complete_owner_sets": [
+      "frozen-heldout-template-generator-scenario-definitions-and-root-schedule-for-complete-case-universe",
+      "every-sealed-case-configuration-and-analysis-spec-for-complete-operation-plan-expansion",
+      "validate-full-command-request-response-and-binding-context",
+      "compile-analysis-plan-constraints-command-evidence-and-derived-outcome",
+      "negative-fit-full-request-wire-response-and-binding-context",
+      "convergence-terminal-all-fit-owners-fixed-rule-and-array-artifacts",
+      "scientific-success-complete-canonical-payload-owner-context"
+    ],
+    "branch_registry": [
+      {
+        "record_kind": "VALIDATE_TERMINAL",
+        "validator_id": "score-root-successful-validate-terminal/1",
+        "validator_implementation_status": "UNIMPLEMENTED",
+        "required_owner_sets": ["complete-validate-command-evidence", "validate-request-response-binding", "derived-validate-outcome"]
+      },
+      {
+        "record_kind": "COMPILE_TIME_NON_SUCCESS",
+        "validator_id": "score-root-compile-terminal/1",
+        "validator_implementation_status": "UNIMPLEMENTED",
+        "required_owner_sets": ["sealed-operation-plan-row", "analysis-plan-and-constraints", "complete-compile-command-evidence", "compile-error", "derived-compile-outcome", "empty-chain-universe-preimage"]
+      },
+      {
+        "record_kind": "FIT_TERMINAL_WORKER_NEGATIVE",
+        "validator_id": "score-root-negative-fit-terminal/1",
+        "validator_implementation_status": "UNIMPLEMENTED",
+        "required_owner_sets": ["full-fit-request", "wire-response", "evaluator-response-binding", "decisive-chain-prefix"]
+      },
+      {
+        "record_kind": "FIT_TERMINAL_CONVERGENCE",
+        "validator_id": "score-root-convergence-terminal/1",
+        "validator_implementation_status": "UNIMPLEMENTED",
+        "required_owner_sets": ["every-full-fit-execution-owner", "fixed-convergence-rule", "canonical-array-artifacts", "derived-convergence-record", "canonical-scientific-payload"]
+      },
+      {
+        "record_kind": "SCIENTIFIC_SUCCESS",
+        "validator_id": "score-root-scientific-success/1",
+        "validator_implementation_status": "UNIMPLEMENTED",
+        "required_owner_sets": ["every-full-fit-execution-owner", "fixed-convergence-rule", "canonical-array-artifacts", "derived-convergence-record", "canonical-scientific-payload"]
+      }
+    ],
+    "closed_rule": "Structural equality and authenticated identities are necessary but not semantic or scientific validation. Current result-universe exactness is relative only to the supplied authenticated case manifest and operation plan; completeness of both from their frozen upstream owners is UNIMPLEMENTED. Every terminal branch is UNIMPLEMENTED until its exact full owner set is present in the score root and the existing terminal/scientific reconstruction is reused over it. The implemented semantic-handler set must equal exactly the registry rows marked IMPLEMENTED. Until then, score validation raises ScoreValidationFailure carrying the derived typed failure record and writes no EvaluationReceipt, ScoreReceipt, ScoreValidationReceipt, BackendAcceptanceReceipt, acceptance state, or product transition."
+  },
+  "score_workflow_provenance": {
+    "registry_schema_version": "ebm-audit-score-workflow-provenance/1.0",
+    "canonicalization": {
+      "schema_version": "ebm-audit-canonicalization-identity/1.0",
+      "json_parser_id": "python-json",
+      "json_parser_version": "3.11",
+      "yaml_parser_id": "pyyaml",
+      "yaml_parser_version": "6.0.3",
+      "canonicalizer_id": "RFC8785-JCS",
+      "canonicalizer_version": "rfc8785-0.1.4",
+      "unicode_policy": "REJECT_NON_NFC",
+      "integer_policy": "I-JSON_SAFE_INTEGER_OR_TYPED_HEX"
+    },
+    "commands": {
+      "evaluation": ["ebm-audit", "evaluate", "--offline"],
+      "score": ["ebm-audit", "score", "--offline"],
+      "score_validation": ["ebm-audit", "validate-score", "--offline"],
+      "backend_acceptance": ["ebm-audit", "accept-backend", "--offline"]
+    },
+    "timestamp_rule": "EvaluationReceipt, ScoreReceipt, ScoreValidationReceipt, and BackendAcceptanceReceipt carry one identical workflow terminal timestamp. It is at or after SealedOutputReceipt.completed_at_utc and is authenticated by the validation-receipt owner tag and downstream digest chain."
+  },
+  "development_scenario_universe_semantic_validation": {
+    "registry_schema_version": "ebm-audit-development-scenario-universe-semantic-validation/1.0",
+    "validator_id": "complete-development-scenario-universe-rederivation/1",
+    "validator_implementation_status": "UNIMPLEMENTED",
+    "freeze_evidence_eligible": false,
+    "reason_code": "SCENARIO.DEVELOPMENT_UNIVERSE_VALIDATOR_UNIMPLEMENTED",
+    "structural_checks_implemented": [
+      "authenticated-submitted-owner-files",
+      "closed-owner-support-dag",
+      "submitted-family-to-submitted-case-partition",
+      "submitted-evidence-tree-byte-set"
+    ],
+    "missing_complete_owner_sets": [
+      "frozen-development-case-universe-source",
+      "resolved-development-operation-plan",
+      "complete-development-results-index",
+      "exact-case-analysis-spec-to-operation-expansion",
+      "one-terminal-result-per-planned-operation",
+      "exact-pilot-operation-to-result-equality",
+      "derived-development-terminal-state"
+    ],
+    "implemented_validator_handlers": [],
+    "closed_rule": "Submitted development owners can be structurally authenticated, but their completeness is not derivable from the current root. Until the missing plan/results owners and one complete handler are present, development scenario freeze evidence fails UNIMPLEMENTED before the separate 104-output scenario derivation semantic gate."
+  },
+  "scenario_scoring_owner_digest_registry": {
+    "registry_schema_version": "ebm-audit-scenario-scoring-owner-digests/1.0",
+    "rows": [
+      {"registry_field":"scenario_derivation_registry_sha256","stored_field":"scenario_derivation_registry_sha256","domain":"ebm-audit/scenario-derivation-registry/1","persisted_schema_ref":"scenario-derivation-registry.schema.json","preimage_schema_ref":"scenario-derivation-registry.schema.json","pair_kind":"CONDITIONAL_SELF_HASH"},
+      {"registry_field":"scenario_predicate_registry_sha256","stored_field":"scenario_predicate_registry_sha256","domain":"ebm-audit/scenario-predicate-registry/1","persisted_schema_ref":"scenario-predicate.schema.json","preimage_schema_ref":"scenario-predicate.schema.json","pair_kind":"COMPLETE_EXTERNAL_OBJECT"},
+      {"registry_field":"scenario_source_owner_manifest_sha256","stored_field":"scenario_source_owner_manifest_sha256","domain":"ebm-audit/scenario-source-owner-manifest/1","persisted_schema_ref":"scenario-evidence.schema.json#/$defs/ScenarioSourceOwnerManifest","preimage_schema_ref":"scenario-evidence.schema.json#/$defs/ScenarioSourceOwnerManifestDigestPreimage","pair_kind":"EXPLICIT_PREIMAGE_PAIR"},
+      {"registry_field":"scenario_source_record_sha256","stored_field":"ScenarioSourceOwnerReference.source_record_sha256","domain":"ebm-audit/scenario-source-record/1","persisted_schema_ref":"scenario-evidence.schema.json#/$defs/ScenarioSourceOwnerReference","preimage_schema_ref":"scenario-evidence.schema.json#/$defs/ScenarioSourceOwnerRecordDigestPreimage","pair_kind":"EXTERNAL_DIGEST_REFERENCE"},
+      {"registry_field":"canonical_array_artifact_owner_sha256","stored_field":"canonical_array_artifact_owner_sha256","domain":"ebm-audit/canonical-array-artifact-owner/1","persisted_schema_ref":"scenario-evidence.schema.json#/$defs/CanonicalArrayArtifactOwner","preimage_schema_ref":"scenario-evidence.schema.json#/$defs/CanonicalArrayArtifactOwner","pair_kind":"CONDITIONAL_SELF_HASH"},
+      {"registry_field":"preprocessing_execution_record_sha256","stored_field":"preprocessing_execution_record_sha256","domain":"ebm-audit/preprocessing-execution-record/1","persisted_schema_ref":"scenario-evidence.schema.json#/$defs/PreprocessingExecutionRecord","preimage_schema_ref":"scenario-evidence.schema.json#/$defs/PreprocessingExecutionRecord","pair_kind":"CONDITIONAL_SELF_HASH"},
+      {"registry_field":"report_predicate_outcome_sha256","stored_field":"report_predicate_outcome_sha256","domain":"ebm-audit/report-predicate-outcome/1","persisted_schema_ref":"scenario-evidence.schema.json#/$defs/ReportPredicateOutcome","preimage_schema_ref":"scenario-evidence.schema.json#/$defs/ReportPredicateOutcome","pair_kind":"CONDITIONAL_SELF_HASH"},
+      {"registry_field":"scenario_derived_field_sha256","stored_field":"scenario_derived_field_sha256","domain":"ebm-audit/scenario-derived-field/1","persisted_schema_ref":"scenario-evidence.schema.json#/$defs/ScenarioDerivedFieldRecord","preimage_schema_ref":"scenario-evidence.schema.json#/$defs/ScenarioDerivedFieldRecord","pair_kind":"CONDITIONAL_SELF_HASH"},
+      {"registry_field":"evidence_tree_manifest_sha256","stored_field":"evidence_tree_manifest_sha256","domain":"ebm-audit/scenario-evidence-tree-manifest/1","persisted_schema_ref":"scenario-evidence.schema.json#/$defs/ScenarioEvidenceTreeManifest","preimage_schema_ref":"scenario-evidence.schema.json#/$defs/ScenarioEvidenceTreeManifest","pair_kind":"CONDITIONAL_SELF_HASH"},
+      {"registry_field":"family_evidence_sha256","stored_field":"family_evidence_sha256","domain":"ebm-audit/substantive-scenario-family-evidence/1","persisted_schema_ref":"scenario-evidence.schema.json#/$defs/SubstantiveScenarioFamilyEvidence","preimage_schema_ref":"scenario-evidence.schema.json#/$defs/SubstantiveScenarioFamilyEvidenceDigestPreimage","pair_kind":"EXPLICIT_PREIMAGE_PAIR"},
+      {"registry_field":"scenario_family_evaluation_receipt_sha256","stored_field":"scenario_family_evaluation_receipt_sha256","domain":"ebm-audit/scenario-family-evaluation-receipt/1","persisted_schema_ref":"evaluator-receipts.schema.json#/$defs/ScenarioFamilyEvaluationReceipt","preimage_schema_ref":"evaluator-receipts.schema.json#/$defs/ScenarioFamilyEvaluationReceipt","pair_kind":"CONDITIONAL_SELF_HASH"},
+      {"registry_field":"development_scenario_evaluation_receipt_sha256","stored_field":"development_scenario_evaluation_receipt_sha256","domain":"ebm-audit/development-scenario-evaluation-receipt/3","persisted_schema_ref":"evaluator-receipts.schema.json#/$defs/DevelopmentScenarioEvaluationReceipt","preimage_schema_ref":"evaluator-receipts.schema.json#/$defs/DevelopmentScenarioEvaluationReceipt","pair_kind":"CONDITIONAL_SELF_HASH"},
+      {"registry_field":"heldout_scenario_evaluation_receipt_sha256","stored_field":"heldout_scenario_evaluation_receipt_sha256","domain":"ebm-audit/heldout-scenario-evaluation-receipt/1","persisted_schema_ref":"evaluator-receipts.schema.json#/$defs/HeldoutScenarioEvaluationReceipt","preimage_schema_ref":"evaluator-receipts.schema.json#/$defs/HeldoutScenarioEvaluationReceipt","pair_kind":"CONDITIONAL_SELF_HASH"},
+      {"registry_field":"frozen_chain_plan_index_sha256","stored_field":"frozen_chain_plan_index_sha256","domain":"ebm-audit/frozen-chain-plan-index/2","persisted_schema_ref":"evaluator-receipts.schema.json#/$defs/FrozenChainPlanIndex","preimage_schema_ref":"evaluator-receipts.schema.json#/$defs/FrozenChainPlanIndex","pair_kind":"CONDITIONAL_SELF_HASH"},
+      {"registry_field":"score_source_evidence_sha256","stored_field":"TypedScoreSourceRecordBody.source_record_sha256","domain":"ebm-audit/score-source-evidence/1","persisted_schema_ref":"evaluator-receipts.schema.json#/$defs/TypedScoreSourceRecordBody","preimage_schema_ref":"evaluator-receipts.schema.json#/$defs/TypedScoreSourceRecordBody","pair_kind":"CONDITIONAL_SELF_HASH"},
+      {"registry_field":"source_validation_registry_sha256","stored_field":"source_validation_registry_sha256","domain":"ebm-audit/score-source-validation-registry/1","persisted_schema_ref":"evaluator-receipts.schema.json#/$defs/ScoreSourceValidationRegistry","preimage_schema_ref":"evaluator-receipts.schema.json#/$defs/ScoreSourceValidationRegistry","pair_kind":"COMPLETE_EXTERNAL_ARRAY"},
+      {"registry_field":"score_evidence_root_sha256","stored_field":"score_evidence_root_sha256","domain":"ebm-audit/score-evidence-root/1","persisted_schema_ref":"evaluator-receipts.schema.json#/$defs/ScoreEvidenceBundle","preimage_schema_ref":"evaluator-receipts.schema.json#/$defs/ScoreEvidenceBundleDigestPreimage","pair_kind":"EXPLICIT_PREIMAGE_PAIR"},
+      {"registry_field":"score_validation_receipt_sha256","stored_field":"score_validation_receipt_sha256","domain":"ebm-audit/score-validation-receipt/1","persisted_schema_ref":"evaluator-receipts.schema.json#/$defs/ScoreValidationReceipt","preimage_schema_ref":"evaluator-receipts.schema.json#/$defs/ScoreValidationReceiptDigestPreimage","pair_kind":"EXPLICIT_PREIMAGE_PAIR"},
+      {"registry_field":"score_validation_failure_record_sha256","stored_field":"score_validation_failure_record_sha256","domain":"ebm-audit/score-validation-failure-record/1","persisted_schema_ref":"evaluator-receipts.schema.json#/$defs/ScoreValidationFailureRecord","preimage_schema_ref":"evaluator-receipts.schema.json#/$defs/ScoreValidationFailureRecordDigestPreimage","pair_kind":"EXPLICIT_PREIMAGE_PAIR"}
+    ]
+  },
+  "schema_files": [
+    "schemas/canonical-records.schema.json",
+    "schemas/worker-protocol.schema.json",
+    "schemas/analysis-universe.schema.json",
+    "schemas/source-set-manifest.schema.json",
+    "schemas/evaluator-receipts.schema.json",
+    "schemas/comparator-transaction.schema.json",
+    "schemas/scenario-derivation-registry.schema.json",
+    "schemas/scenario-evidence.schema.json",
+    "schemas/scenario-family-payload.schema.json",
+    "schemas/scenario-fixture-evidence.schema.json",
+    "schemas/scenario-fixture-contract.schema.json",
+    "schemas/scenario-fixture-predicate.schema.json",
+    "schemas/scenario-predicate.schema.json",
+    "schemas/scientific-invariant.schema.json",
+    "schemas/scientific-invariant-counterexample.schema.json",
+    "schemas/synthetic-resolved-configuration.schema.json",
+    "schemas/synthetic-truth.schema.json",
+    "schemas/synthetic-scientific-data.schema.json"
+  ],
+  "identity_preimages": [
+    {
+      "field": "heldout_attempt_id",
+      "domain": "ebm-audit/heldout-attempt/3",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/HeldoutAttemptIdentityPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "operation_instance_id",
+      "domain": "ebm-audit/benchmark-operation-instance/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/BenchmarkOperationInstancePreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "sealed_operation_plan_sha256",
+      "domain": "ebm-audit/sealed-operation-plan/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/SealedOperationPlanDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "analysis_spec_id",
+      "domain": "ebm-audit/analysis-spec/3",
+      "schema_ref": "analysis-universe.schema.json#/$defs/AnalysisSpec",
+      "projection": "complete-object"
+    },
+    {
+      "field": "origin_id",
+      "domain": "ebm-audit/candidate-origin/1",
+      "schema_ref": "analysis-universe.schema.json#/$defs/CandidateOriginDigestPreimage",
+      "projection": "complete compiler-owned origin without origin_id"
+    },
+    {
+      "field": "source_declaration_digest",
+      "domain": "ebm-audit/analysis-declaration-provenance/1",
+      "schema_ref": "analysis-universe.schema.json#/$defs/DeclarationProvenanceDigestPreimage",
+      "projection": "complete closed declaration provenance without source_declaration_digest"
+    },
+    {
+      "field": "operation_participant_instance_manifest_digest",
+      "domain": "ebm-audit/operation-participant-instance-manifest/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/OperationParticipantInstanceManifestDigestPreimage",
+      "projection": "complete private ordered operation instances and unique membership"
+    },
+    {
+      "field": "public_intent_manifest_digest",
+      "domain": "ebm-audit/public-intent-manifest/2",
+      "schema_ref": "analysis-universe.schema.json#/$defs/PublicIntentManifestDigestPreimage",
+      "projection": "complete data-independent public scientific namespace; plan-level acceptance evidence only"
+    },
+    {
+      "field": "planning_config_digest",
+      "domain": "ebm-audit/planning-config/2",
+      "schema_ref": "analysis-universe.schema.json#/$defs/PlanningConfigDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "validated_planning_summary_id",
+      "domain": "ebm-audit/validated-planning-summary/2",
+      "schema_ref": "analysis-universe.schema.json#/$defs/ValidatedPlanningSummaryBindingPreimage",
+      "projection": "complete-runtime-binding-owner; identity is not persisted in AnalysisPlan"
+    },
+    {
+      "field": "preparation_rule_registry_digest",
+      "domain": "ebm-audit/preparation-rule-registry/1",
+      "schema_ref": "analysis-universe.schema.json#/$defs/PreparationRuleRegistryDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "plan_digest",
+      "domain": "ebm-audit/analysis-plan/3",
+      "schema_ref": "analysis-universe.schema.json#/$defs/AnalysisPlanDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "receipt_digest",
+      "domain": "ebm-audit/preparation-receipt/2",
+      "schema_ref": "analysis-universe.schema.json#/$defs/PreparationReceiptDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "universe_id",
+      "domain": "ebm-audit/analysis-universe/3",
+      "schema_ref": "analysis-universe.schema.json#/$defs/UniverseIdentityPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "chain_execution_id",
+      "domain": "ebm-audit/chain-execution/3",
+      "schema_ref": "analysis-universe.schema.json#/$defs/ChainExecutionIdPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "attempt_id",
+      "domain": "ebm-audit/chain-attempt/3",
+      "schema_ref": "analysis-universe.schema.json#/$defs/AttemptIdPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "scientific_request_digest",
+      "domain": "ebm-audit/scientific-request/2",
+      "schema_ref": "worker-protocol.schema.json#/$defs/ScientificCommandRequestProjection",
+      "projection": "validate/fit/stage: exclude request_id,request_metadata_digest,scientific_request_digest,created_at_utc; attempt and stage-call identity remain scientific; field is null for describe,self-test"
+    },
+    {
+      "field": "retry_equivalence_digest",
+      "domain": "ebm-audit/retry-equivalence/1",
+      "schema_ref": "worker-protocol.schema.json#/$defs/RetryEquivalentFitRequestProjection",
+      "projection": "complete ScientificFitRequestProjection after the four existing transport exclusions, then remove only payload.attempt_id and payload.attempt_ordinal"
+    },
+    {
+      "field": "request_metadata_digest",
+      "domain": "ebm-audit/worker-request-metadata/2",
+      "schema_ref": "worker-protocol.schema.json#/$defs/WorkerRequestMetadataDigestPreimage",
+      "projection": "complete-worker-request-with-request_metadata_digest-removed"
+    },
+    {
+      "field": "fit_request_id",
+      "domain": "ebm-audit/fit-request-id/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/Sha256Digest",
+      "projection": "exact WorkerRequest.payload.attempt_id lowercase prefixed SHA-256 string; derive first 16 SHA-256 bytes over ASCII domain, NUL, attempt ASCII; force RFC 4122 variant/version-4 bits; format canonical lowercase UUID"
+    },
+    {
+      "field": "authenticated_request_evidence_digest",
+      "domain": "ebm-audit/authenticated-worker-request-evidence/2",
+      "schema_ref": "worker-protocol.schema.json#/$defs/AuthenticatedWorkerRequestEvidenceProjection",
+      "projection": "complete-object"
+    },
+    {
+      "field": "authenticated_execution_evidence_digest",
+      "domain": "ebm-audit/authenticated-worker-execution-evidence/2",
+      "schema_ref": "worker-protocol.schema.json#/$defs/AuthenticatedWorkerExecutionEvidenceProjection",
+      "projection": "complete-object"
+    },
+    {
+      "field": "core_observed_failure_digest",
+      "domain": "ebm-audit/core-observed-failure/2",
+      "schema_ref": "worker-protocol.schema.json#/$defs/CoreObservedFailureDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "selected_algorithm_binding_digest",
+      "domain": "ebm-audit/selected-algorithm-binding/2",
+      "schema_ref": "analysis-universe.schema.json#/$defs/SelectedAlgorithmBinding",
+      "projection": "complete-object"
+    },
+    {
+      "field": "worker_command_evidence_digest",
+      "domain": "ebm-audit/worker-command-evidence/2",
+      "schema_ref": "worker-protocol.schema.json#/$defs/CommandEvidenceProjection",
+      "projection": "complete-object"
+    },
+    {
+      "field": "requested_outputs_digest",
+      "domain": "ebm-audit/requested-outputs/2",
+      "schema_ref": "analysis-universe.schema.json#/$defs/RequestedOutputsPreimage",
+      "projection": "command-neutral registry-order set; command eligibility validated separately"
+    },
+    {
+      "field": "requested_output_registry_digest",
+      "domain": "ebm-audit/requested-output-registry/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/RequestedOutputRegistryDigestPreimage",
+      "projection": "complete-requested_outputs-array-in-registry-order"
+    },
+    {
+      "field": "self_test_check_registry_digest",
+      "domain": "ebm-audit/self-test-check-registry/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/SelfTestCheckRegistryDigestPreimage",
+      "projection": "complete-self_test_checks-array-in-registry-order"
+    },
+    {
+      "field": "chain_cache_key",
+      "domain": "ebm-audit/chain-cache/4",
+      "schema_ref": "analysis-universe.schema.json#/$defs/ChainCachePreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "universe_cache_key",
+      "domain": "ebm-audit/universe-cache/3",
+      "schema_ref": "analysis-universe.schema.json#/$defs/UniverseCachePreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "result_id",
+      "domain": "ebm-audit/result-record/2",
+      "schema_ref": "canonical-records.schema.json#/$defs/ResultRecordDigestPreimage",
+      "projection": "complete object containing result_schema_version and the closed discriminated ResultRecord body; result_id is absent"
+    },
+    {
+      "field": "convergence_rule_digest",
+      "domain": "ebm-audit/convergence-rule/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ConvergenceRuleOwner",
+      "projection": "complete fixed convergence-rule owner"
+    },
+    {
+      "field": "cache_verification_digest",
+      "domain": "ebm-audit/cache-lineage-verification/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/CacheLineage",
+      "projection": "remove:cache_verification_digest"
+    },
+    {
+      "field": "environment_digest",
+      "domain": "ebm-audit/environment/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/EnvironmentIdentity",
+      "projection": "complete-object"
+    },
+    {
+      "field": "settings_digest",
+      "domain": "ebm-audit/settings/1",
+      "schema_ref": "worker-protocol.schema.json#/$defs/SettingsObject",
+      "projection": "complete-object"
+    },
+    {
+      "field": "settings_schema_digest",
+      "domain": "ebm-audit/settings-schema/1",
+      "schema_ref": "worker-protocol.schema.json#/$defs/ClosedSettingsSchema",
+      "projection": "complete-object"
+    },
+    {
+      "field": "stage_semantics_digest",
+      "domain": "ebm-audit/stage-semantics/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/StageSemanticsDefinition",
+      "projection": "complete-object"
+    },
+    {
+      "field": "stage_model_reference_digest",
+      "domain": "ebm-audit/stage-model-reference/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/StageModelReference",
+      "projection": "remove:stage_model_reference_digest"
+    },
+    {
+      "field": "exact_fixed_target_reference_digest",
+      "domain": "ebm-audit/exact-fixed-target-reference/1",
+      "schema_ref": "worker-protocol.schema.json#/$defs/ExactFixedTargetReference",
+      "projection": "remove:exact_fixed_target_reference_digest"
+    },
+    {
+      "field": "native_probability_matrix_digest",
+      "domain": "ebm-audit/kde-ebm-native-probability-matrix/1",
+      "schema_ref": null,
+      "projection": "exact C-order native probability-matrix bytes after event-axis projection"
+    },
+    {
+      "field": "backend_identity_digest",
+      "domain": "ebm-audit/backend-identity/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/BackendIdentity",
+      "projection": "complete-object"
+    },
+    {
+      "field": "capabilities_digest",
+      "domain": "ebm-audit/capabilities/1",
+      "schema_ref": "worker-protocol.schema.json#/$defs/AdapterCapabilities",
+      "projection": "complete-object"
+    },
+    {
+      "field": "adapter_semantics_digest",
+      "domain": "ebm-audit/adapter-semantics/2",
+      "schema_ref": "worker-protocol.schema.json#/$defs/AdapterSemantics",
+      "projection": "complete-object"
+    },
+    {
+      "field": "execution_input_projection_digest",
+      "domain": "ebm-audit/execution-input-projection/2",
+      "schema_ref": "worker-protocol.schema.json#/$defs/ExecutionInputProjection",
+      "projection": "complete-object"
+    },
+    {
+      "field": "worker_fit_payload_digest",
+      "domain": "ebm-audit/worker-fit-payload/2",
+      "schema_ref": "worker-protocol.schema.json#/$defs/WorkerFitPayloadDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "worker_validation_payload_digest",
+      "domain": "ebm-audit/worker-validation-payload/2",
+      "schema_ref": "worker-protocol.schema.json#/$defs/WorkerValidationPayloadDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "response_metadata_digest",
+      "domain": "ebm-audit/worker-response-metadata/2",
+      "schema_ref": "worker-protocol.schema.json#/$defs/WorkerResponseMetadataDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "worker_stage_result_digest",
+      "domain": "ebm-audit/worker-stage-result/2",
+      "schema_ref": "worker-protocol.schema.json#/$defs/StageResultDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "chain_payload_digest",
+      "domain": "ebm-audit/final-chain-payload/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/FinalChainScientificPayload",
+      "projection": "remove:chain_payload_digest"
+    },
+    {
+      "field": "actual_validate_worker_subject_digest",
+      "domain": "ebm-audit/actual-validate-worker-subject/2",
+      "schema_ref": "worker-protocol.schema.json#/$defs/ActualValidateWorkerSubjectProjection",
+      "projection": "complete-object"
+    },
+    {
+      "field": "actual_fit_worker_subject_digest",
+      "domain": "ebm-audit/actual-fit-worker-subject/2",
+      "schema_ref": "worker-protocol.schema.json#/$defs/ActualFitWorkerSubjectProjection",
+      "projection": "complete-object"
+    },
+    {
+      "field": "actual_stage_worker_subject_digest",
+      "domain": "ebm-audit/actual-stage-worker-subject/2",
+      "schema_ref": "worker-protocol.schema.json#/$defs/ActualStageWorkerSubjectProjection",
+      "projection": "complete-object"
+    },
+    {
+      "field": "benchmark_subject_digest",
+      "domain": "ebm-audit/benchmark-subject/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/BenchmarkSubjectIdentity",
+      "projection": "complete-object"
+    },
+    {
+      "field": "candidate_sha256",
+      "domain": "ebm-audit/candidate-tree/1",
+      "schema_ref": "source-set-manifest.schema.json#/$defs/CandidateTreeManifest",
+      "projection": "complete-object"
+    },
+    {
+      "field": "source_component_sha256",
+      "applies_to_fields": [
+        "generator_sha256",
+        "metrics_rules_sha256",
+        "report_language_rules_sha256",
+        "evaluator_source_sha256",
+        "normative_authority_sha256"
+      ],
+      "domain": "ebm-audit/source-set/1",
+      "schema_ref": "source-set-manifest.schema.json#/$defs/SourceSetDigestPreimage",
+      "projection": "complete closed discriminated object; destination_field equals the exact destination and declared_roots equals its schema-closed vector"
+    },
+    {
+      "field": "benchmark_freeze_receipt_sha256",
+      "domain": "ebm-audit/benchmark-freeze-receipt/3",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/BenchmarkFreezeReceiptDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "evidence_owner_sha256",
+      "domain": "ebm-audit/freeze-predicate-evidence-owner/2",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/FreezePredicateEvidenceOwnerDigestPreimage",
+      "projection": "complete-object-with-own-digest-null"
+    },
+    {
+      "field": "blocked_pre_root_diagnostic_sha256",
+      "domain": "ebm-audit/blocked-pre-root-diagnostic/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/BlockedPreRootDiagnosticDigestPreimage",
+      "projection": "complete-object-with-own-digest-null"
+    },
+    {
+      "field": "candidate_freeze_receipt_sha256",
+      "domain": "ebm-audit/candidate-freeze-receipt/3",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/CandidateFreezeReceiptDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "acceptance_candidate_transition_receipt_sha256",
+      "domain": "ebm-audit/acceptance-candidate-transition-receipt/2",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/AcceptanceCandidateTransitionReceiptDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "profile_synthetic_event_binding_sha256",
+      "domain": "ebm-audit/profile-synthetic-event-binding/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ProfileSyntheticEventBindingDigestPreimage",
+      "projection": "complete-coordinate-bound-synthetic-to-analysis-event-owner-with-own-digest-null"
+    },
+    {
+      "field": "profile_execution_source_manifest_sha256",
+      "domain": "ebm-audit/profile-execution-source-manifest/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ProfileExecutionSourceManifestDigestPreimage",
+      "projection": "complete-ordered-six-role-declared-fit-sensitive-source-manifest-with-own-digest-null"
+    },
+    {
+      "field": "profile_worker_invocation_semantics_sha256",
+      "domain": "ebm-audit/profile-worker-invocation-semantics/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ProfileWorkerInvocationSemanticsDigestPreimage",
+      "projection": "exact-worker-argv-token-vector-and-normalized-timeout"
+    },
+    {
+      "field": "profile_execution_identity_sha256",
+      "domain": "ebm-audit/profile-execution-identity/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ProfileExecutionIdentityDigestPreimage",
+      "projection": "complete-fit-sensitive-candidate-independent-execution-identity-with-own-digest-null"
+    },
+    {
+      "field": "profile_public_seed",
+      "domain": "ebm-audit/profile-public-seed/2",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ProfilePublicSeedPreimage",
+      "projection": "complete-execution-identity-event-binding-chain-preimage; first-eight-sha256-bytes-big-endian-uint64"
+    },
+    {
+      "field": "profile_characterization_plan_receipt_sha256",
+      "domain": "ebm-audit/profile-characterization-plan-receipt/3",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ProfileCharacterizationPlanReceiptDigestPreimage",
+      "projection": "complete-pre-execution-plan-with-own-digest-null"
+    },
+    {
+      "field": "blocked_profile_diagnostic_sha256",
+      "domain": "ebm-audit/blocked-profile-diagnostic/2",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/BlockedProfileDiagnosticDigestPreimage",
+      "projection": "complete-blocked-diagnostic-with-own-digest-null"
+    },
+    {
+      "field": "pre_candidate_qualification_receipt_sha256",
+      "domain": "ebm-audit/pre-candidate-qualification-receipt/2",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/PreCandidateQualificationReceiptDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "sealed_case_manifest_sha256",
+      "domain": "ebm-audit/sealed-case-manifest/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/SealedCaseManifest",
+      "projection": "complete-object"
+    },
+    {
+      "field": "sealed_case_manifest_receipt_sha256",
+      "domain": "ebm-audit/sealed-case-manifest-receipt/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/SealedCaseManifestReceiptDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "one_shot_execution_receipt_sha256",
+      "domain": "ebm-audit/one-shot-execution-receipt/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/OneShotExecutionReceiptDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "sealed_results_sha256",
+      "domain": "ebm-audit/sealed-results/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/SealedResultsIndex",
+      "projection": "complete-object"
+    },
+    {
+      "field": "sealed_output_receipt_sha256",
+      "domain": "ebm-audit/sealed-output-receipt/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/SealedOutputReceiptDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "evaluation_receipt_sha256",
+      "domain": "ebm-audit/evaluation-receipt/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/EvaluationReceiptDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "RuleOutcome.evidence_sha256",
+      "domain": "ebm-audit/mandatory-rule-evidence/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ScoreAggregateEvidenceDigestPreimage",
+      "projection": "complete score root, source-validation registry, MANDATORY_RULE kind, and registered rule ID"
+    },
+    {
+      "field": "BackendGateResult.evidence_sha256",
+      "domain": "ebm-audit/backend-gate-evidence/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ScoreAggregateEvidenceDigestPreimage",
+      "projection": "complete score root, source-validation registry, BACKEND_GATE kind, and registered non-baseline gate ID"
+    },
+    {
+      "field": "rule_outcomes_sha256",
+      "domain": "ebm-audit/rule-outcomes/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/RuleOutcomesDigestPreimage",
+      "projection": "complete-rule-id-sorted-array"
+    },
+    {
+      "field": "score_receipt_sha256",
+      "domain": "ebm-audit/score-receipt/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ScoreReceiptDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "applicable_gate_results_sha256",
+      "domain": "ebm-audit/backend-applicable-gates/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/BackendGateResultsDigestPreimage",
+      "projection": "complete-gate-id-sorted-array"
+    },
+    {
+      "field": "backend_acceptance_receipt_sha256",
+      "domain": "ebm-audit/backend-acceptance-receipt/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/BackendAcceptanceReceiptDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "input_digest",
+      "domain": "ebm-audit/scientific-data/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/ScientificDataDigestPreimage",
+      "projection": "complete-object",
+      "nullable_only_for": [
+        "UNPREPARED:PLAN_INELIGIBLE:INVALID_SPECIFICATION",
+        "UNPREPARED:PREPARATION_INVALID:INVALID_SPECIFICATION"
+      ],
+      "null_semantics": "Canonical ScientificDataDigestPreimage does not exist; null is a typed absence and never a digest alias."
+    },
+    {
+      "field": "generated_scientific_data_sha256",
+      "domain": "ebm-audit/generated-scientific-data/1",
+      "schema_ref": "synthetic-scientific-data.schema.json",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/generated_scientific_data_sha256"
+    },
+    {
+      "field": "resolved_generator_configuration_sha256",
+      "applies_to_fields": [
+        "resolved_generator_configuration_sha256",
+        "comparator_pre_override_configuration_sha256",
+        "comparator_post_override_configuration_sha256",
+        "source_preoperation_resolved_generator_configuration_sha256",
+        "member_postoperation_resolved_generator_configuration_sha256"
+      ],
+      "domain": "ebm-audit/resolved-generator-configuration/1",
+      "schema_ref": "synthetic-resolved-configuration.schema.json#/$defs/ResolvedGeneratorConfiguration",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/resolved_generator_configuration_sha256"
+    },
+    {
+      "field": "case_configuration_sha256",
+      "domain": "ebm-audit/audit-case-configuration/3",
+      "schema_ref": "worker-protocol.schema.json#/$defs/AuditCaseConfigurationDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "matched_comparator_plan_evidence_sha256",
+      "domain": "ebm-audit/matched-comparator-plan-evidence/1",
+      "schema_ref": "comparator-transaction.schema.json#/$defs/MatchedComparatorPlanEvidence",
+      "projection": "complete-object"
+    },
+    {
+      "field": "transaction_state_sha256",
+      "applies_to_fields": [
+        "pre_state_sha256",
+        "post_state_sha256"
+      ],
+      "domain": "ebm-audit/comparator-transaction-state/1",
+      "schema_ref": "comparator-transaction.schema.json#/$defs/ComparatorTransactionState",
+      "projection": "complete-object"
+    },
+    {
+      "field": "ordered_operations_sha256",
+      "domain": "ebm-audit/comparator-ordered-operations/1",
+      "schema_ref": "comparator-transaction.schema.json#/$defs/MatchedComparatorPlanEvidence/properties/ordered_operations",
+      "projection": "complete-array-for-the-exact-member-in-ascending-contiguous-sequence-order"
+    },
+    {
+      "field": "equal_projection_sha256",
+      "domain": "ebm-audit/comparator-equal-projection/1",
+      "schema_ref": "comparator-transaction.schema.json#/$defs/EqualProjectionDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "shared_component_sha256",
+      "applies_to_fields": [
+        "source_component_sha256",
+        "member_component_sha256"
+      ],
+      "domain": "ebm-audit/comparator-component/1",
+      "schema_ref": "comparator-transaction.schema.json#/$defs/CanonicalJsonValue",
+      "projection": "complete-canonical-json-value"
+    },
+    {
+      "field": "matched_comparator_execution_binding_sha256",
+      "domain": "ebm-audit/matched-comparator-execution-binding/1",
+      "schema_ref": "comparator-transaction.schema.json#/$defs/MatchedComparatorEvidence",
+      "projection": "complete-object"
+    },
+    {
+      "field": "matched_comparator_evidence_sha256",
+      "domain": "ebm-audit/matched-comparator-evidence-manifest/1",
+      "schema_ref": "comparator-transaction.schema.json#/$defs/MatchedComparatorEvidenceManifestDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "null_calibration_identity_digest",
+      "domain": "ebm-audit/null-calibration-identity/1",
+      "schema_ref": "scientific-invariant.schema.json#/$defs/NullCalibrationIdentity",
+      "projection": "complete-object"
+    },
+    {
+      "field": "refit_steps_digest",
+      "domain": "ebm-audit/refit-steps/1",
+      "schema_ref": "scientific-invariant.schema.json#/$defs/RefitStepsDigestPreimage",
+      "projection": "complete-object-with-digest_state-DIGEST_PREIMAGE-and-refit_steps_digest-null"
+    },
+    {
+      "field": "candidate_strong_evidence_decision_sha256",
+      "applies_to_fields": [
+        "candidate_strong_evidence_decision_sha256",
+        "candidate_decision_sha256"
+      ],
+      "domain": "ebm-audit/candidate-strong-evidence-decision/1",
+      "schema_ref": "scientific-invariant.schema.json#/$defs/CandidateStrongEvidenceDecision",
+      "projection": "complete-object"
+    },
+    {
+      "field": "false_positive_opportunity_manifest_sha256",
+      "domain": "ebm-audit/false-positive-opportunity-manifest/1",
+      "schema_ref": "scientific-invariant.schema.json#/$defs/FalsePositiveOpportunityManifestDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "false_positive_evaluation_sha256",
+      "domain": "ebm-audit/false-positive-evaluation/1",
+      "schema_ref": "scientific-invariant.schema.json#/$defs/FalsePositiveEvaluation",
+      "projection": "complete-object"
+    },
+    {
+      "field": "resolved_parameter_manifest_sha256",
+      "domain": "ebm-audit/resolved-parameter-manifest/1",
+      "schema_ref": "synthetic-resolved-configuration.schema.json#/$defs/ResolvedParameterManifest",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/resolved_parameter_manifest_sha256"
+    },
+    {
+      "field": "resolved_generator_mechanism_sha256",
+      "domain": "ebm-audit/resolved-generator-mechanism/1",
+      "schema_ref": "synthetic-resolved-configuration.schema.json#/$defs/ResolvedGeneratorMechanism",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/resolved_generator_mechanism_sha256"
+    },
+    {
+      "field": "component_seed_manifest_sha256",
+      "domain": "ebm-audit/component-seed-manifest/1",
+      "schema_ref": "synthetic-resolved-configuration.schema.json#/$defs/ComponentSeedManifest",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/component_seed_manifest_sha256"
+    },
+    {
+      "field": "truth_object_sha256",
+      "domain": "ebm-audit/synthetic-truth/1",
+      "schema_ref": "synthetic-truth.schema.json",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/truth_object_sha256"
+    },
+    {
+      "field": "benchmark_operation_manifest_sha256",
+      "applies_to_fields": [
+        "resample_manifest_sha256",
+        "removal_manifest_sha256",
+        "transformation_manifest_sha256"
+      ],
+      "domain": "ebm-audit/benchmark-operation-manifest/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/BenchmarkOperationManifest",
+      "projection": "complete-object-with-manifest_kind-equal-to-destination-kind"
+    },
+    {
+      "field": "canonical_scientific_payload_sha256",
+      "domain": "ebm-audit/canonical-scientific-payload/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/CanonicalScientificPayload",
+      "projection": "complete-object"
+    },
+    {
+      "field": "frozen_chain_plan_sha256",
+      "domain": "ebm-audit/frozen-chain-plan/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/FrozenChainPlanDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "validate_evaluator_worker_response_binding_sha256",
+      "domain": "ebm-audit/validate-evaluator-worker-response-binding/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ValidateEvaluatorWorkerResponseBinding",
+      "projection": "complete-object"
+    },
+    {
+      "field": "fit_evaluator_worker_response_binding_sha256",
+      "domain": "ebm-audit/fit-evaluator-worker-response-binding/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/FitEvaluatorWorkerResponseBinding",
+      "projection": "complete-object"
+    },
+    {
+      "field": "private_alignment_artifact_digest",
+      "domain": "ebm-audit/reference-private-alignment/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/PrivateReferenceAlignmentArtifact",
+      "projection": "complete-object"
+    },
+    {
+      "field": "reference_row_order_digest",
+      "domain": "ebm-audit/reference-row-order/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/ReferenceRowOrderDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "baseline_inclusion_digest",
+      "domain": "ebm-audit/baseline-inclusion/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/BaselineInclusionDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "reference_id",
+      "domain": "ebm-audit/canonical-reference/2",
+      "schema_ref": "canonical-records.schema.json#/$defs/CanonicalReferenceResultDigestPreimage",
+      "projection": "complete-object-with-reference_id-null"
+    },
+    {
+      "field": "verified_reference_alignment_owner_id",
+      "domain": "ebm-audit/verified-reference-alignment-owner/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/VerifiedReferenceAlignmentOwnerDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "current_identity_row_digest",
+      "domain": "ebm-audit/current-identity-rows/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/CurrentIdentityRowDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "baseline_subject_digest",
+      "domain": "ebm-audit/baseline-subject/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/BaselineSourceBinding",
+      "projection": "complete-object"
+    },
+    {
+      "field": "baseline_seed_chain_policy_digest",
+      "domain": "ebm-audit/baseline-seed-chain-policy/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/BaselineSeedChainPolicyDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "statistical_diagnostics_digest",
+      "domain": "ebm-audit/baseline-statistical-diagnostics/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/BaselineStatisticalDiagnosticsDigestPreimage",
+      "projection": "complete-object"
+    },
+    {
+      "field": "baseline_connected_result_id",
+      "domain": "ebm-audit/baseline-connected-result/2",
+      "schema_ref": "canonical-records.schema.json#/$defs/BaselineConnectedResultDigestPreimage",
+      "projection": "complete-object-with-result_id-null"
+    },
+    {
+      "field": "baseline_reproduction_id",
+      "domain": "ebm-audit/baseline-reproduction/2",
+      "schema_ref": "canonical-records.schema.json#/$defs/BaselineReproductionRecordDigestPreimage",
+      "projection": "complete-object-with-baseline_reproduction_id-null"
+    },
+    {
+      "field": "baseline_assessment_id",
+      "domain": "ebm-audit/baseline-assessment/1",
+      "schema_ref": "canonical-records.schema.json#/$defs/BaselineAssessmentRecordDigestPreimage",
+      "projection": "complete-object-with-baseline_assessment_id-null"
+    },
+    {
+      "field": "scenario_derivation_registry_sha256",
+      "domain": "ebm-audit/scenario-derivation-registry/1",
+      "schema_ref": "scenario-derivation-registry.schema.json",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/scenario_derivation_registry_sha256"
+    },
+    {
+      "field": "scenario_predicate_registry_sha256",
+      "domain": "ebm-audit/scenario-predicate-registry/1",
+      "schema_ref": "scenario-predicate.schema.json",
+      "projection": "complete-closed-substantive-predicate-schema"
+    },
+    {
+      "field": "scenario_source_owner_manifest_sha256",
+      "domain": "ebm-audit/scenario-source-owner-manifest/1",
+      "schema_ref": "scenario-evidence.schema.json#/$defs/ScenarioSourceOwnerManifestDigestPreimage",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/scenario_source_owner_manifest_sha256"
+    },
+    {
+      "field": "scenario_source_record_sha256",
+      "applies_to_fields": ["ScenarioSourceOwnerReference.source_record_sha256"],
+      "domain": "ebm-audit/scenario-source-record/1",
+      "schema_ref": "scenario-evidence.schema.json#/$defs/ScenarioSourceOwnerRecordDigestPreimage",
+      "projection": "complete owner_class, natural_identity, and source_record object"
+    },
+    {
+      "field": "canonical_array_artifact_owner_sha256",
+      "domain": "ebm-audit/canonical-array-artifact-owner/1",
+      "schema_ref": "scenario-evidence.schema.json#/$defs/CanonicalArrayArtifactOwner",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/canonical_array_artifact_owner_sha256"
+    },
+    {
+      "field": "preprocessing_execution_record_sha256",
+      "domain": "ebm-audit/preprocessing-execution-record/1",
+      "schema_ref": "scenario-evidence.schema.json#/$defs/PreprocessingExecutionRecord",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/preprocessing_execution_record_sha256"
+    },
+    {
+      "field": "report_predicate_outcome_sha256",
+      "domain": "ebm-audit/report-predicate-outcome/1",
+      "schema_ref": "scenario-evidence.schema.json#/$defs/ReportPredicateOutcome",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/report_predicate_outcome_sha256"
+    },
+    {
+      "field": "scenario_derived_field_sha256",
+      "domain": "ebm-audit/scenario-derived-field/1",
+      "schema_ref": "scenario-evidence.schema.json#/$defs/ScenarioDerivedFieldRecord",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/scenario_derived_field_sha256"
+    },
+    {
+      "field": "evidence_tree_manifest_sha256",
+      "domain": "ebm-audit/scenario-evidence-tree-manifest/1",
+      "schema_ref": "scenario-evidence.schema.json#/$defs/ScenarioEvidenceTreeManifest",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/evidence_tree_manifest_sha256"
+    },
+    {
+      "field": "family_evidence_sha256",
+      "domain": "ebm-audit/substantive-scenario-family-evidence/1",
+      "schema_ref": "scenario-evidence.schema.json#/$defs/SubstantiveScenarioFamilyEvidenceDigestPreimage",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/family_evidence_sha256"
+    },
+    {
+      "field": "scenario_family_evaluation_receipt_sha256",
+      "domain": "ebm-audit/scenario-family-evaluation-receipt/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ScenarioFamilyEvaluationReceipt",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/scenario_family_evaluation_receipt_sha256"
+    },
+    {
+      "field": "development_scenario_evaluation_receipt_sha256",
+      "domain": "ebm-audit/development-scenario-evaluation-receipt/3",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/DevelopmentScenarioEvaluationReceipt",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/development_scenario_evaluation_receipt_sha256"
+    },
+    {
+      "field": "heldout_scenario_evaluation_receipt_sha256",
+      "domain": "ebm-audit/heldout-scenario-evaluation-receipt/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/HeldoutScenarioEvaluationReceipt",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/heldout_scenario_evaluation_receipt_sha256"
+    },
+    {
+      "field": "frozen_chain_plan_index_sha256",
+      "domain": "ebm-audit/frozen-chain-plan-index/2",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/FrozenChainPlanIndex",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/frozen_chain_plan_index_sha256"
+    },
+    {
+      "field": "score_source_evidence_sha256",
+      "applies_to_fields": ["TypedScoreSourceRecordBody.source_record_sha256"],
+      "domain": "ebm-audit/score-source-evidence/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/TypedScoreSourceRecordBody",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/source_record_sha256"
+    },
+    {
+      "field": "source_validation_registry_sha256",
+      "domain": "ebm-audit/score-source-validation-registry/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ScoreSourceValidationRegistry",
+      "projection": "complete ordered 101-row expanded source-validator registry"
+    },
+    {
+      "field": "score_evidence_root_sha256",
+      "domain": "ebm-audit/score-evidence-root/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ScoreEvidenceBundleDigestPreimage",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/score_evidence_root_sha256"
+    },
+    {
+      "field": "score_validation_receipt_sha256",
+      "domain": "ebm-audit/score-validation-receipt/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ScoreValidationReceiptDigestPreimage",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/score_validation_receipt_sha256"
+    },
+    {
+      "field": "score_validation_failure_record_sha256",
+      "domain": "ebm-audit/score-validation-failure-record/1",
+      "schema_ref": "evaluator-receipts.schema.json#/$defs/ScoreValidationFailureRecordDigestPreimage",
+      "projection": "set-literal:/digest_state=DIGEST_PREIMAGE;set-null:/score_validation_failure_record_sha256"
+    },
+    {
+      "field": "participant_token_key_id_digest",
+      "domain": "ebm-audit/participant-token-key-id/1",
+      "schema_ref": null,
+      "projection": "exact-key-bytes"
+    }
+  ],
+  "requested_outputs": [
+    {
+      "output_id": "central_order",
+      "commands": ["validate", "fit"],
+      "required_capabilities": ["strict_single_sequence"],
+      "required_for_mvp_fit": true,
+      "result_members": ["central_order_permutation"]
+    },
+    {
+      "output_id": "order_samples",
+      "commands": ["validate", "fit"],
+      "required_capabilities": ["order_samples"],
+      "required_for_mvp_fit": false,
+      "result_members": ["postburn_order_state_chain", "order_state_chain"]
+    },
+    {
+      "output_id": "likelihood_trace",
+      "commands": ["validate", "fit"],
+      "required_capabilities": ["likelihood_trace"],
+      "required_for_mvp_fit": false,
+      "result_members": ["postburn_likelihood_trace", "likelihood_trace"]
+    },
+    {
+      "output_id": "accepted_transition_diagnostics",
+      "commands": ["validate", "fit"],
+      "required_capabilities": ["accepted_transition_diagnostics"],
+      "required_for_mvp_fit": false,
+      "result_members": ["postburn_state_change_mask", "actual_transition_count", "actual_transition_fraction"]
+    },
+    {
+      "output_id": "position_probabilities",
+      "commands": ["validate", "fit"],
+      "required_capabilities": ["position_probabilities"],
+      "required_for_mvp_fit": false,
+      "result_members": ["position_probabilities"]
+    },
+    {
+      "output_id": "pairwise_precedence",
+      "commands": ["validate", "fit"],
+      "required_capabilities": ["pairwise_precedence"],
+      "required_for_mvp_fit": false,
+      "result_members": ["pairwise_precedence"]
+    },
+    {
+      "output_id": "exact_fixed_order_target",
+      "commands": ["validate", "fit"],
+      "required_capabilities": ["exact_fixed_order_target"],
+      "required_for_mvp_fit": false,
+      "result_members": ["backend.<adapter_id>.<declared-name>"]
+    },
+    {
+      "output_id": "fitted_event_distributions",
+      "commands": ["validate", "fit"],
+      "required_capabilities": ["fitted_event_distributions"],
+      "required_for_mvp_fit": false,
+      "result_members": ["backend.<adapter_id>.<declared-name>"]
+    },
+    {
+      "output_id": "training_stage_posterior",
+      "commands": ["validate", "fit"],
+      "required_capabilities": ["participant_stage_posterior"],
+      "required_for_mvp_fit": false,
+      "result_members": ["training_row_indexes", "training_stage_posterior"]
+    },
+    {
+      "output_id": "training_hard_stages",
+      "commands": ["validate", "fit"],
+      "required_capabilities": ["hard_stages"],
+      "required_for_mvp_fit": false,
+      "result_members": ["training_row_indexes", "training_map_stage", "training_map_tie_mask"]
+    },
+    {
+      "output_id": "training_expected_stage",
+      "commands": ["validate", "fit"],
+      "required_capabilities": ["participant_stage_posterior"],
+      "required_for_mvp_fit": false,
+      "result_members": ["training_row_indexes", "training_expected_stage"]
+    },
+    {
+      "output_id": "evaluation_stage_posterior",
+      "commands": ["validate", "fit"],
+      "required_capabilities": ["participant_stage_posterior", "fixed_evaluation_cohort_staging"],
+      "required_for_mvp_fit": false,
+      "capability_absence_behavior": "FIXED_COHORT_STAGE_COMPONENT_NOT_APPLICABLE",
+      "result_members": ["evaluation_row_indexes", "evaluation_stage_posterior"]
+    },
+    {
+      "output_id": "evaluation_hard_stages",
+      "commands": ["validate", "fit"],
+      "required_capabilities": ["hard_stages", "fixed_evaluation_cohort_staging"],
+      "required_for_mvp_fit": false,
+      "capability_absence_behavior": "FIXED_COHORT_STAGE_COMPONENT_NOT_APPLICABLE",
+      "result_members": ["evaluation_row_indexes", "evaluation_map_stage", "evaluation_map_tie_mask"]
+    },
+    {
+      "output_id": "evaluation_expected_stage",
+      "commands": ["validate", "fit"],
+      "required_capabilities": ["participant_stage_posterior", "fixed_evaluation_cohort_staging"],
+      "required_for_mvp_fit": false,
+      "capability_absence_behavior": "FIXED_COHORT_STAGE_COMPONENT_NOT_APPLICABLE",
+      "result_members": ["evaluation_row_indexes", "evaluation_expected_stage"]
+    },
+    {
+      "output_id": "portable_fitted_model_artifact",
+      "commands": ["validate", "fit"],
+      "required_capabilities": ["portable_fitted_model_artifact"],
+      "required_for_mvp_fit": false,
+      "result_members": ["backend_artifacts"]
+    },
+    {
+      "output_id": "stage_posterior",
+      "commands": ["stage"],
+      "required_capabilities": ["participant_stage_posterior", "portable_fitted_model_artifact"],
+      "required_for_mvp_fit": false,
+      "result_members": ["stage_row_indexes", "stage_posterior"]
+    },
+    {
+      "output_id": "hard_stages",
+      "commands": ["stage"],
+      "required_capabilities": ["hard_stages", "portable_fitted_model_artifact"],
+      "required_for_mvp_fit": false,
+      "result_members": ["stage_row_indexes", "stage_map_stage", "stage_map_tie_mask"]
+    },
+    {
+      "output_id": "expected_stage",
+      "commands": ["stage"],
+      "required_capabilities": ["participant_stage_posterior", "portable_fitted_model_artifact"],
+      "required_for_mvp_fit": false,
+      "result_members": ["stage_row_indexes", "stage_expected_stage"]
+    }
+  ],
+  "self_test_checks": [
+    { "check_id": "schema-roundtrip", "required": true },
+    { "check_id": "identity-stability", "required": true },
+    { "check_id": "seed-repeatability", "required": true },
+    { "check_id": "array-invariants", "required": true },
+    { "check_id": "offline-no-network", "required": true },
+    { "check_id": "side-effect-boundary", "required": true }
+  ],
+  "participant_token": {
+    "method_id": "hmac-sha256-typed-private-id/1",
+    "key_generation_method": "os-csprng/1",
+    "required_key_bytes": 32,
+    "key_byte_length_field": "ParticipantTokenParameters.key_byte_length",
+    "message_domain": "ebm-audit/participant-token/1",
+    "message_framing": "ASCII(domain) || NUL || ASCII(type_tag) || NUL || uint64be(byte_length(value_bytes)) || value_bytes",
+    "type_tags": {
+      "string": "string",
+      "integer": "integer"
+    },
+    "string_value_bytes": "exact UTF-8 source string bytes without trimming, case folding, or Unicode normalization",
+    "integer_value_bytes": "canonical ASCII decimal: 0 or optional minus followed by nonzero digit and digits; no plus or leading zero",
+    "token_encoding": "hmac-sha256:<64-lowercase-hex>"
+  },
+  "runtime_invariant_registry": [
+    { "rule_id": "source-set-paths-already-nfc/1", "owner_schema_ref": "source-set-manifest.schema.json#/$defs/SourceSetManifest", "enforcement_phase": "source-set-enumeration-before-sort-or-hash", "failure_status": "FREEZE_FAILED", "required": true },
+    {
+      "rule_id": "source-set-order-and-uniqueness-exact/1",
+      "owner_schema_ref": "source-set-manifest.schema.json#/$defs/SourceSetManifestCore",
+      "enforcement_phase": "source-set-enumeration-before-hash",
+      "failure_status": "FREEZE_FAILED",
+      "algorithm": "Encode every declared_roots value and entry.path as exact UTF-8 after NFC rejection; require each array to equal its ascending bytewise sort; reject duplicate byte strings and any pair whose NFC forms collide.",
+      "required": true
+    },
+    {
+      "rule_id": "source-set-root-coverage-exact/1",
+      "owner_schema_refs": ["source-set-manifest.schema.json#/$defs/SourceSetManifest", "source-set-manifest.schema.json#/$defs/SourceSetDigestPreimage"],
+      "enforcement_phase": "source-set-enumeration-before-hash",
+      "failure_status": "FREEZE_FAILED",
+      "pre_freeze_failure_status": "PRE_FREEZE_BLOCKED",
+      "algorithm": "Resolve each schema-closed declared root against the committed candidate without following symlinks; require that root to exist with its declared file-or-directory role; enumerate all and only regular files or Git symlink blobs under it; require every entry path to match exactly one root and every root contribution count to be at least one. The src/ebm_audit/evaluator directory root therefore requires at least one src/ebm_audit/evaluator/ entry.",
+      "required": true
+    },
+    {
+      "rule_id": "source-set-entry-byte-identity-exact/1",
+      "owner_schema_ref": "source-set-manifest.schema.json#/$defs/SourceSetManifestCore",
+      "enforcement_phase": "source-set-enumeration-before-hash",
+      "failure_status": "FREEZE_FAILED",
+      "algorithm": "For every entry, require kind and git_mode to equal the committed tree entry; hash exact regular-file blob bytes for kind=file and exact Git link-target blob bytes without dereference for kind=symlink; require byte_length and prefixed SHA-256 to equal the observation.",
+      "required": true
+    },
+    { "rule_id": "candidate-tree-paths-already-nfc/1", "owner_schema_ref": "source-set-manifest.schema.json#/$defs/CandidateTreeManifest", "enforcement_phase": "candidate-tree-enumeration-before-sort-or-hash", "failure_status": "FREEZE_FAILED", "required": true },
+    {
+      "rule_id": "candidate-tree-order-and-uniqueness-exact/1",
+      "owner_schema_ref": "source-set-manifest.schema.json#/$defs/CandidateTreeManifest",
+      "enforcement_phase": "candidate-tree-enumeration-before-hash",
+      "failure_status": "FREEZE_FAILED",
+      "algorithm": "Encode every entry.path as exact UTF-8 after NFC rejection; require entries to equal ascending bytewise path sort; reject duplicate byte strings and any pair whose NFC forms collide.",
+      "required": true
+    },
+    {
+      "rule_id": "candidate-tree-entry-byte-identity-exact/1",
+      "owner_schema_ref": "source-set-manifest.schema.json#/$defs/CandidateTreeManifest",
+      "enforcement_phase": "candidate-tree-enumeration-before-hash",
+      "failure_status": "FREEZE_FAILED",
+      "algorithm": "Enumerate the exact committed tree recursively without following symlinks; reject mode 160000 and every mode outside 100644, 100755, and 120000; require the manifest path/mode/kind set to equal the tree; recompute byte_length and SHA-256 from regular blob bytes or undereferenced symlink target bytes.",
+      "required": true
+    },
+    { "rule_id": "canonical-view-participant-axis-lengths-exact/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/CanonicalDatasetView", "enforcement_phase": "canonical-record-validation", "required": true },
+    { "rule_id": "canonical-view-event-axis-lengths-exact/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/CanonicalDatasetView", "enforcement_phase": "canonical-record-validation", "required": true },
+    { "rule_id": "canonical-view-array-catalog-shapes-exact/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/CanonicalDatasetView", "enforcement_phase": "canonical-record-validation", "required": true },
+    { "rule_id": "canonical-view-data-accounting-exact/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/CanonicalDatasetView", "enforcement_phase": "canonical-record-validation", "required": true },
+    { "rule_id": "scientific-data-participant-axis-lengths-exact/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/ScientificDataDigestPreimage", "enforcement_phase": "canonical-digest-validation", "required": true },
+    { "rule_id": "scientific-data-event-axis-lengths-exact/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/ScientificDataDigestPreimage", "enforcement_phase": "canonical-digest-validation", "required": true },
+    { "rule_id": "scientific-data-cell-count-product-exact/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/ScientificDataDigestPreimage", "enforcement_phase": "canonical-digest-validation", "required": true },
+    { "rule_id": "scientific-data-array-catalog-shapes-exact/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/ScientificDataDigestPreimage", "enforcement_phase": "canonical-digest-validation", "required": true },
+    { "rule_id": "reference-row-order-count-matches-bindings/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/ReferenceRowOrderDigestPreimage", "enforcement_phase": "canonical-digest-validation", "required": true },
+    { "rule_id": "reference-row-order-indexes-contiguous/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/ReferenceRowOrderDigestPreimage", "enforcement_phase": "canonical-digest-validation", "required": true },
+    { "rule_id": "reference-row-order-bindings-unique/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/ReferenceRowOrderDigestPreimage", "enforcement_phase": "canonical-digest-validation", "required": true },
+    { "rule_id": "reference-row-order-alignment-method-matches-row-type/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/ReferenceRowOrderDigestPreimage", "enforcement_phase": "canonical-digest-validation", "required": true },
+    { "rule_id": "influence-common-event-count-exact/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/InfluenceRecord", "enforcement_phase": "canonical-record-validation", "required": true },
+    { "rule_id": "influence-pairwise-denominator-exact/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/InfluenceRecord", "enforcement_phase": "canonical-record-validation", "required": true },
+    { "rule_id": "influence-flip-count-matches-pairs/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/InfluenceRecord", "enforcement_phase": "canonical-record-validation", "required": true },
+    { "rule_id": "influence-flip-count-within-denominator/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/InfluenceRecord", "enforcement_phase": "canonical-record-validation", "required": true },
+    { "rule_id": "influence-flip-fraction-exact/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/InfluenceRecord", "enforcement_phase": "canonical-record-validation", "required": true },
+    { "rule_id": "influence-fewer-than-two-common-events-empty-pairs/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/InfluenceRecord", "enforcement_phase": "canonical-record-validation", "required": true },
+    { "rule_id": "audit-case-operation-bindings-exact/3", "owner_schema_ref": "worker-protocol.schema.json#/$defs/AuditCaseConfigurationDigestPreimage", "enforcement_phase": "audit-case-configuration-validation", "algorithm": "Require operation_bindings in ascending operation_matrix_id UTF-8 order with unique matrix IDs. Every row repeats the outer case_id and resolves its analysis_spec_ordinal and analysis_spec_id to the exact unique ordered_analysis_specs entry; every ordered spec is referenced at least once. Multiple matrix rows may intentionally reference one spec only as configuration/digest representation. Execution remains blocked until grouped_operation_execution_contract is active.", "required": true },
+    { "rule_id": "audit-case-analysis-spec-order-exact/3", "owner_schema_ref": "worker-protocol.schema.json#/$defs/AuditCaseConfigurationDigestPreimage", "enforcement_phase": "audit-case-configuration-validation", "algorithm": "Hash each complete execution-only AnalysisSpec under ebm-audit/analysis-spec/3; require unique IDs and ordered_analysis_specs in ascending analysis_spec_id UTF-8 order.", "required": true },
+    { "rule_id": "audit-case-truth-free/1", "owner_schema_ref": "worker-protocol.schema.json#/$defs/AuditCaseConfigurationDigestPreimage", "enforcement_phase": "audit-case-configuration-validation", "required": true },
+    {
+      "rule_id": "settings-schema-required-subset-of-properties/1",
+      "owner_schema_ref": "worker-protocol.schema.json#/$defs/SettingsSchemaValidationRule",
+      "enforcement_phase": "describe-validation",
+      "failure_status": "PROTOCOL_ERROR",
+      "failure_code": "PROTOCOL.SETTINGS_SCHEMA_REQUIRED_PROPERTY_UNDECLARED",
+      "required": true
+    },
+    { "rule_id": "supported-algorithm-settings-rule-set-exact/1", "owner_schema_ref": "worker-protocol.schema.json#/$defs/SupportedAlgorithm", "enforcement_phase": "describe-validation", "required": true },
+    { "rule_id": "describe-settings-schemas-validated/1", "owner_schema_ref": "worker-protocol.schema.json#/$defs/DescribeResult", "enforcement_phase": "describe-validation", "algorithm": "Schema-validate the complete DescribeResult; require unique algorithm IDs and the exact settings-validation rule set; recursively enforce required as a subset of properties; recompute every capabilities_digest, settings_schema_digest, and stage_semantics_digest from its complete inline owner; and recompute requested_output_registry_digest and self_test_check_registry_digest from the complete frozen ordered registry rows. Reject a well-formed digest copied consistently without its source-owner derivation.", "required": true },
+    { "rule_id": "validate-command-payload-digest-recomputed/1", "owner_schema_ref": "worker-protocol.schema.json#/$defs/ValidateSuccessCommandEvidenceProjection", "enforcement_phase": "evaluator-response-binding", "algorithm": "Apply runtime_invariant_execution_contract.atomic_identity_rule to the exact request, DescribeResult, and response owner; reconstruct the complete WorkerValidationPayloadDigestPreimage from the successful response; require it to equal the supplied complete preimage and the request configuration/settings/requested-output identities; then recompute worker_validation_payload_digest under its fixed domain.", "required": true },
+    { "rule_id": "validate-command-subject-digest-recomputed/1", "owner_schema_ref": "worker-protocol.schema.json#/$defs/ValidateSuccessCommandEvidenceProjection", "enforcement_phase": "evaluator-response-binding", "algorithm": "Apply runtime_invariant_execution_contract.atomic_identity_rule, independently reconstruct the complete ActualValidateWorkerSubjectProjection from the exact request and successful response, and recompute actual_validate_worker_subject_digest under its fixed domain.", "required": true },
+    { "rule_id": "fit-command-payload-digest-recomputed/1", "owner_schema_ref": "worker-protocol.schema.json#/$defs/FitSuccessCommandEvidenceProjection", "enforcement_phase": "evaluator-response-binding", "algorithm": "Apply runtime_invariant_execution_contract.atomic_identity_rule to the exact request, DescribeResult, and response owner. Validate the complete successful fit response and exact WorkerFitPayloadDigestPreimage, reconstruct the response-owned preimage, and recompute its RFC 8785 digest. Derive each fixed-cohort NOT_APPLICABLE_BY_CAPABILITY output from component_applicability and reject every corresponding evaluation_row_indexes, evaluation_stage_posterior, evaluation_map_stage, evaluation_map_tie_mask, or evaluation_expected_stage array before accepting the payload, including after all payload hashes are recomputed. For every training or evaluation stage array require exactly one StageModelReference; recompute its digest with the registered domain; require its event set, selection method, full permutation, stage semantics, native int32 order binding, matched fitted-distribution bindings, and final full float64 stage-prior binding to resolve exactly to unique backend-private array-catalog entries; require the recorded one-step final-pi fixed-point L1 residual to be finite, nonnegative, and strictly less than the exact tolerance in StageSemanticsDefinition; and bind every stage field provenance to that same reference. Require the reference to be null when no stage output exists. The headline central order may differ from the stage reference order and equality must not be inferred.", "required": true },
+    { "rule_id": "fit-command-subject-digest-recomputed/1", "owner_schema_ref": "worker-protocol.schema.json#/$defs/FitSuccessCommandEvidenceProjection", "enforcement_phase": "evaluator-response-binding", "algorithm": "Apply runtime_invariant_execution_contract.atomic_identity_rule, independently reconstruct the complete ActualFitWorkerSubjectProjection from the exact request and successful response, and recompute actual_fit_worker_subject_digest under its fixed domain.", "required": true },
+    { "rule_id": "negative-command-payload-absent/1", "owner_schema_ref": "worker-protocol.schema.json#/$defs/NegativeCommandEvidenceProjection", "enforcement_phase": "evaluator-response-binding", "required": true },
+    { "rule_id": "negative-command-payload-version-command-compatible/1", "owner_schema_ref": "worker-protocol.schema.json#/$defs/NegativeCommandEvidenceProjection", "enforcement_phase": "evaluator-response-binding", "required": true },
+    { "rule_id": "negative-command-status-matches-error-category/1", "owner_schema_ref": "worker-protocol.schema.json#/$defs/NegativeCommandEvidenceProjection", "enforcement_phase": "evaluator-response-binding", "required": true },
+    {
+      "rule_id": "negative-command-subject-digest-recomputed/1",
+      "owner_schema_ref": "worker-protocol.schema.json#/$defs/NegativeCommandEvidenceProjection",
+      "enforcement_phase": "evaluator-response-binding",
+      "failure_status": "PROTOCOL_ERROR",
+      "algorithm": "First apply runtime_invariant_execution_contract.atomic_identity_rule to the exact request, authenticated DescribeResult, and negative response owner. For validate or fit, reconstruct the command-specific v2 ActualValidateWorkerSubjectProjection or ActualFitWorkerSubjectProjection from the validated request and response; require exact object equality; recompute the corresponding domain-separated /2 digest; and reject every missing, extra, mismatched, or wrong-digest identity component as PROTOCOL_ERROR. Stage framing is reserved and must be rejected before evaluator response binding.",
+      "required": true
+    },
+    { "rule_id": "command-evidence-response-binding-exact/1", "owner_schema_refs": ["worker-protocol.schema.json#/$defs/ValidateSuccessCommandEvidenceProjection", "worker-protocol.schema.json#/$defs/FitSuccessCommandEvidenceProjection", "worker-protocol.schema.json#/$defs/NegativeCommandEvidenceProjection"], "enforcement_phase": "evaluator-response-binding", "algorithm": "After the enclosing acceptance path has passed runtime_invariant_execution_contract.atomic_identity_rule, require every command-evidence request, scientific-request, response, payload-kind/payload, requested-output, execution-input projection, and backend identity to equal the complete selected evaluator response binding. This equality rule does not independently establish any atomic source owner and cannot substitute for the preceding atomic-owner validation.", "required": true },
+    { "rule_id": "null-calibration-identity-complete/v1", "owner_schema_ref": "scientific-invariant.schema.json#/$defs/NullCalibrationIdentity", "enforcement_phase": "null-calibration-identity-binding", "required": true },
+    { "rule_id": "null-calibration-identity-exact-match-across-opportunity-and-nested-fits/v1", "owner_schema_refs": ["scientific-invariant.schema.json#/$defs/NullCalibrationIdentity", "scientific-invariant.schema.json#/$defs/RefitStepsEvidence", "scientific-invariant.schema.json#/$defs/CandidateStrongEvidenceDecision", "scientific-invariant.schema.json#/$defs/FalsePositiveOpportunityManifest"], "enforcement_phase": "candidate-evidence-binding", "algorithm": "Validate the complete candidate NullCalibrationIdentity and recompute null_calibration_identity_digest under ebm-audit/null-calibration-identity/1. For observed and every ordered null fit, validate the complete persisted RefitStepsEvidence, project its exact RefitStepsDigestPreimage by setting digest_state=DIGEST_PREIMAGE and refit_steps_digest=null, recompute under ebm-audit/refit-steps/1, and require the persisted digest to match. Require every refit preimage null_calibration_identity_digest and benchmark subject to equal the exact candidate identity. Missing, malformed, noncanonical, wrong-digest, or cross-identity evidence fails closed.", "required": true },
+    { "rule_id": "candidate-test-empirical-p-equals-one-plus-exceedances-over-60/v1", "owner_schema_ref": "scientific-invariant.schema.json#/$defs/CandidateStrongEvidenceDecision", "enforcement_phase": "candidate-decision-evaluation", "required": true },
+    { "rule_id": "candidate-test-null-effect-equals-observed-minus-null-median/v1", "owner_schema_ref": "scientific-invariant.schema.json#/$defs/CandidateStrongEvidenceDecision", "enforcement_phase": "candidate-decision-evaluation", "required": true },
+    { "rule_id": "candidate-assessability-requires-observed-and-all-177-null-fits-success-convergence-pass-finite-exact-identity-and-equal-refit-steps/v1", "owner_schema_ref": "scientific-invariant.schema.json#/$defs/CandidateStrongEvidenceDecision", "enforcement_phase": "candidate-decision-evaluation", "algorithm": "Require the observed fit and exact ordered 177 null fits to retain complete role-specific operation evidence. Every operation owner binds the same opportunity, exact source input, transformation, null family or explicit observed null, replicate or explicit observed null, fit seed, and complete_refit=true. Require OBSERVED for the observed fit and NULL plus exact equality to the enclosing family/replicate slot for each null fit; reject omission, relabeling, malformed values, and cross-opportunity substitution. Compare only recomputed refit_steps_digest values for refit-step equality; operation-role facts are deliberately excluded because observed and null operations differ. Preserve the existing success, convergence, finite-statistic, hard-failure, family, replicate, and decision rules unchanged.", "required": true },
+    { "rule_id": "candidate-state-is-not-assessable-iff-any-precondition-fails-else-strong-iff-all-six-tests-have-positive-effect-and-p-at-most-0.05/v1", "owner_schema_ref": "scientific-invariant.schema.json#/$defs/CandidateStrongEvidenceDecision", "enforcement_phase": "candidate-decision-evaluation", "required": true },
+    { "rule_id": "candidate-decision-forbidden-input-independence/v1", "owner_schema_ref": "scientific-invariant.schema.json#/$defs/CandidateStrongEvidenceDecision", "enforcement_phase": "candidate-decision-evaluation", "required": true },
+    { "rule_id": "fpr-opportunities-exact-indexes-0-through-59-and-unique-case-ids/v1", "owner_schema_ref": "scientific-invariant.schema.json#/$defs/FalsePositiveOpportunityManifest", "enforcement_phase": "false-positive-opportunity-sealing", "required": true },
+    { "rule_id": "fpr-opportunities-all-pure-no-signal-truth-eligible-sealed-and-one-identity/v1", "owner_schema_ref": "scientific-invariant.schema.json#/$defs/FalsePositiveOpportunityManifest", "enforcement_phase": "false-positive-opportunity-sealing", "required": true },
+    { "rule_id": "fpr-candidate-digests-and-states-match-sealed-candidate-decisions/v1", "owner_schema_ref": "scientific-invariant.schema.json#/$defs/FalsePositiveOpportunityManifest", "enforcement_phase": "false-positive-opportunity-sealing", "required": true },
+    { "rule_id": "fpr-counts-derived-from-exact-opportunity-manifest/v1", "owner_schema_ref": "scientific-invariant.schema.json#/$defs/FalsePositiveEvaluation", "enforcement_phase": "false-positive-evaluation", "required": true },
+    { "rule_id": "fpr-point-rate-equals-false-positive-count-divided-by-60/v1", "owner_schema_ref": "scientific-invariant.schema.json#/$defs/FalsePositiveEvaluation", "enforcement_phase": "false-positive-evaluation", "required": true },
+    { "rule_id": "fpr-clopper-pearson-upper-bound-equals-beta-inverse-0.95-x-plus-1-60-minus-x/v1", "owner_schema_ref": "scientific-invariant.schema.json#/$defs/FalsePositiveEvaluation", "enforcement_phase": "false-positive-evaluation", "required": true },
+    { "rule_id": "fpr-pass-iff-valid-60-not-assessable-0-point-rate-at-most-0.05-and-upper-bound-at-most-0.05/v1", "owner_schema_ref": "scientific-invariant.schema.json#/$defs/FalsePositiveEvaluation", "enforcement_phase": "false-positive-evaluation", "required": true },
+    { "rule_id": "requested-output-registry-order-unique/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/RequestedOutputRegistryDigestPreimage", "enforcement_phase": "registry-digest-validation", "algorithm": "Require entries to equal protocol-registry requested_outputs order exactly and output_id values to be unique.", "required": true },
+    { "rule_id": "requested-output-required-capabilities-conjunctive/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/RequestedOutputRegistryDigestPreimage", "enforcement_phase": "requested-output-validation", "algorithm": "Resolve every requested row to the exact frozen registry entry and evaluate its required_capabilities conjunction. Missing fit or non-stage capabilities fail the request. The sole component-scoped exception is missing fixed_evaluation_cohort_staging on the three registered evaluation-stage outputs: derive the exact ordered {output_id,status:NOT_APPLICABLE_BY_CAPABILITY,value:null,reason_code:STAGING.FIXED_COHORT_UNAVAILABLE} records while candidate_compilation_outcome remains VALID and fit_execution_permitted remains true. The complete fit-payload and canonical-scientific-payload rules consume those component records and forbid every registered result member for each unavailable output. Reject missing, extra, unrelated, stale-reason, non-stage, whole-request, fallback-array, or fully rehashed coexistence substitutions.", "required": true },
+    { "rule_id": "self-test-check-registry-order-unique/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/SelfTestCheckRegistryDigestPreimage", "enforcement_phase": "registry-digest-validation", "algorithm": "Require entries to equal protocol-registry self_test_checks order exactly and check_id values to be unique.", "required": true },
+    { "rule_id": "freeze-predicate-evidence-registry-exact/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/BenchmarkFreezeReceiptBody", "enforcement_phase": "benchmark-freeze-receipt-validation", "failure_status": "FREEZE_FAILED", "algorithm": "Require exact ordered equality with all 28 governing predicate rows and one typed owner per row. Recompute each owner digest, but never treat a self-hash as proof. Decisive held-out execution freeze additionally requires the substantive evaluator to resolve every complete owner from exact current bytes or versioned state, execute the registered verifier where applicable, and rederive the outcome under this exact registry. The current contract slice has no such resolver: BenchmarkFreezeReceipt/3 is BLOCKED, frozen=false, and DRAFT. ProfileCharacterizationPlanReceipt/3 fixes pre-execution intent only and the retained BlockedProfileDiagnostic/2 records only the earlier pre-run state. Neither is benchmark-freeze evidence or overrides the later retained 54-fit outcome. The two profile predicates remain unavailable until a future issuer-owned opaque ProfileCharacterizationEvidenceReceipt/3 exists under ebm-audit/profile-characterization-evidence-receipt/3; no caller mapping validator is defined. One-row, missing, extra, reordered, digest-only, plan-as-evidence, diagnostic-as-evidence, caller-constructed, generic-transcript, threshold-label, fully rehashed counterfeit, or asserted-PASS evidence fails closed.", "required": true },
+    { "rule_id": "rule-outcomes-order-unique/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/RuleOutcomesDigestPreimage", "enforcement_phase": "evaluation-receipt-validation", "algorithm": "Require RuleOutcome objects to equal ascending UTF-8 rule_id order and reject duplicate rule_id values.", "required": true },
+    { "rule_id": "backend-gate-results-order-unique/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/BackendGateResultsDigestPreimage", "enforcement_phase": "evaluation-receipt-validation", "algorithm": "Require BackendGateResult objects to equal ascending UTF-8 gate_id order and reject duplicate gate_id values.", "required": true },
+    { "rule_id": "removal-indexes-ascending-within-source/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/RemovalOperationManifest", "enforcement_phase": "benchmark-operation-manifest-validation", "algorithm": "Require ordered_removed_row_indexes to equal its strictly ascending numeric sort and every index to be less than source_participant_count.", "required": true },
+    { "rule_id": "removal-count-accounting-exact/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/RemovalOperationManifest", "enforcement_phase": "benchmark-operation-manifest-validation", "algorithm": "Require retained_participant_count plus length(ordered_removed_row_indexes) to equal source_participant_count exactly.", "required": true },
+    { "rule_id": "evaluator-response-files-order-complete/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/EvaluatorWorkerResponseBinding", "enforcement_phase": "evaluator-response-binding", "failure_status": "PROTOCOL_ERROR", "algorithm": "Enumerate the physical response regular-file set under the assigned response root without following symlinks; require files to contain every file exactly once in ascending UTF-8 relative_path order and no missing, duplicate, or extra entry.", "required": true },
+    { "rule_id": "evaluator-response-payload-digest-exact/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/EvaluatorWorkerResponseBinding", "enforcement_phase": "evaluator-response-binding", "failure_status": "PROTOCOL_ERROR", "algorithm": "Apply runtime_invariant_execution_contract.atomic_identity_rule to the exact request, DescribeResult, and evaluator response binding. Select the registered payload domain and closed preimage from payload_digest_kind; schema-validate the complete preimage, bind its algorithm, settings, requested outputs, executable, source, environment, capabilities, and core identities to the complete response owner where applicable, and independently recompute payload_digest. Require payload_digest_kind=NONE and payload_digest=null exactly for a null negative payload.", "required": true },
+    { "rule_id": "evaluator-response-binding-distinct-from-wire-digest/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/EvaluatorWorkerResponseBinding", "enforcement_phase": "evaluator-response-binding", "failure_status": "PROTOCOL_ERROR", "algorithm": "Apply runtime_invariant_execution_contract.atomic_identity_rule to the exact request, DescribeResult, and evaluator response binding. Recompute response_metadata_digest from the complete schema-valid wire response preimage, derive the entire evaluator binding projection from that same wire response including payload and sorted file identities, and recompute the command-specific binding digest under its distinct registered domain; require exact projection equality and reject aliasing, substitution, recursion, or an independently valid but detached binding.", "required": true },
+    { "rule_id": "sealed-case-raw-canonical-input-digests-independent/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/SealedCaseRecord", "enforcement_phase": "sealed-case-validation", "failure_status": "EVALUATION_FAILED", "algorithm": "Recompute generated_scientific_data_sha256 from the complete raw SyntheticScientificData preimage and input_digest from the independently constructed canonical ScientificDataDigestPreimage under their distinct registered domains; require both exact values and reject copying or domain substitution.", "required": true },
+    { "rule_id": "sealed-case-generator-audit-configuration-digests-independent/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/SealedCaseRecord", "enforcement_phase": "sealed-case-validation", "failure_status": "EVALUATION_FAILED", "algorithm": "Recompute resolved_generator_configuration_sha256 from the raw ResolvedGeneratorConfiguration preimage and case_configuration_sha256 from the canonical AuditCaseConfigurationDigestPreimage under their distinct registered domains; require both exact values and reject copying or domain substitution.", "required": true },
+    { "rule_id": "sealed-case-comparator-plan-applicability-exact/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/SealedCaseRecord", "enforcement_phase": "sealed-case-validation", "failure_status": "EVALUATION_FAILED", "algorithm": "Require comparator_id, derived_comparator_member_id, pair_index, shared_draw_seed, comparator pre/post configuration digests, and matched_comparator_plan_evidence_sha256 all null for a non-member and all non-null for a member; a non-member must carry no detached plan or member evidence. For a member, recompute the complete audit-case configuration identity, require exactly its one complete matched-comparator plan, require the member-evidence IDs to equal the plan's complete ordered_member_ids exactly, validate every complete member evidence object against that same plan, and derive exactly one member whose comparator/family/replicate/pair, pre/post resolved configuration, generated-data digest, and canonical input digest equal the sealed case. Require that member ID to equal the authenticated case's derived_comparator_member_id. Missing, extra, duplicate, reordered, alternate-plan, caller-selected, or case/member-disagreeing evidence fails.", "required": true },
+    { "rule_id": "sealed-case-manifest-order-unique/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/SealedCaseManifest", "enforcement_phase": "sealed-case-manifest-validation", "failure_status": "EVALUATION_FAILED", "algorithm": "Require cases to equal ascending tuple order by UTF-8 family_id, numeric variant_index, numeric replicate_index, then operation_matrix_ids; reject duplicate complete case coordinates.", "required": true },
+    { "rule_id": "sealed-case-manifest-header-binding-exact/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/SealedCaseManifest", "enforcement_phase": "sealed-case-manifest-validation", "failure_status": "EVALUATION_FAILED", "algorithm": "Consume the schema-valid SealedCaseManifest owner directly and require every row in its cases array to carry heldout_attempt_id and benchmark_subject_digest values byte-equal to that manifest's outer header.", "required": true },
+    { "rule_id": "validate-terminal-binding-digest-exact/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/ValidateTerminalSealedResult", "enforcement_phase": "sealed-result-validation", "failure_status": "EVALUATION_FAILED", "algorithm": "Schema-validate the complete sealed owner, exact WorkerRequest, DescribeResult, and validate-success or validate-negative evaluator binding selected from validate_command_evidence.status. Apply runtime_invariant_execution_contract.atomic_identity_rule; require every command-evidence response identity to equal that binding; recompute validate_evaluator_worker_response_binding_sha256 under the fixed domain; and require the sealed destination field and status branch to agree.", "required": true },
+    { "rule_id": "fit-terminal-binding-digest-exact/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/FitTerminalSealedResult", "enforcement_phase": "sealed-result-validation", "failure_status": "EVALUATION_FAILED", "algorithm": "Schema-validate the complete FIT_TERMINAL owner, exact WorkerRequest, DescribeResult, selected fit evaluator binding, private-root-authenticated SealedCaseManifest and SealedOperationPlanDigestPreimage, complete case-configuration/AnalysisSpec owner, and private-root-authenticated FrozenChainPlanDigestPreimage. Apply runtime_invariant_execution_contract.atomic_identity_rule; independently recompute and persist both sealed_operation_plan_sha256 and frozen_chain_plan_sha256; bind the plan headers to the terminal result; resolve the operation, sealed case, and AnalysisSpec exactly once; require request configuration, canonical data, event semantics, settings, outputs, and backend to equal those owners; require ordered unique chain rows with held-out attempt_ordinal=0; independently derive the ordinary or matched-comparator seeds, universe_id, chain_execution_id, and attempt_id; resolve the result to exactly one plan row; derive request_id from that attempt; and require the request's universe/chain/attempt/ordinal/chain ID/seed plus its recomputed command-specific scientific_request_digest to equal that authenticated plan row. Then require every command-evidence response identity to equal the selected binding and recompute fit_evaluator_worker_response_binding_sha256. Negative evidence status equals core_final_status; successful worker evidence is admitted only for CONVERGENCE_FAILED or CONVERGENCE_NOT_ASSESSABLE.", "required": true },
+    { "rule_id": "sealed-result-comparator-applicability-exact/1", "owner_schema_refs": ["evaluator-receipts.schema.json#/$defs/FitTerminalSealedResult", "evaluator-receipts.schema.json#/$defs/ScientificSuccessSealedResult"], "enforcement_phase": "sealed-result-validation", "failure_status": "EVALUATION_FAILED", "algorithm": "Resolve operation_instance_id against the exact deterministic case/analysis-spec operation plan and its sealed case. Before trusting the authenticated case's derived_comparator_member_id, require exactly one complete semantic comparator context per sealed comparator case, bind it to the exact case/configuration, validate its one plan and complete ordered member-evidence set, and independently derive the unique member whose configuration/data identities equal the case. The matched operation and result execution evidence must both name that derived member rather than a supplied plan row. Require comparator_applicability=MATCHED_COMPARATOR_CHAIN exactly for a matched-comparator operation and NOT_APPLICABLE otherwise; require matched_comparator_execution_binding_sha256 non-null in the former case and null in the latter, resolve the result seed to exactly one comparator chain, and verify that binding against the same case, plan, subject, backend, settings, and environment.", "required": true },
+    { "rule_id": "canonical-scientific-payload-digest-recomputed/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/ScientificSuccessSealedResult", "enforcement_phase": "sealed-result-validation", "failure_status": "EVALUATION_FAILED", "algorithm": "Schema-validate the complete ScientificSuccessSealedResult, CanonicalScientificPayload, BenchmarkSubjectIdentity, DescribeResult, HeldoutAttemptIdentityPreimage, sealed case manifest, complete case-configuration and comparator-semantic owners, typed sealed operation plan, FrozenChainPlanDigestPreimage v3, every successful fit-payload preimage, every complete fit request/wire-response/evaluator-binding owner, the fixed convergence-rule owner, and the exact local convergence arrays. Resolve the private attempt root outside caller context, recompute root_commitment from every frozen public owner, derive heldout_attempt_id, authenticate the complete sealed-case manifest, operation plan, and frozen chain plan under their distinct private-root HMAC domains, and require the typed operation array to equal exactly one deterministic entry per sealed case/analysis-spec ordinal. Exact-compare the authenticated Plan/3 schema version, plan digest, candidate ordinal, candidate_id, analysis_spec_id, complete UniverseIdentityPreimage/3, and ordered chain projection; require candidate_id equal analysis_spec_id; then derive universe_id, chain_execution_id, and attempt_id only under their /3 domains. Independently revalidate every comparator case's complete ordered member evidence before using its authenticated derived member. Resolve the selected algorithm exactly once in DescribeResult, recompute its capabilities, settings-schema, and stage-semantics identities, validate the AnalysisSpec settings against that exact schema, recompute settings_digest and the complete-registry requested_outputs_digest, and bind those owners to the benchmark subject. Require the chain plan headers to equal the attempt, subject, operation, analysis specification, and universe; require its row count to equal AnalysisSpec.mcmc.chain_count; require every held-out attempt_ordinal to equal 0; and independently derive each ordinary or matched-comparator seed from the private root before accepting the identity graph. Derive each request UUID from its attempt, apply runtime_invariant_execution_contract.atomic_identity_rule, require every recomputed command-specific scientific_request_digest to equal its authenticated frozen-chain row, then independently recompute request metadata, wire response, response binding, actual worker subject, command evidence, successful payload, canonical chain projection, and sealed top-level owner. Revalidate each per-chain StageModelReference and require its exact object and digest to survive unchanged from fit payload to canonical projection; both training and fixed-evaluation posteriors share that one reference, while no equality with the retained-state headline central order is required. Reconstruct canonical little-endian convergence source bytes, bind their catalog entries to the successful payloads, derive transitions, unique states, repeated runs, cross-chain distances, and the fixed classification. For each fit owner and reconstructed chain, derive the exact fixed-cohort applicability set from requested outputs and observed capabilities, then reject any missing applicability row or evaluation-stage array whose component is NOT_APPLICABLE_BY_CAPABILITY, even when every downstream object is rehashed. Reject missing, extra, reordered, duplicated, substituted, reused, detached, caller-classified, caller-rooted, retried, or fully rehashed arbitrary identities/owners/operations/chains/bindings, then recompute canonical_scientific_payload_sha256.", "required": true },
+    { "rule_id": "sealed-results-order-unique/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/SealedResultsIndex", "enforcement_phase": "sealed-results-index-validation", "failure_status": "EVALUATION_FAILED", "algorithm": "Require records in branch order COMPILE_TIME_NON_SUCCESS, VALIDATE_TERMINAL, FIT_TERMINAL, SCIENTIFIC_SUCCESS and then ascending complete branch sort identity. Require exactly one natural identity per terminal universe across COMPILE_TIME_NON_SUCCESS, FIT_TERMINAL, and SCIENTIFIC_SUCCESS, normalized as (operation_instance_id, analysis_spec_id, universe_id), plus at most one distinct attempt-level VALIDATE_TERMINAL identity. Reject cross-branch duplicates even when the selected chain fields differ. FIT_TERMINAL admits no SUCCESS or CONVERGENCE_WARN final status, so scientific success evidence exists only in SCIENTIFIC_SUCCESS.", "required": true },
+    { "rule_id": "sealed-results-header-binding-exact/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/SealedResultsIndex", "enforcement_phase": "sealed-results-index-validation", "failure_status": "EVALUATION_FAILED", "algorithm": "Require the active execution-identity graph, consume the schema-valid SealedResultsIndex owner directly, and require every row in its results array to carry heldout_attempt_id and benchmark_subject_digest values byte-equal to that index's outer header. Direct dispatch executes this check under the same active graph guard.", "required": true },
+    { "rule_id": "score-aggregate-outcome-derived/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/SubstantiveScoreContext", "enforcement_phase": "score-receipt-validation", "failure_status": "EVALUATION_FAILED", "algorithm": "Require the source-controlled execution-identity graph/3 before reading any score-context field, selecting an owner, or parsing bundle provenance, then invoke validate-substantive-score/1 over the complete closed context. Resolve the evaluator-selected disjoint source repository, authenticate the exact upstream-only ScoreEvidenceBundle, validate its exact file and directory tree, and derive every registered source state. Require the FrozenChainPlanIndex/2 attempt-level authenticated AnalysisPlan/3 and PreparationReceipt/2 owner pair to pass the same digest recomputation and HeldoutAttemptIdentityPreimage/4 under ebm-audit/heldout-attempt/3 plus SealedOperationPlan/2 anchor validation before deriving the chain-required subset, including when ordered_plans is empty because every universe is COMPILE_TIME_NON_SUCCESS. Require every indexed FrozenChainPlan/3 to pass the same authenticated Plan/3-bound Universe/3 identity verifier used by terminal and scientific-result validation. Require the exact 23-family held-out graph, baseline reproduction, complete FPR bundle, RuleOutcome array, BackendGateResult array, downstream EvaluationReceipt, ScoreReceipt, and private ScoreValidationReceipt to share one attempt, subject, candidate, contract, evaluator, registry, root, and source identities. NOT_ASSESSABLE fails closed, hard gates never WARN, FAIL dominates WARN dominates PASS, and UNIMPLEMENTED validators emit no validated product branch.", "required": true },
+    { "rule_id": "score-fpr-opportunity-counts-exact/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/SubstantiveScoreContext", "enforcement_phase": "score-receipt-validation", "failure_status": "EVALUATION_FAILED", "algorithm": "Require the active source-controlled execution-identity graph/3, then invoke the same validate-substantive-score/1 enforcement point over the complete closed context. From the exact FPR object in the authenticated source root, revalidate the global sealed-universe subset, exactly 60 unique opportunity_id values and indices, all 177 nested null fits per opportunity, exact three-state partition, and require the ScoreReceipt counters to equal the freshly derived counts. A detached {bundle,score_receipt} projection is unit-test material only and is not a registered product path.", "required": true },
+    { "rule_id": "score-fpr-evaluation-binding-exact/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/SubstantiveScoreContext", "enforcement_phase": "score-receipt-validation", "failure_status": "EVALUATION_FAILED", "algorithm": "Require the active source-controlled execution-identity graph/3, then invoke the same validate-substantive-score/1 enforcement point over the complete closed context. Recompute the exact FalsePositiveOpportunityManifest and FalsePositiveEvaluation from the one authenticated source-root object, require numerator, denominator, point rate, Clopper-Pearson upper bound, gate state, subject, null identity, evaluation receipt, and score digest bindings, and reject detached or caller-selected FPR evidence.", "required": true },
+    { "rule_id": "backend-acceptance-cas-receipt-atomic/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/BackendAcceptanceContext", "enforcement_phase": "backend-acceptance-transaction", "failure_status": "ACCEPTANCE_FAILED", "algorithm": "Require the active source-controlled execution-identity graph/3 before reading any nested score-context field, selecting an owner, or parsing bundle provenance, then reinvoke validate-substantive-score/1 over the complete nested SubstantiveScoreContext and the same evaluator-selected source repository. Bind the authenticated ScoreValidationReceipt and BackendAcceptanceReceipt to the freshly derived root, evaluation, score, gate digest, aggregate branch, and target: PASS only to ACCEPTED; WARN or FAIL only to REJECTED; malformed, missing, substituted, incomplete, or UNIMPLEMENTED evidence to no transition. Then compare-and-set from ACCEPTANCE_CANDIDATE into one durable transaction using an owner-only same-directory temporary file, fsync, atomic no-overwrite hard link, directory fsync, and exact readback. Reject overlap, replay, partial state, wrong target, branch swaps, root mutation, and caller-selected repository paths.", "required": true },
+    { "rule_id": "comparator-member-configuration-identities-present/1", "owner_schema_ref": "evaluator-receipts.schema.json#/$defs/SealedCaseRecord", "enforcement_phase": "sealed-case-validation", "required": true },
+    { "rule_id": "comparator-sealed-case-binding-exact/1", "owner_schema_refs": ["evaluator-receipts.schema.json#/$defs/SealedCaseRecord", "comparator-transaction.schema.json#/$defs/MatchedComparatorEvidence"], "enforcement_phase": "comparator-evidence-binding", "required": true },
+    { "rule_id": "comparator-shared-component-equality-executable/1", "owner_schema_ref": "comparator-transaction.schema.json#/$defs/MatchedComparatorEvidence", "enforcement_phase": "comparator-evidence-binding", "required": true },
+    { "rule_id": "comparator-chain-binding-equality-executable/1", "owner_schema_ref": "comparator-transaction.schema.json#/$defs/MatchedComparatorEvidence", "enforcement_phase": "comparator-evidence-binding", "required": true },
+    { "rule_id": "comparator-plan-member-binding-exact/1", "owner_schema_ref": "comparator-transaction.schema.json#/$defs/MatchedComparatorEvidence", "enforcement_phase": "comparator-evidence-binding", "required": true },
+    { "rule_id": "comparator-evidence-four-chain-binding-exact/1", "owner_schema_ref": "comparator-transaction.schema.json#/$defs/MatchedComparatorEvidence", "enforcement_phase": "comparator-evidence-binding", "required": true },
+    { "rule_id": "convergence-sampling-accounting-exact/1", "owner_schema_ref": "canonical-records.schema.json#/$defs/ConvergenceSamplingAccounting", "enforcement_phase": "canonical-convergence-validation", "failure_status": "EVALUATION_FAILED", "algorithm": "Schema-validate the complete closed row. Require thinning_interval to be an exact positive safe integer. Require order_state_status=VALID exactly when both state counts are non-null safe integers and require order_state_status=MISSING or INVALID exactly when both counts are null. For VALID rows derive retained_state_count as 0 when postburn_unthinned_state_count=0, otherwise floor((postburn_unthinned_state_count-1)/thinning_interval)+1, and require exact equality. JSON Schema branch selection is not arithmetic proof.", "required": true }
+  ],
+  "side_effect_inventory_exclusions": [
+    "response/.side-effects.json.tmp",
+    "response/side-effects.json",
+    "response/.response.json.tmp",
+    "response/response.json"
+  ]
+}

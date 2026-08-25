@@ -1,0 +1,157 @@
+{
+  "schema_version": "ebm-audit-matched-moderate-source-manifest/1.0",
+  "data_classification": "SYNTHETIC_ONLY",
+  "operation_id": "open_matched_moderate_pair",
+  "comparator_id": "cmp_moderate_signal_vs_pure_no_signal",
+  "authority_resource": {
+    "relative_path": "examples/development/matched-moderate-authority.json",
+    "expected_byte_sha256": "656fea0659b8851d7c75fd577308bb9ae9c9b931d4024570d3efd7c344201bb2"
+  },
+  "pair_count": 8,
+  "signal_member": {
+    "family_id": "moderate_mina_shape",
+    "variant_id": "moderate_57_public"
+  },
+  "pure_no_signal_member": {
+    "family_id": "pure_no_signal",
+    "variant_id": "null_correlated"
+  },
+  "reference_order_policy": {
+    "source": "SIGNAL_STRICT_ORDER_EVENT_IDS",
+    "interpretation": "PREDECLARED_DESCRIPTIVE_REFERENCE_ONLY",
+    "truth_recovery_claim": false,
+    "pure_no_signal_truth": "NO_RECOVERABLE_ORDER_OR_STAGE"
+  },
+  "shared_component_paths": [
+    "group_assignment",
+    "latent_time",
+    "covariates",
+    "participant_effect",
+    "measurement_normal",
+    "measurement_scale",
+    "measurement_skew",
+    "contamination",
+    "outliers",
+    "missingness"
+  ],
+  "excluded_component_paths": [
+    "parameters",
+    "subgroup_assignment",
+    "label_permutation",
+    "within_group_feature_permutation"
+  ],
+  "configuration_ledger": {
+    "identity_differences": [
+      "/scenario_family_id",
+      "/variant_id"
+    ],
+    "no_signal_semantic_differences": [
+      "/event_parameters/amplitude",
+      "/event_parameters/covariate_effect",
+      "/event_parameters/group_effect",
+      "/event_parameters/participant_effect_loading",
+      "/latent_sampling",
+      "/scenario_parameters/truth_type"
+    ],
+    "non_scientific_owner_fields": [
+      "/schema_version",
+      "/digest_state",
+      "/resolved_generator_configuration_sha256",
+      "/dependency_records"
+    ],
+    "source_bound_equal_fields": [
+      "/synthetic_marker",
+      "/replicate_index",
+      "/dimensions",
+      "/event_ids",
+      "/event_directions",
+      "/event_parameters/baseline",
+      "/event_parameters/transition_width",
+      "/event_parameters/event_centers",
+      "/measurement_noise",
+      "/group_generation",
+      "/covariates",
+      "/participant_effect",
+      "/missingness",
+      "/outliers",
+      "/scenario_parameters/pair_mode",
+      "/scenario_parameters/pair_event_ids",
+      "/scenario_parameters/equivalence_block_event_ids",
+      "/scenario_parameters/alternate_inversions",
+      "/scenario_parameters/minority_fraction",
+      "/scenario_parameters/opposing_relation_fraction",
+      "/scenario_parameters/contamination_fraction",
+      "/scenario_parameters/wrong_direction_event_ids",
+      "/scenario_parameters/measurement_noise_sd_levels",
+      "/scenario_parameters/boundary_rule_ids",
+      "/scenario_parameters/boundary_quantile_shifts",
+      "/scenario_parameters/base_quantile_cutoff",
+      "/analysis_configuration"
+    ]
+  },
+  "subgroup_policy": {
+    "mode": "ABSENT_AND_UNCONSUMED",
+    "shared": false
+  },
+  "execution_policy": {
+    "pair_ordinals": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "retry_allowed": false,
+    "adaptation_allowed": false,
+    "heldout_allowed": false,
+    "ordinary_audit_authority": false,
+    "report_authority": false,
+    "profile_authority": false,
+    "selection_authority": false
+  },
+  "pairs": [
+    {
+      "pair_ordinal": 0,
+      "replicate_index": 0,
+      "shared_draw_root": "1000000000000001"
+    },
+    {
+      "pair_ordinal": 1,
+      "replicate_index": 1,
+      "shared_draw_root": "2000000000000002"
+    },
+    {
+      "pair_ordinal": 2,
+      "replicate_index": 2,
+      "shared_draw_root": "3000000000000003"
+    },
+    {
+      "pair_ordinal": 3,
+      "replicate_index": 3,
+      "shared_draw_root": "4000000000000004"
+    },
+    {
+      "pair_ordinal": 4,
+      "replicate_index": 4,
+      "shared_draw_root": "5000000000000005"
+    },
+    {
+      "pair_ordinal": 5,
+      "replicate_index": 5,
+      "shared_draw_root": "6000000000000006"
+    },
+    {
+      "pair_ordinal": 6,
+      "replicate_index": 6,
+      "shared_draw_root": "7000000000000007"
+    },
+    {
+      "pair_ordinal": 7,
+      "replicate_index": 7,
+      "shared_draw_root": "8000000000000008"
+    }
+  ]
+}

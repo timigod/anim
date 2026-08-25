@@ -1,0 +1,365 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.ebm-audit.invalid/participant-stage-comparison.schema.json",
+  "title": "EBM Audit public fixed-cohort participant-stage comparison",
+  "$ref": "#/$defs/ParticipantStageComparison",
+  "$defs": {
+    "NonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "NullableString": {
+      "oneOf": [
+        { "$ref": "#/$defs/NonEmptyString" },
+        { "type": "null" }
+      ]
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "NullableDigest": {
+      "oneOf": [
+        { "$ref": "#/$defs/Digest" },
+        { "type": "null" }
+      ]
+    },
+    "SafeInteger": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "EventIdArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/NonEmptyString" },
+      "uniqueItems": true
+    },
+    "NullableBoolean": {
+      "oneOf": [
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "StageAvailability": {
+      "enum": [
+        "AVAILABLE",
+        "NOT_APPLICABLE_BY_CAPABILITY",
+        "NOT_ASSESSABLE"
+      ]
+    },
+    "StageMetricStatus": {
+      "enum": [
+        "ASSESSABLE",
+        "NOT_APPLICABLE_BY_CAPABILITY",
+        "NOT_ASSESSABLE"
+      ]
+    },
+    "ParticipantStageMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric_id", "status", "value", "reason_code"],
+      "properties": {
+        "metric_id": { "$ref": "#/$defs/NonEmptyString" },
+        "status": { "$ref": "#/$defs/StageMetricStatus" },
+        "value": {
+          "oneOf": [
+            { "type": "number", "format": "finite-number" },
+            { "type": "null" }
+          ]
+        },
+        "reason_code": { "$ref": "#/$defs/NullableString" }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "status": { "const": "ASSESSABLE" },
+            "value": { "type": "number", "format": "finite-number" },
+            "reason_code": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "status": {
+              "enum": [
+                "NOT_APPLICABLE_BY_CAPABILITY",
+                "NOT_ASSESSABLE"
+              ]
+            },
+            "value": { "type": "null" },
+            "reason_code": { "$ref": "#/$defs/NonEmptyString" }
+          }
+        }
+      ]
+    },
+    "ParticipantStageComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_schema_version",
+        "rule_id",
+        "left_availability",
+        "left_availability_reason_code",
+        "left_stage_model_reference_digest",
+        "left_stage_reference_order_event_ids",
+        "left_headline_central_order_event_ids",
+        "left_stage_reference_order_matches_headline",
+        "right_availability",
+        "right_availability_reason_code",
+        "right_stage_model_reference_digest",
+        "right_stage_reference_order_event_ids",
+        "right_headline_central_order_event_ids",
+        "right_stage_reference_order_matches_headline",
+        "availability",
+        "availability_reason_code",
+        "left_ordered_event_ids",
+        "right_ordered_event_ids",
+        "common_event_ids",
+        "common_event_count",
+        "left_only_event_ids",
+        "right_only_event_ids",
+        "same_event_set",
+        "same_ordered_event_ids",
+        "same_event_direction_bindings",
+        "same_stage_semantics",
+        "semantic_comparability",
+        "semantic_comparability_reason_code",
+        "same_evaluation_cohort",
+        "same_evaluation_row_indexes",
+        "same_evaluation_unit_bindings",
+        "evaluation_cohort_digest",
+        "evaluation_cohort_count",
+        "participant_selection_source",
+        "quantile_rule_id",
+        "cohort_denominator_count",
+        "valid_participant_count",
+        "missing_participant_count",
+        "normalized_stage_wasserstein_quantiles",
+        "normalized_stage_wasserstein_iqr",
+        "private_evidence_digest",
+        "metric_status",
+        "metric_reason_code",
+        "metrics"
+      ],
+      "properties": {
+        "record_schema_version": {
+          "const": "ebm-audit-stage-comparison/2.0"
+        },
+        "rule_id": {
+          "const": "fixed-evaluation-cohort-native-stage-comparison/2"
+        },
+        "left_availability": { "$ref": "#/$defs/StageAvailability" },
+        "left_availability_reason_code": { "$ref": "#/$defs/NullableString" },
+        "left_stage_model_reference_digest": { "$ref": "#/$defs/NullableDigest" },
+        "left_stage_reference_order_event_ids": {
+          "oneOf": [
+            { "$ref": "#/$defs/EventIdArray" },
+            { "type": "null" }
+          ]
+        },
+        "left_headline_central_order_event_ids": {
+          "oneOf": [
+            { "$ref": "#/$defs/EventIdArray" },
+            { "type": "null" }
+          ]
+        },
+        "left_stage_reference_order_matches_headline": {
+          "$ref": "#/$defs/NullableBoolean"
+        },
+        "right_availability": { "$ref": "#/$defs/StageAvailability" },
+        "right_availability_reason_code": { "$ref": "#/$defs/NullableString" },
+        "right_stage_model_reference_digest": { "$ref": "#/$defs/NullableDigest" },
+        "right_stage_reference_order_event_ids": {
+          "oneOf": [
+            { "$ref": "#/$defs/EventIdArray" },
+            { "type": "null" }
+          ]
+        },
+        "right_headline_central_order_event_ids": {
+          "oneOf": [
+            { "$ref": "#/$defs/EventIdArray" },
+            { "type": "null" }
+          ]
+        },
+        "right_stage_reference_order_matches_headline": {
+          "$ref": "#/$defs/NullableBoolean"
+        },
+        "availability": { "$ref": "#/$defs/StageAvailability" },
+        "availability_reason_code": { "$ref": "#/$defs/NullableString" },
+        "left_ordered_event_ids": { "$ref": "#/$defs/EventIdArray" },
+        "right_ordered_event_ids": { "$ref": "#/$defs/EventIdArray" },
+        "common_event_ids": { "$ref": "#/$defs/EventIdArray" },
+        "common_event_count": { "$ref": "#/$defs/SafeInteger" },
+        "left_only_event_ids": { "$ref": "#/$defs/EventIdArray" },
+        "right_only_event_ids": { "$ref": "#/$defs/EventIdArray" },
+        "same_event_set": { "type": "boolean" },
+        "same_ordered_event_ids": { "type": "boolean" },
+        "same_event_direction_bindings": { "type": "boolean" },
+        "same_stage_semantics": { "$ref": "#/$defs/NullableBoolean" },
+        "semantic_comparability": {
+          "enum": [
+            "COMPARABLE",
+            "SEMANTICALLY_NON_EQUIVALENT",
+            "NOT_ASSESSABLE"
+          ]
+        },
+        "semantic_comparability_reason_code": {
+          "$ref": "#/$defs/NullableString"
+        },
+        "same_evaluation_cohort": { "$ref": "#/$defs/NullableBoolean" },
+        "same_evaluation_row_indexes": { "$ref": "#/$defs/NullableBoolean" },
+        "same_evaluation_unit_bindings": { "$ref": "#/$defs/NullableBoolean" },
+        "evaluation_cohort_digest": { "$ref": "#/$defs/NullableDigest" },
+        "evaluation_cohort_count": {
+          "oneOf": [
+            { "$ref": "#/$defs/SafeInteger" },
+            { "type": "null" }
+          ]
+        },
+        "participant_selection_source": {
+          "const": "FIXED_EVALUATION_COHORT"
+        },
+        "quantile_rule_id": {
+          "const": "inverse-empirical-cdf/1"
+        },
+        "cohort_denominator_count": {
+          "oneOf": [
+            { "$ref": "#/$defs/SafeInteger" },
+            { "type": "null" }
+          ]
+        },
+        "valid_participant_count": {
+          "oneOf": [
+            { "$ref": "#/$defs/SafeInteger" },
+            { "type": "null" }
+          ]
+        },
+        "missing_participant_count": {
+          "oneOf": [
+            { "$ref": "#/$defs/SafeInteger" },
+            { "type": "null" }
+          ]
+        },
+        "normalized_stage_wasserstein_quantiles": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["q10", "q25", "q50", "q75", "q90"],
+          "properties": {
+            "q10": {
+              "oneOf": [
+                { "type": "number", "format": "finite-number" },
+                { "type": "null" }
+              ]
+            },
+            "q25": {
+              "oneOf": [
+                { "type": "number", "format": "finite-number" },
+                { "type": "null" }
+              ]
+            },
+            "q50": {
+              "oneOf": [
+                { "type": "number", "format": "finite-number" },
+                { "type": "null" }
+              ]
+            },
+            "q75": {
+              "oneOf": [
+                { "type": "number", "format": "finite-number" },
+                { "type": "null" }
+              ]
+            },
+            "q90": {
+              "oneOf": [
+                { "type": "number", "format": "finite-number" },
+                { "type": "null" }
+              ]
+            }
+          }
+        },
+        "normalized_stage_wasserstein_iqr": {
+          "oneOf": [
+            { "type": "number", "format": "finite-number" },
+            { "type": "null" }
+          ]
+        },
+        "private_evidence_digest": { "$ref": "#/$defs/Digest" },
+        "metric_status": { "$ref": "#/$defs/StageMetricStatus" },
+        "metric_reason_code": { "$ref": "#/$defs/NullableString" },
+        "metrics": {
+          "type": "array",
+          "minItems": 11,
+          "maxItems": 11,
+          "prefixItems": [
+            {
+              "allOf": [
+                { "$ref": "#/$defs/ParticipantStageMetric" },
+                { "properties": { "metric_id": { "const": "fixed-cohort-stage-wasserstein-median/1" } } }
+              ]
+            },
+            {
+              "allOf": [
+                { "$ref": "#/$defs/ParticipantStageMetric" },
+                { "properties": { "metric_id": { "const": "fixed-cohort-stage-wasserstein-maximum/1" } } }
+              ]
+            },
+            {
+              "allOf": [
+                { "$ref": "#/$defs/ParticipantStageMetric" },
+                { "properties": { "metric_id": { "const": "mean-left-expected-stage/1" } } }
+              ]
+            },
+            {
+              "allOf": [
+                { "$ref": "#/$defs/ParticipantStageMetric" },
+                { "properties": { "metric_id": { "const": "mean-right-expected-stage/1" } } }
+              ]
+            },
+            {
+              "allOf": [
+                { "$ref": "#/$defs/ParticipantStageMetric" },
+                { "properties": { "metric_id": { "const": "mean-signed-expected-stage-change/1" } } }
+              ]
+            },
+            {
+              "allOf": [
+                { "$ref": "#/$defs/ParticipantStageMetric" },
+                { "properties": { "metric_id": { "const": "mean-absolute-expected-stage-change/1" } } }
+              ]
+            },
+            {
+              "allOf": [
+                { "$ref": "#/$defs/ParticipantStageMetric" },
+                { "properties": { "metric_id": { "const": "mean-normalized-absolute-expected-stage-change/1" } } }
+              ]
+            },
+            {
+              "allOf": [
+                { "$ref": "#/$defs/ParticipantStageMetric" },
+                { "properties": { "metric_id": { "const": "map-stage-agreement-fraction/1" } } }
+              ]
+            },
+            {
+              "allOf": [
+                { "$ref": "#/$defs/ParticipantStageMetric" },
+                { "properties": { "metric_id": { "const": "mean-normalized-stage-wasserstein/1" } } }
+              ]
+            },
+            {
+              "allOf": [
+                { "$ref": "#/$defs/ParticipantStageMetric" },
+                { "properties": { "metric_id": { "const": "cohort-normalized-stage-wasserstein/1" } } }
+              ]
+            },
+            {
+              "allOf": [
+                { "$ref": "#/$defs/ParticipantStageMetric" },
+                { "properties": { "metric_id": { "const": "mean-normalized-stage-jensen-shannon/1" } } }
+              ]
+            }
+          ],
+          "items": false
+        }
+      }
+    }
+  }
+}

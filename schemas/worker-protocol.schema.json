@@ -1,0 +1,2002 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "worker-protocol.schema.json",
+  "title": "EBM Audit external worker protocol v2",
+  "oneOf": [
+    { "$ref": "#/$defs/WorkerRequest" },
+    { "$ref": "#/$defs/WorkerRequestMetadataDigestPreimage" },
+    { "$ref": "#/$defs/WorkerResponse" },
+    { "$ref": "#/$defs/WorkerValidationPayloadDigestPreimage" },
+    { "$ref": "#/$defs/WorkerFitPayloadDigestPreimage" },
+    { "$ref": "#/$defs/WorkerResponseMetadataDigestPreimage" },
+    { "$ref": "#/$defs/AuditCaseConfigurationDigestPreimage" },
+    { "$ref": "#/$defs/SideEffectsRecord" },
+    { "$ref": "#/$defs/ActualValidateWorkerSubjectProjection" },
+    { "$ref": "#/$defs/ActualFitWorkerSubjectProjection" },
+    { "$ref": "#/$defs/ActualStageWorkerSubjectProjection" },
+    { "$ref": "#/$defs/ValidateSuccessCommandEvidenceProjection" },
+    { "$ref": "#/$defs/FitSuccessCommandEvidenceProjection" },
+    { "$ref": "#/$defs/StageSuccessCommandEvidenceProjection" },
+    { "$ref": "#/$defs/AuthenticatedWorkerRequestEvidenceProjection" },
+    { "$ref": "#/$defs/AuthenticatedWorkerExecutionEvidenceProjection" },
+    { "$ref": "#/$defs/CoreObservedFailureDigestPreimage" },
+    { "$ref": "#/$defs/NegativeCommandEvidenceProjection" },
+    { "$ref": "#/$defs/RetryEquivalentFitRequestProjection" }
+  ],
+  "$defs": {
+    "Command": {
+      "enum": ["describe", "validate", "fit", "stage", "self-test"]
+    },
+    "CaseOperationBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id", "operation_matrix_id", "analysis_spec_id", "analysis_spec_ordinal"],
+      "properties": {
+        "case_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+/-]{0,255}$" },
+        "operation_matrix_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "analysis_spec_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "analysis_spec_ordinal": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" }
+      }
+    },
+    "AuditCaseConfigurationDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_configuration_schema_version", "case_id", "operation_bindings", "ordered_analysis_specs"],
+      "properties": {
+        "case_configuration_schema_version": { "const": "ebm-audit-case-configuration/3.0" },
+        "case_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+/-]{0,255}$" },
+        "operation_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/CaseOperationBinding" }
+        },
+        "ordered_analysis_specs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "analysis-universe.schema.json#/$defs/AnalysisSpec" }
+        }
+      },
+      "x-ebm-invariants": [
+        "audit-case-operation-bindings-exact/3",
+        "audit-case-analysis-spec-order-exact/3",
+        "audit-case-truth-free/1"
+      ],
+      "$comment": "The complete canonical, truth-free auditor configuration for one benchmark case. Each operation matrix binds explicitly to one execution-only AnalysisSpec and ordinal. Several matrices may bind the same spec only as configuration/digest representation; execution fails closed until F0 implements one grouped operation owner per unique case/spec with canonically sorted matrix aliases. It is distinct from the raw generator ResolvedGeneratorConfiguration and its digest domain."
+    },
+    "WorkerStatus": {
+      "enum": ["SUCCESS", "INVALID_INPUT", "UNSUPPORTED_CAPABILITY", "INVALID_SPECIFICATION", "BACKEND_ERROR", "TIMEOUT", "PRIVACY_VIOLATION", "PROTOCOL_ERROR"]
+    },
+    "UuidV4": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "FileRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["byte_length", "sha256"],
+      "properties": {
+        "byte_length": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      }
+    },
+    "FilesMap": {
+      "type": "object",
+      "propertyNames": { "$ref": "canonical-records.schema.json#/$defs/RelativePosixPath" },
+      "additionalProperties": { "$ref": "#/$defs/FileRecord" }
+    },
+    "ArrayCatalog": {
+      "$ref": "canonical-records.schema.json#/$defs/ArrayCatalog"
+    },
+    "FitInputArrayCatalog": {
+      "type": "object",
+      "propertyNames": { "enum": ["train_values", "training_row_indexes", "train_group_codes", "evaluation_values", "evaluation_row_indexes", "evaluation_group_codes"] },
+      "additionalProperties": { "$ref": "canonical-records.schema.json#/$defs/ArrayCatalogEntry" }
+    },
+    "StageInputArrayCatalog": {
+      "type": "object",
+      "propertyNames": { "enum": ["stage_values", "stage_row_indexes", "stage_group_codes"] },
+      "additionalProperties": { "$ref": "canonical-records.schema.json#/$defs/ArrayCatalogEntry" }
+    },
+    "StageOutputArrayCatalog": {
+      "type": "object",
+      "propertyNames": { "enum": ["stage_row_indexes", "stage_posterior", "stage_map_stage", "stage_map_tie_mask", "stage_expected_stage"] },
+      "additionalProperties": { "$ref": "canonical-records.schema.json#/$defs/ArrayCatalogEntry" }
+    },
+    "ExpectedIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base_backend_identity", "base_backend_identity_digest", "selected_algorithm_id", "selected_backend_identity_digest", "capabilities_digest"],
+      "properties": {
+        "base_backend_identity": { "$ref": "canonical-records.schema.json#/$defs/BackendIdentity" },
+        "base_backend_identity_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "selected_algorithm_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "selected_backend_identity_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "capabilities_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      }
+    },
+    "GroupCodebook": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^(0|[1-9][0-9]*)$" },
+      "additionalProperties": { "enum": ["reference", "at_risk"] }
+    },
+    "ProjectSyntheticCaseCoordinate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["family_id", "variant_id", "replicate_index", "resolution_mode"],
+      "properties": {
+        "family_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "variant_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "replicate_index": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "resolution_mode": { "enum": ["DEVELOPMENT_VARIANT", "TRANSFORMED_SOURCE"] }
+      }
+    },
+    "ProjectSyntheticCandidateProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "trust_boundary", "generator_code_sha256", "authority_sha256", "scenario_definitions_sha256", "source_contract_sha256", "case_id", "case_coordinate", "source_case_id", "case_seed", "shared_draw_seed", "case_operation_seed", "component_seed_manifest_sha256", "case_seed_identity_sha256", "base_generated_scientific_data_sha256", "candidate_id", "analysis_spec_id", "candidate_derivation_kind", "candidate_derivation_selector", "candidate_operation_seed", "candidate_operation_intent", "candidate_operation_intent_sha256", "candidate_dataset_sha256", "candidate_array_catalog_sha256", "provenance_binding_sha256"],
+      "properties": {
+        "schema_version": { "const": "ebm-audit-project-synthetic-candidate-provenance/1.0" },
+        "trust_boundary": { "const": "OPAQUE_LIVE_OWNER_ISSUANCE_AND_DETERMINISTIC_WORKER_HASH_VERIFICATION" },
+        "generator_code_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "authority_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "scenario_definitions_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "source_contract_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "case_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "case_coordinate": { "$ref": "#/$defs/ProjectSyntheticCaseCoordinate" },
+        "source_case_id": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/MachineId" }, { "type": "null" }] },
+        "case_seed": { "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" },
+        "shared_draw_seed": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" }, { "type": "null" }] },
+        "case_operation_seed": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" }, { "type": "null" }] },
+        "component_seed_manifest_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "case_seed_identity_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "base_generated_scientific_data_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "candidate_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "analysis_spec_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "candidate_derivation_kind": { "enum": ["ordinary", "bootstrap", "subsample", "influence", "null"] },
+        "candidate_derivation_selector": { "type": "string", "pattern": "^(ordinary|replicate:(0|[1-9][0-9]*)|removal:(0|[1-9][0-9]*))$" },
+        "candidate_operation_seed": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" }, { "type": "null" }] },
+        "candidate_operation_intent": { "$ref": "analysis-universe.schema.json#/$defs/OperationIntent" },
+        "candidate_operation_intent_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "candidate_dataset_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "candidate_array_catalog_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "provenance_binding_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      },
+      "$comment": "The core's live opaque input owner authenticates issuance. The subprocess verifies only deterministic code, descriptor, catalog, and closed-record hashes; no signature or credential subsystem is implied."
+    },
+    "SyntheticProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "classification", "generator_id", "generator_version", "generator_record_sha256", "generated_input_sha256", "complete_truth_sha256", "complete_truth_record_id", "scenario_id", "replicate", "seed", "source_kind", "participant_data_present", "external_source_present", "participant_count", "event_count", "event_ids"],
+      "properties": {
+        "schema_version": { "const": "ebm-audit-synthetic-provenance/1.0" },
+        "classification": { "const": "SYNTHETIC-ONLY" },
+        "generator_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "generator_version": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "generator_record_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "generated_input_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "complete_truth_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "complete_truth_record_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "scenario_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "replicate": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "seed": { "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" },
+        "source_kind": { "const": "PROJECT_OWNED_DETERMINISTIC_GENERATOR" },
+        "participant_data_present": { "const": false },
+        "external_source_present": { "const": false },
+        "participant_count": { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+        "event_count": { "type": "integer", "minimum": 2, "maximum": 9007199254740991 },
+        "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "canonical-records.schema.json#/$defs/MachineId" } },
+        "project_candidate": { "$ref": "#/$defs/ProjectSyntheticCandidateProvenance" }
+      }
+    },
+    "DatasetDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["variant_id", "participant_count", "evaluation_participant_count", "event_count", "event_ids", "event_directions", "group_codebook", "training_row_index_array", "evaluation_row_index_array", "array_catalog", "stage_semantics", "stage_semantics_digest", "preprocessing_manifest_digest", "scientific_data_digest"],
+      "properties": {
+        "variant_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "participant_count": { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+        "evaluation_participant_count": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "event_count": { "type": "integer", "minimum": 2, "maximum": 9007199254740991 },
+        "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "canonical-records.schema.json#/$defs/MachineId" } },
+        "event_directions": { "type": "array", "minItems": 2, "items": { "enum": ["higher", "lower"] } },
+        "group_codebook": { "$ref": "#/$defs/GroupCodebook" },
+        "training_row_index_array": { "const": "training_row_indexes" },
+        "evaluation_row_index_array": { "enum": ["evaluation_row_indexes", null] },
+        "array_catalog": { "$ref": "#/$defs/FitInputArrayCatalog" },
+        "stage_semantics": { "const": "strict-prefix-count/1" },
+        "stage_semantics_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "preprocessing_manifest_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "scientific_data_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "synthetic_provenance": { "$ref": "#/$defs/SyntheticProvenance" }
+      }
+    },
+    "StageDatasetDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["variant_id", "participant_count", "event_count", "event_ids", "event_directions", "group_codebook", "stage_row_index_array", "array_catalog", "stage_semantics", "stage_semantics_digest", "preprocessing_manifest_digest", "scientific_data_digest"],
+      "properties": {
+        "variant_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "participant_count": { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+        "event_count": { "type": "integer", "minimum": 2, "maximum": 9007199254740991 },
+        "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "canonical-records.schema.json#/$defs/MachineId" } },
+        "event_directions": { "type": "array", "minItems": 2, "items": { "enum": ["higher", "lower"] } },
+        "group_codebook": { "oneOf": [{ "$ref": "#/$defs/GroupCodebook" }, { "type": "null" }] },
+        "stage_row_index_array": { "const": "stage_row_indexes" },
+        "array_catalog": { "$ref": "#/$defs/StageInputArrayCatalog" },
+        "stage_semantics": { "const": "strict-prefix-count/1" },
+        "stage_semantics_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "preprocessing_manifest_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "scientific_data_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      }
+    },
+    "ArtifactBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "relative_path", "media_type", "byte_length", "sha256", "creating_chain_execution_id", "creating_scientific_request_digest", "adapter_id", "algorithm_id", "worker_executable_digest", "worker_code_digest", "backend_source_digest", "environment_digest", "settings_digest", "stage_semantics_digest", "stage_model_reference_digest", "event_ids"],
+      "properties": {
+        "artifact_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "relative_path": { "$ref": "canonical-records.schema.json#/$defs/RelativePosixPath" },
+        "media_type": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "byte_length": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "creating_chain_execution_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "creating_scientific_request_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "adapter_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "algorithm_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "worker_executable_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "worker_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "backend_source_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "environment_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "settings_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "stage_semantics_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "stage_model_reference_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "canonical-records.schema.json#/$defs/MachineId" } }
+      },
+      "$comment": "A fitted artifact that supports participant staging carries the exact creating chain's stage-model-reference digest. Null is reserved for artifacts with no stage-capable model."
+    },
+    "StageArtifactBinding": {
+      "$ref": "#/$defs/ArtifactBinding",
+      "properties": {
+        "stage_model_reference_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      }
+    },
+    "FitRequestedOutput": {
+      "enum": ["central_order", "order_samples", "likelihood_trace", "accepted_transition_diagnostics", "position_probabilities", "pairwise_precedence", "exact_fixed_order_target", "fitted_event_distributions", "training_stage_posterior", "training_hard_stages", "training_expected_stage", "evaluation_stage_posterior", "evaluation_hard_stages", "evaluation_expected_stage", "portable_fitted_model_artifact"]
+    },
+    "StageRequestedOutput": {
+      "enum": ["stage_posterior", "hard_stages", "expected_stage"]
+    },
+    "SelfTestCheckId": {
+      "enum": ["schema-roundtrip", "identity-stability", "seed-repeatability", "array-invariants", "offline-no-network", "side-effect-boundary"]
+    },
+    "DescribeRequestPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_identity"],
+      "properties": {
+        "expected_identity": { "oneOf": [{ "$ref": "#/$defs/ExpectedIdentity" }, { "type": "null" }] }
+      }
+    },
+    "CandidateProvenanceBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding_schema_version", "candidate_id", "analysis_specification_id", "operation_intent_digest", "selector", "operation_seed"],
+      "properties": {
+        "binding_schema_version": { "const": "ebm-audit-candidate-provenance-binding/1.0" },
+        "candidate_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "analysis_specification_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "operation_intent_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "selector": { "type": "string", "pattern": "^(ordinary|replicate:(0|[1-9][0-9]*)|removal:(0|[1-9][0-9]*))$" },
+        "operation_seed": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" }, { "type": "null" }] }
+      },
+      "$comment": "Core-owned request binding for one sealed prepared candidate. Project-owned synthetic provenance must match these independent outer fields before worker delegation."
+    },
+    "ExecutionInputProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projection_schema_version", "trust_boundary", "offline", "core_code_digest", "config_digest", "input_files", "dataset", "data_accounting", "preprocessing_manifest_digest", "algorithm_id", "settings", "settings_digest", "requested_outputs", "requested_outputs_digest", "selected_backend_identity", "selected_backend_identity_digest", "capabilities", "capabilities_digest", "stage_semantics_definition", "stage_semantics_digest", "adapter_semantics", "adapter_semantics_digest"],
+      "properties": {
+        "projection_schema_version": { "const": "ebm-audit-execution-input-projection/2.0" },
+        "trust_boundary": { "const": "TRUSTED_WORKER_SHARED_PROCESS_REPEATABILITY_ONLY" },
+        "offline": { "const": true },
+        "core_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "config_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "input_files": { "$ref": "#/$defs/FilesMap" },
+        "dataset": { "oneOf": [{ "$ref": "#/$defs/DatasetDescriptor" }, { "$ref": "#/$defs/StageDatasetDescriptor" }] },
+        "candidate_provenance_binding": { "$ref": "#/$defs/CandidateProvenanceBinding" },
+        "data_accounting": { "$ref": "canonical-records.schema.json#/$defs/DataAccounting" },
+        "preprocessing_manifest_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "algorithm_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "settings": { "type": "object" },
+        "settings_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "requested_outputs": { "type": "array", "uniqueItems": true, "items": { "$ref": "analysis-universe.schema.json#/$defs/ScientificRequestedOutput" } },
+        "requested_outputs_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "selected_backend_identity": { "$ref": "canonical-records.schema.json#/$defs/BackendIdentity" },
+        "selected_backend_identity_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "capabilities": { "$ref": "#/$defs/AdapterCapabilities" },
+        "capabilities_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "stage_semantics_definition": { "$ref": "canonical-records.schema.json#/$defs/StageSemanticsDefinition" },
+        "stage_semantics_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "adapter_semantics": { "$ref": "#/$defs/AdapterSemantics" },
+        "adapter_semantics_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      },
+      "$comment": "This projection is a repeatability contract for a trusted local worker. The backend callback and worker shell share one process, so it does not claim hostile-code isolation. Validate and fit carry the identical object and digest; attempt identity is bound separately by the fit scientific request."
+    },
+    "ValidateRequestPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["execution_input_projection", "execution_input_projection_digest"],
+      "properties": {
+        "execution_input_projection": { "$ref": "#/$defs/ExecutionInputProjection" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      }
+    },
+    "BackendFitScientificInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scientific_input_schema_version", "universe_id", "chain_execution_id", "attempt_id", "attempt_ordinal", "seed", "chain_id", "execution_input_projection", "execution_input_projection_digest"],
+      "properties": {
+        "scientific_input_schema_version": { "const": "ebm-audit-backend-fit-scientific-input/2.0" },
+        "universe_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "chain_execution_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "attempt_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "attempt_ordinal": { "enum": [0, 1] },
+        "seed": { "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" },
+        "chain_id": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "execution_input_projection": { "$ref": "#/$defs/ExecutionInputProjection" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      },
+      "$comment": "The attempt identifier and ordinal are scientific inputs in protocol v2. The fit request UUID is deterministically derived from the attempt identity, while that redundant UUID and the timestamp remain excluded from the scientific digest."
+    },
+    "RetryEquivalentBackendFitScientificInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scientific_input_schema_version", "universe_id", "chain_execution_id", "seed", "chain_id", "execution_input_projection", "execution_input_projection_digest"],
+      "properties": {
+        "scientific_input_schema_version": { "const": "ebm-audit-backend-fit-scientific-input/2.0" },
+        "universe_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "chain_execution_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "seed": { "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" },
+        "chain_id": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "execution_input_projection": { "$ref": "#/$defs/ExecutionInputProjection" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      },
+      "$comment": "The complete fit scientific input after removing exactly payload.attempt_id and payload.attempt_ordinal. No other scientific field is omitted."
+    },
+    "FitRequestPayload": {
+      "$ref": "#/$defs/BackendFitScientificInput"
+    },
+    "StageScientificInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scientific_input_schema_version", "seed", "stage_call_id", "fitted_artifact", "execution_input_projection", "execution_input_projection_digest"],
+      "properties": {
+        "scientific_input_schema_version": { "const": "ebm-audit-stage-scientific-input/2.0" },
+        "seed": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" }, { "type": "null" }] },
+        "stage_call_id": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "fitted_artifact": { "$ref": "#/$defs/StageArtifactBinding" },
+        "execution_input_projection": { "$ref": "#/$defs/ExecutionInputProjection" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      }
+    },
+    "StageRequestPayload": { "$ref": "#/$defs/StageScientificInput" },
+    "SelfTestRequestPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seed", "profile", "requested_checks"],
+      "properties": {
+        "seed": { "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" },
+        "profile": { "const": "tiny-synthetic/1" },
+        "requested_checks": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/SelfTestCheckId" } }
+      }
+    },
+    "WorkerRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol_version", "request_schema_version", "payload_schema_version", "command", "request_id", "request_metadata_digest", "scientific_request_digest", "created_at_utc", "offline", "core_code_digest", "payload", "files"],
+      "properties": {
+        "protocol_version": { "const": "ebm-audit-worker/v2" },
+        "request_schema_version": { "const": "ebm-audit-worker-request/2.0" },
+        "payload_schema_version": { "enum": [null, "ebm-audit-worker-validation/2.0", "ebm-audit-worker-fit-payload/2.0", "ebm-audit-stage-scientific-input/2.0"] },
+        "command": { "$ref": "#/$defs/Command" },
+        "request_id": { "$ref": "#/$defs/UuidV4" },
+        "request_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "scientific_request_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "created_at_utc": { "$ref": "canonical-records.schema.json#/$defs/Timestamp" },
+        "offline": { "const": true },
+        "core_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "payload": {},
+        "files": { "$ref": "#/$defs/FilesMap" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "command": { "enum": ["validate", "fit", "stage"] } }, "required": ["command"] },
+          "then": { "properties": { "scientific_request_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" } } },
+          "else": { "properties": { "scientific_request_digest": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "command": { "const": "describe" } } },
+          "then": { "properties": { "payload_schema_version": { "type": "null" }, "payload": { "$ref": "#/$defs/DescribeRequestPayload" } } }
+        },
+        {
+          "if": { "properties": { "command": { "const": "validate" } } },
+          "then": { "properties": { "payload_schema_version": { "const": "ebm-audit-worker-validation/2.0" }, "payload": { "$ref": "#/$defs/ValidateRequestPayload" } } }
+        },
+        {
+          "if": { "properties": { "command": { "const": "fit" } } },
+          "then": { "properties": { "payload_schema_version": { "const": "ebm-audit-worker-fit-payload/2.0" }, "payload": { "$ref": "#/$defs/FitRequestPayload" } } }
+        },
+        {
+          "if": { "properties": { "command": { "const": "stage" } } },
+          "then": { "properties": { "payload_schema_version": { "const": "ebm-audit-stage-scientific-input/2.0" }, "payload": { "$ref": "#/$defs/StageRequestPayload" } } }
+        },
+        {
+          "if": { "properties": { "command": { "const": "self-test" } } },
+          "then": { "properties": { "payload_schema_version": { "type": "null" }, "payload": { "$ref": "#/$defs/SelfTestRequestPayload" } } }
+        }
+      ]
+    },
+    "WorkerRequestMetadataDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol_version", "request_schema_version", "payload_schema_version", "command", "request_id", "scientific_request_digest", "created_at_utc", "offline", "core_code_digest", "payload", "files"],
+      "properties": {
+        "protocol_version": { "const": "ebm-audit-worker/v2" },
+        "request_schema_version": { "const": "ebm-audit-worker-request/2.0" },
+        "payload_schema_version": { "enum": [null, "ebm-audit-worker-validation/2.0", "ebm-audit-worker-fit-payload/2.0", "ebm-audit-stage-scientific-input/2.0"] },
+        "command": { "$ref": "#/$defs/Command" },
+        "request_id": { "$ref": "#/$defs/UuidV4" },
+        "scientific_request_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "created_at_utc": { "$ref": "canonical-records.schema.json#/$defs/Timestamp" },
+        "offline": { "const": true },
+        "core_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "payload": {},
+        "files": { "$ref": "#/$defs/FilesMap" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "command": { "enum": ["validate", "fit", "stage"] } }, "required": ["command"] },
+          "then": { "properties": { "scientific_request_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" } } },
+          "else": { "properties": { "scientific_request_digest": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "command": { "const": "describe" } } },
+          "then": { "properties": { "payload_schema_version": { "type": "null" }, "payload": { "$ref": "#/$defs/DescribeRequestPayload" } } }
+        },
+        {
+          "if": { "properties": { "command": { "const": "validate" } } },
+          "then": { "properties": { "payload_schema_version": { "const": "ebm-audit-worker-validation/2.0" }, "payload": { "$ref": "#/$defs/ValidateRequestPayload" } } }
+        },
+        {
+          "if": { "properties": { "command": { "const": "fit" } } },
+          "then": { "properties": { "payload_schema_version": { "const": "ebm-audit-worker-fit-payload/2.0" }, "payload": { "$ref": "#/$defs/FitRequestPayload" } } }
+        },
+        {
+          "if": { "properties": { "command": { "const": "stage" } } },
+          "then": { "properties": { "payload_schema_version": { "const": "ebm-audit-stage-scientific-input/2.0" }, "payload": { "$ref": "#/$defs/StageRequestPayload" } } }
+        },
+        {
+          "if": { "properties": { "command": { "const": "self-test" } } },
+          "then": { "properties": { "payload_schema_version": { "type": "null" }, "payload": { "$ref": "#/$defs/SelfTestRequestPayload" } } }
+        }
+      ]
+    },
+    "ScientificFitRequestProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol_version", "request_schema_version", "payload_schema_version", "command", "offline", "core_code_digest", "payload", "files"],
+      "properties": {
+        "protocol_version": { "const": "ebm-audit-worker/v2" },
+        "request_schema_version": { "const": "ebm-audit-worker-request/2.0" },
+        "payload_schema_version": { "const": "ebm-audit-worker-fit-payload/2.0" },
+        "command": { "const": "fit" },
+        "offline": { "const": true },
+        "core_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "payload": { "$ref": "#/$defs/BackendFitScientificInput" },
+        "files": { "$ref": "#/$defs/FilesMap" }
+      }
+    },
+    "RetryEquivalentFitRequestProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol_version", "request_schema_version", "payload_schema_version", "command", "offline", "core_code_digest", "payload", "files"],
+      "properties": {
+        "protocol_version": { "const": "ebm-audit-worker/v2" },
+        "request_schema_version": { "const": "ebm-audit-worker-request/2.0" },
+        "payload_schema_version": { "const": "ebm-audit-worker-fit-payload/2.0" },
+        "command": { "const": "fit" },
+        "offline": { "const": true },
+        "core_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "payload": { "$ref": "#/$defs/RetryEquivalentBackendFitScientificInput" },
+        "files": { "$ref": "#/$defs/FilesMap" }
+      },
+      "$comment": "Closed owner for ebm-audit/retry-equivalence/1. It is derived from the complete ScientificFitRequestProjection after the four existing transport exclusions, then removes only payload.attempt_id and payload.attempt_ordinal."
+    },
+    "ScientificValidateRequestProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol_version", "request_schema_version", "payload_schema_version", "command", "offline", "core_code_digest", "payload", "files"],
+      "properties": {
+        "protocol_version": { "const": "ebm-audit-worker/v2" },
+        "request_schema_version": { "const": "ebm-audit-worker-request/2.0" },
+        "payload_schema_version": { "const": "ebm-audit-worker-validation/2.0" },
+        "command": { "const": "validate" },
+        "offline": { "const": true },
+        "core_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "payload": { "$ref": "#/$defs/ValidateRequestPayload" },
+        "files": { "$ref": "#/$defs/FilesMap" }
+      }
+    },
+    "ScientificStageRequestProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol_version", "request_schema_version", "payload_schema_version", "command", "offline", "core_code_digest", "payload", "files"],
+      "properties": {
+        "protocol_version": { "const": "ebm-audit-worker/v2" },
+        "request_schema_version": { "const": "ebm-audit-worker-request/2.0" },
+        "payload_schema_version": { "const": "ebm-audit-stage-scientific-input/2.0" },
+        "command": { "const": "stage" },
+        "offline": { "const": true },
+        "core_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "payload": { "$ref": "#/$defs/StageScientificInput" },
+        "files": { "$ref": "#/$defs/FilesMap" }
+      }
+    },
+    "ScientificCommandRequestProjection": {
+      "oneOf": [
+        { "$ref": "#/$defs/ScientificValidateRequestProjection" },
+        { "$ref": "#/$defs/ScientificFitRequestProjection" },
+        { "$ref": "#/$defs/ScientificStageRequestProjection" }
+      ]
+    },
+    "SettingsObject": {
+      "type": "object"
+    },
+    "AdapterConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum_participants", "maximum_participants", "minimum_events", "maximum_events", "required_group_roles", "maximum_threads", "maximum_raw_iterations"],
+      "properties": {
+        "minimum_participants": { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+        "maximum_participants": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" }, { "type": "null" }] },
+        "minimum_events": { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+        "maximum_events": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" }, { "type": "null" }] },
+        "required_group_roles": { "type": "array", "uniqueItems": true, "items": { "enum": ["reference", "at_risk"] } },
+        "maximum_threads": { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+        "maximum_raw_iterations": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" }, { "type": "null" }] }
+      }
+    },
+    "AdapterCapabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capabilities_schema_version", "strict_single_sequence", "grouped_or_simultaneous_events", "subtypes", "temporal_events", "missing_values", "per_feature_missingness", "order_samples", "position_probabilities", "pairwise_precedence", "likelihood_trace", "accepted_transition_diagnostics", "fitted_event_distributions", "participant_stage_posterior", "hard_stages", "fixed_evaluation_cohort_staging", "portable_fitted_model_artifact", "multiple_chains", "bootstrap", "cross_validation", "deterministic_seed", "offline_execution", "constraints"],
+      "properties": {
+        "capabilities_schema_version": { "const": "ebm-audit-worker-capabilities/1.0" },
+        "strict_single_sequence": { "type": "boolean" },
+        "grouped_or_simultaneous_events": { "type": "boolean" },
+        "subtypes": { "type": "boolean" },
+        "temporal_events": { "type": "boolean" },
+        "missing_values": { "const": "REJECT" },
+        "per_feature_missingness": { "const": false },
+        "order_samples": { "type": "boolean" },
+        "position_probabilities": { "type": "boolean" },
+        "pairwise_precedence": { "type": "boolean" },
+        "exact_fixed_order_target": { "type": "boolean" },
+        "likelihood_trace": { "type": "boolean" },
+        "accepted_transition_diagnostics": { "type": "boolean" },
+        "fitted_event_distributions": { "type": "boolean" },
+        "participant_stage_posterior": { "type": "boolean" },
+        "hard_stages": { "type": "boolean" },
+        "fixed_evaluation_cohort_staging": { "type": "boolean" },
+        "portable_fitted_model_artifact": { "type": "boolean" },
+        "multiple_chains": { "type": "boolean" },
+        "bootstrap": { "type": "boolean" },
+        "cross_validation": { "type": "boolean" },
+        "deterministic_seed": { "type": "boolean" },
+        "offline_execution": { "type": "boolean" },
+        "constraints": { "$ref": "#/$defs/AdapterConstraints" }
+      }
+    },
+    "AdapterMcmcScheduleBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plan_field", "source_kind", "backend_setting_id", "constant_value"],
+      "properties": {
+        "plan_field": { "enum": ["raw_iteration_count", "burn_in_count", "thinning_interval"] },
+        "source_kind": { "enum": ["backend-setting", "adapter-constant"] },
+        "backend_setting_id": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+            { "type": "null" }
+          ]
+        },
+        "constant_value": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "source_kind": { "const": "backend-setting" },
+            "backend_setting_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+            "constant_value": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "source_kind": { "const": "adapter-constant" },
+            "backend_setting_id": { "type": "null" },
+            "constant_value": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" }
+          }
+        }
+      ]
+    },
+    "AdapterMcmcProposalSettingBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proposal_setting_id", "backend_setting_id"],
+      "properties": {
+        "proposal_setting_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "backend_setting_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" }
+      }
+    },
+    "AdapterMcmcProjectionUnavailable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projection_schema_version", "availability", "reason_code"],
+      "properties": {
+        "projection_schema_version": { "const": "ebm-audit-adapter-mcmc-projection/1.0" },
+        "availability": { "const": "UNAVAILABLE" },
+        "reason_code": { "const": "NON_CHAIN_ALGORITHM" }
+      }
+    },
+    "AdapterMcmcProjectionAvailable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projection_schema_version", "availability", "schedule_bindings", "indexing_rule", "proposal_method_id", "proposal_setting_bindings", "initialization_rule", "plan_owned_fields"],
+      "properties": {
+        "projection_schema_version": { "const": "ebm-audit-adapter-mcmc-projection/1.0" },
+        "availability": { "const": "AVAILABLE" },
+        "schedule_bindings": {
+          "type": "array",
+          "prefixItems": [
+            { "allOf": [{ "$ref": "#/$defs/AdapterMcmcScheduleBinding" }, { "properties": { "plan_field": { "const": "raw_iteration_count" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/AdapterMcmcScheduleBinding" }, { "properties": { "plan_field": { "const": "burn_in_count" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/AdapterMcmcScheduleBinding" }, { "properties": { "plan_field": { "const": "thinning_interval" } } }] }
+          ],
+          "items": false,
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "indexing_rule": { "const": "returned-post-proposal-row/1" },
+        "proposal_method_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "proposal_setting_bindings": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/AdapterMcmcProposalSettingBinding" }
+        },
+        "initialization_rule": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "plan_owned_fields": { "const": ["chain_count", "seed_derivation_version"] }
+      }
+    },
+    "AdapterMcmcProjection": {
+      "oneOf": [
+        { "$ref": "#/$defs/AdapterMcmcProjectionUnavailable" },
+        { "$ref": "#/$defs/AdapterMcmcProjectionAvailable" }
+      ]
+    },
+    "AdapterSemantics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapter_semantics_schema_version", "adapter_id", "algorithm_id", "semantic_version", "supported_commands", "capabilities_digest", "settings_schema_digest", "stage_semantics_digest", "requested_output_registry_digest", "mcmc_projection"],
+      "properties": {
+        "adapter_semantics_schema_version": { "const": "ebm-audit-adapter-semantics/2.0" },
+        "adapter_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "algorithm_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "semantic_version": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "supported_commands": { "const": ["validate", "fit"] },
+        "capabilities_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "settings_schema_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "stage_semantics_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "requested_output_registry_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "mcmc_projection": { "$ref": "#/$defs/AdapterMcmcProjection" }
+      },
+      "$comment": "Transport-neutral maintained adapter semantics. It deliberately excludes worker executable/code and worker wire-version identities."
+    },
+    "SettingsScalarValue": {
+      "type": ["string", "number", "integer", "boolean", "null"]
+    },
+    "SettingsScalarTypeDeclaration": {
+      "oneOf": [
+        { "enum": ["string", "number", "integer", "boolean", "null"] },
+        {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": { "enum": ["string", "number", "integer", "boolean", "null"] }
+        }
+      ]
+    },
+    "InlineScalarSettingsSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "$ref": "#/$defs/SettingsScalarTypeDeclaration" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "enum": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/SettingsScalarValue" } },
+        "const": { "$ref": "#/$defs/SettingsScalarValue" },
+        "default": { "$ref": "#/$defs/SettingsScalarValue" },
+        "minimum": { "type": "number" },
+        "maximum": { "type": "number" },
+        "exclusiveMinimum": { "type": "number" },
+        "exclusiveMaximum": { "type": "number" },
+        "multipleOf": { "type": "number", "exclusiveMinimum": 0 },
+        "minLength": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "maxLength": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "pattern": { "type": "string" }
+      }
+    },
+    "InlineArraySettingsSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "items"],
+      "properties": {
+        "type": { "const": "array" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "items": { "$ref": "#/$defs/InlineSettingsSubschema" },
+        "minItems": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "maxItems": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "uniqueItems": { "type": "boolean" }
+      }
+    },
+    "InlineObjectSettingsSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "additionalProperties", "properties", "required"],
+      "properties": {
+        "type": { "const": "object" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "additionalProperties": { "const": false },
+        "properties": { "type": "object", "propertyNames": { "type": "string", "minLength": 1 }, "additionalProperties": { "$ref": "#/$defs/InlineSettingsSubschema" } },
+        "required": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "minProperties": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "maxProperties": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "dependentRequired": {
+          "type": "object",
+          "propertyNames": { "type": "string", "minLength": 1 },
+          "additionalProperties": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "InlineSettingsSubschema": {
+      "oneOf": [
+        { "$ref": "#/$defs/InlineScalarSettingsSchema" },
+        { "$ref": "#/$defs/InlineArraySettingsSchema" },
+        { "$ref": "#/$defs/InlineObjectSettingsSchema" }
+      ]
+    },
+    "ClosedSettingsSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["$schema", "$id", "type", "additionalProperties", "properties", "required"],
+      "properties": {
+        "$schema": { "const": "https://json-schema.org/draft/2020-12/schema" },
+        "$id": { "type": "string", "pattern": "^urn:ebm-audit:worker-settings-schema:[a-z0-9._-]+:[0-9]+$" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "const": "object" },
+        "additionalProperties": { "const": false },
+        "properties": { "type": "object", "propertyNames": { "type": "string", "minLength": 1 }, "additionalProperties": { "$ref": "#/$defs/InlineSettingsSubschema" } },
+        "required": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "minProperties": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "maxProperties": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "dependentRequired": {
+          "type": "object",
+          "propertyNames": { "type": "string", "minLength": 1 },
+          "additionalProperties": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+        }
+      },
+      "x-ebm-invariants": [
+        "settings-schema-required-subset-of-properties/1"
+      ],
+      "$comment": "This recursive inline subset deliberately excludes $ref, $dynamicRef, $defs, anchors, applicator unions, conditionals, patternProperties, unevaluatedProperties, content schemas, and every unknown keyword. No schema retrieval is permitted. After shape validation, describe validation MUST recursively execute settings-schema-required-subset-of-properties/1 and reject every required name absent from the same object's properties map."
+    },
+    "SettingsSchemaValidationRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule_id", "enforcement_phase", "failure_status", "failure_code"],
+      "properties": {
+        "rule_id": { "const": "settings-schema-required-subset-of-properties/1" },
+        "enforcement_phase": { "const": "describe-validation" },
+        "failure_status": { "const": "PROTOCOL_ERROR" },
+        "failure_code": { "const": "PROTOCOL.SETTINGS_SCHEMA_REQUIRED_PROPERTY_UNDECLARED" }
+      }
+    },
+    "SupportedAlgorithm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm_id", "supported_commands", "capabilities", "capabilities_digest", "settings_schema", "settings_schema_digest", "settings_schema_validation_rules", "stage_semantics_definition", "stage_semantics_digest", "adapter_semantics", "adapter_semantics_digest"],
+      "properties": {
+        "algorithm_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "supported_commands": { "const": ["validate", "fit"] },
+        "capabilities": { "$ref": "#/$defs/AdapterCapabilities" },
+        "capabilities_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "settings_schema": { "$ref": "#/$defs/ClosedSettingsSchema" },
+        "settings_schema_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "stage_semantics_definition": { "$ref": "canonical-records.schema.json#/$defs/StageSemanticsDefinition" },
+        "stage_semantics_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "adapter_semantics": { "$ref": "#/$defs/AdapterSemantics" },
+        "adapter_semantics_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "settings_schema_validation_rules": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": { "$ref": "#/$defs/SettingsSchemaValidationRule" }
+        }
+      },
+      "x-ebm-invariants": [
+        "supported-algorithm-settings-rule-set-exact/1",
+        "settings-schema-required-subset-of-properties/1",
+        "describe-settings-schemas-validated/1"
+      ]
+    },
+    "DescribeResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["supported_commands", "supported_algorithms", "worker_limitations", "requested_output_registry_digest", "self_test_check_registry_digest"],
+      "properties": {
+        "supported_commands": { "const": ["describe", "validate", "fit", "self-test"] },
+        "supported_algorithms": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/SupportedAlgorithm" } },
+        "worker_limitations": { "type": "array", "items": { "type": "string", "maxLength": 1000 } },
+        "requested_output_registry_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "self_test_check_registry_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      },
+      "x-ebm-invariants": [
+        "describe-settings-schemas-validated/1"
+      ]
+    },
+    "WorkerFixedCohortStageArrayExclusion": {
+      "type": "object",
+      "allOf": [
+        {
+          "if": {
+            "required": ["component_applicability"],
+            "properties": {
+              "component_applicability": {
+                "contains": {
+                  "type": "object",
+                  "required": ["output_id"],
+                  "properties": { "output_id": { "const": "evaluation_stage_posterior" } }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "array_catalog": {
+                "not": {
+                  "anyOf": [
+                    { "required": ["evaluation_row_indexes"] },
+                    { "required": ["evaluation_stage_posterior"] }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["component_applicability"],
+            "properties": {
+              "component_applicability": {
+                "contains": {
+                  "type": "object",
+                  "required": ["output_id"],
+                  "properties": { "output_id": { "const": "evaluation_hard_stages" } }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "array_catalog": {
+                "not": {
+                  "anyOf": [
+                    { "required": ["evaluation_row_indexes"] },
+                    { "required": ["evaluation_map_stage"] },
+                    { "required": ["evaluation_map_tie_mask"] }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["component_applicability"],
+            "properties": {
+              "component_applicability": {
+                "contains": {
+                  "type": "object",
+                  "required": ["output_id"],
+                  "properties": { "output_id": { "const": "evaluation_expected_stage" } }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "array_catalog": {
+                "not": {
+                  "anyOf": [
+                    { "required": ["evaluation_row_indexes"] },
+                    { "required": ["evaluation_expected_stage"] }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "WorkerStageModelReferenceBinding": {
+      "type": "object",
+      "required": ["array_catalog", "stage_model_reference"],
+      "if": {
+        "properties": {
+          "array_catalog": {
+            "anyOf": [
+              { "required": ["training_stage_posterior"] },
+              { "required": ["training_map_stage"] },
+              { "required": ["training_map_tie_mask"] },
+              { "required": ["training_expected_stage"] },
+              { "required": ["evaluation_stage_posterior"] },
+              { "required": ["evaluation_map_stage"] },
+              { "required": ["evaluation_map_tie_mask"] },
+              { "required": ["evaluation_expected_stage"] }
+            ]
+          }
+        }
+      },
+      "then": { "properties": { "stage_model_reference": { "$ref": "canonical-records.schema.json#/$defs/StageModelReference" } } },
+      "else": { "properties": { "stage_model_reference": { "type": "null" } } }
+    },
+    "ExactFixedTargetArrayBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["member_name", "array_digest"],
+      "properties": {
+        "member_name": {
+          "enum": [
+            "backend.kde-ebm.exact-fixed-target-position-probabilities",
+            "backend.kde-ebm.exact-fixed-target-pairwise-precedence"
+          ]
+        },
+        "array_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      }
+    },
+    "ExactFixedTargetReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exact_fixed_target_reference_schema_version", "requested_output_id", "target_arithmetic_id", "native_probability_matrix_shape", "native_probability_matrix_dtype", "native_probability_matrix_order", "native_probability_matrix_digest", "event_ids", "component_axis", "order_count", "position_probabilities_binding", "pairwise_precedence_binding", "even_permutation_mass", "exact_fixed_target_reference_digest"],
+      "properties": {
+        "exact_fixed_target_reference_schema_version": { "const": "ebm-audit-exact-fixed-target-reference/1.0" },
+        "requested_output_id": { "const": "exact_fixed_order_target" },
+        "target_arithmetic_id": { "const": "kde-ebm-0.0.3-uniform-order-posterior-binary64-uniform-stage-plus-1e-250/2" },
+        "native_probability_matrix_shape": {
+          "type": "array",
+          "prefixItems": [
+            { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+            { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+            { "const": 2 }
+          ],
+          "items": false,
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "native_probability_matrix_dtype": { "const": "float64" },
+        "native_probability_matrix_order": { "const": "C" },
+        "native_probability_matrix_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "event_ids": { "type": "array", "minItems": 2, "maxItems": 9, "uniqueItems": true, "items": { "$ref": "canonical-records.schema.json#/$defs/MachineId" } },
+        "component_axis": { "const": ["non-event-density", "event-density"] },
+        "order_count": { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+        "position_probabilities_binding": {
+          "allOf": [
+            { "$ref": "#/$defs/ExactFixedTargetArrayBinding" },
+            { "properties": { "member_name": { "const": "backend.kde-ebm.exact-fixed-target-position-probabilities" } } }
+          ]
+        },
+        "pairwise_precedence_binding": {
+          "allOf": [
+            { "$ref": "#/$defs/ExactFixedTargetArrayBinding" },
+            { "properties": { "member_name": { "const": "backend.kde-ebm.exact-fixed-target-pairwise-precedence" } } }
+          ]
+        },
+        "even_permutation_mass": { "$ref": "canonical-records.schema.json#/$defs/Probability" },
+        "exact_fixed_target_reference_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      }
+    },
+    "WorkerExactFixedTargetReferenceBinding": {
+      "type": "object",
+      "required": ["array_catalog"],
+      "if": {
+        "properties": {
+          "array_catalog": {
+            "anyOf": [
+              { "required": ["backend.kde-ebm.exact-fixed-target-position-probabilities"] },
+              { "required": ["backend.kde-ebm.exact-fixed-target-pairwise-precedence"] }
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": ["exact_fixed_target_reference"],
+        "properties": {
+          "array_catalog": {
+            "allOf": [
+              { "required": ["backend.kde-ebm.exact-fixed-target-position-probabilities"] },
+              { "required": ["backend.kde-ebm.exact-fixed-target-pairwise-precedence"] }
+            ]
+          },
+          "exact_fixed_target_reference": { "$ref": "#/$defs/ExactFixedTargetReference" }
+        }
+      },
+      "else": {
+        "properties": {
+          "exact_fixed_target_reference": { "type": "null" }
+        }
+      }
+    },
+    "WorkerFitPayloadCore": {
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/WorkerFixedCohortStageArrayExclusion" }, { "$ref": "#/$defs/WorkerStageModelReferenceBinding" }, { "$ref": "#/$defs/WorkerExactFixedTargetReferenceBinding" }],
+      "required": ["payload_schema_version", "universe_id", "chain_execution_id", "attempt_id", "attempt_ordinal", "algorithm_id", "settings_digest", "config_digest", "requested_outputs_digest", "execution_input_projection_digest", "seed", "chain_id", "event_ids", "central_order_permutation", "central_order_method", "raw_iteration_count", "burn_in_count", "thinning_interval", "postburn_unthinned_state_count", "retained_state_count", "likelihood_indexing", "actual_transition_count", "actual_transition_fraction", "array_catalog", "field_origins", "participant_event_manifest", "preprocessing_manifest_digest", "stage_semantics_digest", "stage_model_reference", "component_applicability", "input_digest", "core_code_digest", "worker_executable_digest", "worker_code_digest", "backend_source_digest", "environment_digest", "capabilities_digest", "resource_summary", "backend_artifacts"],
+      "properties": {
+        "payload_schema_version": { "const": "ebm-audit-worker-fit-payload/2.0" },
+        "universe_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "chain_execution_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "attempt_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "attempt_ordinal": { "enum": [0, 1] },
+        "algorithm_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "settings_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "config_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "requested_outputs_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "seed": { "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" },
+        "chain_id": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "canonical-records.schema.json#/$defs/MachineId" } },
+        "central_order_permutation": { "type": "array", "minItems": 2, "items": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" } },
+        "central_order_method": { "$ref": "canonical-records.schema.json#/$defs/CentralOrderMethod" },
+        "raw_iteration_count": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" }, { "type": "null" }] },
+        "burn_in_count": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/SafeInteger" }, { "type": "null" }] },
+        "thinning_interval": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" }, { "type": "null" }] },
+        "postburn_unthinned_state_count": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" }, { "type": "null" }] },
+        "retained_state_count": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" }, { "type": "null" }] },
+        "likelihood_indexing": { "enum": ["post-proposal-state/1", null] },
+        "actual_transition_count": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/SafeInteger" }, { "type": "null" }] },
+        "actual_transition_fraction": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Probability" }, { "type": "null" }] },
+        "array_catalog": { "$ref": "#/$defs/ArrayCatalog" },
+        "field_origins": { "type": "object", "additionalProperties": { "$ref": "canonical-records.schema.json#/$defs/FieldProvenance" } },
+        "participant_event_manifest": { "$ref": "canonical-records.schema.json#/$defs/ParticipantEventManifest" },
+        "preprocessing_manifest_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "stage_semantics_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "stage_model_reference": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/StageModelReference" }, { "type": "null" }] },
+        "exact_fixed_target_reference": { "oneOf": [{ "$ref": "#/$defs/ExactFixedTargetReference" }, { "type": "null" }] },
+        "component_applicability": { "$ref": "canonical-records.schema.json#/$defs/FixedCohortStageComponentApplicabilitySet" },
+        "input_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "core_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "worker_executable_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "worker_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "backend_source_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "environment_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "capabilities_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "resource_summary": { "$ref": "canonical-records.schema.json#/$defs/ResourceSummary" },
+        "backend_artifacts": { "type": "array", "items": { "$ref": "canonical-records.schema.json#/$defs/ArtifactReference" } },
+        "synthetic_provenance": { "$ref": "#/$defs/SyntheticProvenance" }
+      },
+      "x-ebm-invariants": ["fit-command-payload-digest-recomputed/1"]
+    },
+    "WorkerFitPayloadDigestPreimage": {
+      "allOf": [
+        { "$ref": "#/$defs/WorkerFitPayloadCore" }
+      ],
+      "unevaluatedProperties": false
+    },
+    "WorkerFitPayload": {
+      "allOf": [
+        { "$ref": "#/$defs/WorkerFitPayloadCore" },
+        {
+          "type": "object",
+          "required": ["worker_fit_payload_digest"],
+          "properties": {
+            "worker_fit_payload_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "StageResultCore": {
+      "type": "object",
+      "allOf": [
+        {
+          "properties": {
+            "fitted_artifact": {
+              "properties": {
+                "stage_model_reference_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+              }
+            }
+          }
+        }
+      ],
+      "required": ["stage_result_schema_version", "protocol_version", "request_id", "stage_call_id", "algorithm_id", "settings_digest", "config_digest", "requested_outputs_digest", "execution_input_projection_digest", "seed", "fitted_artifact", "event_ids", "stage_semantics_digest", "stage_model_reference_digest", "stage_row_indexes_array", "array_catalog", "field_origins", "participant_event_manifest", "input_digest", "core_code_digest", "worker_executable_digest", "worker_code_digest", "backend_source_digest", "environment_digest", "capabilities_digest", "warnings", "runtime_seconds", "resource_summary"],
+      "properties": {
+        "stage_result_schema_version": { "const": "ebm-audit-stage-result/2.0" },
+        "protocol_version": { "const": "ebm-audit-worker/v2" },
+        "request_id": { "$ref": "#/$defs/UuidV4" },
+        "stage_call_id": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "algorithm_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "settings_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "config_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "requested_outputs_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "seed": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" }, { "type": "null" }] },
+        "fitted_artifact": { "$ref": "#/$defs/ArtifactBinding" },
+        "event_ids": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "canonical-records.schema.json#/$defs/MachineId" } },
+        "stage_semantics_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "stage_model_reference_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "stage_row_indexes_array": { "const": "stage_row_indexes" },
+        "array_catalog": { "$ref": "#/$defs/StageOutputArrayCatalog" },
+        "field_origins": { "type": "object", "additionalProperties": { "$ref": "canonical-records.schema.json#/$defs/FieldProvenance" } },
+        "participant_event_manifest": { "$ref": "canonical-records.schema.json#/$defs/ParticipantEventManifest" },
+        "input_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "core_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "worker_executable_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "worker_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "backend_source_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "environment_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "capabilities_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "warnings": { "type": "array", "items": { "$ref": "canonical-records.schema.json#/$defs/WarningRecord" } },
+        "runtime_seconds": { "type": "number", "minimum": 0 },
+        "resource_summary": { "$ref": "canonical-records.schema.json#/$defs/ResourceSummary" }
+      }
+    },
+    "StageResultDigestPreimage": {
+      "allOf": [{ "$ref": "#/$defs/StageResultCore" }],
+      "unevaluatedProperties": false
+    },
+    "StageResult": {
+      "allOf": [
+        { "$ref": "#/$defs/StageResultCore" },
+        {
+          "type": "object",
+          "required": ["worker_stage_result_digest"],
+          "properties": {
+            "worker_stage_result_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "SelfTestCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check_id", "outcome", "safe_message", "evidence_digests", "evidence_counts"],
+      "properties": {
+        "check_id": { "$ref": "#/$defs/SelfTestCheckId" },
+        "outcome": { "enum": ["PASS", "FAIL"] },
+        "safe_message": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "evidence_digests": { "$ref": "canonical-records.schema.json#/$defs/StringDigestMap" },
+        "evidence_counts": { "type": "object", "propertyNames": { "$ref": "canonical-records.schema.json#/$defs/MachineId" }, "additionalProperties": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" } }
+      }
+    },
+    "SelfTestReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "fixture_id", "fixture_digest", "worker_executable_digest", "worker_code_digest", "backend_source_digest", "environment_digest", "started_at_utc", "ended_at_utc", "checks"],
+      "properties": {
+        "profile": { "const": "tiny-synthetic/1" },
+        "fixture_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "fixture_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "worker_executable_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "worker_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "backend_source_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "environment_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "started_at_utc": { "$ref": "canonical-records.schema.json#/$defs/Timestamp" },
+        "ended_at_utc": { "$ref": "canonical-records.schema.json#/$defs/Timestamp" },
+        "checks": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/SelfTestCheck" } }
+      }
+    },
+    "DescribeSuccessPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result"],
+      "properties": { "result": { "$ref": "#/$defs/DescribeResult" } }
+    },
+    "ValidateSuccessPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm_id", "settings_digest", "config_digest", "requested_outputs_digest", "execution_input_projection_digest", "validation_issues", "predicted_accounting", "component_applicability", "fit_permitted"],
+      "properties": {
+        "algorithm_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "settings_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "config_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "requested_outputs_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "validation_issues": { "type": "array", "items": { "$ref": "canonical-records.schema.json#/$defs/ValidationIssue" } },
+        "predicted_accounting": { "$ref": "canonical-records.schema.json#/$defs/DataAccounting" },
+        "component_applicability": { "$ref": "canonical-records.schema.json#/$defs/FixedCohortStageComponentApplicabilitySet" },
+        "fit_permitted": { "type": "boolean" }
+      }
+    },
+    "WorkerValidationPayloadDigestPreimage": {
+      "$ref": "#/$defs/ValidateSuccessPayload"
+    },
+    "FitSuccessPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["universe_id", "chain_execution_id", "attempt_id", "attempt_ordinal", "algorithm_id", "settings_digest", "config_digest", "requested_outputs_digest", "execution_input_projection_digest", "seed", "chain_id", "result"],
+      "properties": {
+        "universe_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "chain_execution_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "attempt_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "attempt_ordinal": { "enum": [0, 1] },
+        "algorithm_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "settings_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "config_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "requested_outputs_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "seed": { "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" },
+        "chain_id": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "result": { "$ref": "#/$defs/WorkerFitPayload" }
+      }
+    },
+    "StageSuccessPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm_id", "settings_digest", "config_digest", "requested_outputs_digest", "execution_input_projection_digest", "seed", "stage_call_id", "result"],
+      "properties": {
+        "algorithm_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "settings_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "config_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "requested_outputs_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "seed": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" }, { "type": "null" }] },
+        "stage_call_id": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "result": { "$ref": "#/$defs/StageResult" }
+      }
+    },
+    "SelfTestSuccessPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seed", "receipt"],
+      "properties": {
+        "seed": { "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" },
+        "receipt": { "$ref": "#/$defs/SelfTestReceipt" }
+      }
+    },
+    "WorkerResponseCore": {
+      "type": "object",
+      "required": ["protocol_version", "response_schema_version", "payload_schema_version", "request_id", "request_metadata_digest", "scientific_request_digest", "command", "status", "backend_identity", "backend_identity_digest", "capabilities", "capabilities_digest", "settings_digest", "requested_outputs_digest", "execution_input_projection_digest", "core_code_digest", "started_at_utc", "ended_at_utc", "runtime_seconds", "resource_summary", "warnings_record_count", "warnings_file_digest", "side_effects_file_digest", "payload", "error", "files"],
+      "properties": {
+        "protocol_version": { "const": "ebm-audit-worker/v2" },
+        "response_schema_version": { "const": "ebm-audit-worker-response/2.0" },
+        "payload_schema_version": { "enum": [null, "ebm-audit-worker-validation/2.0", "ebm-audit-worker-fit-payload/2.0", "ebm-audit-stage-scientific-input/2.0"] },
+        "request_id": { "$ref": "#/$defs/UuidV4" },
+        "request_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "scientific_request_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "command": { "$ref": "#/$defs/Command" },
+        "status": { "$ref": "#/$defs/WorkerStatus" },
+        "backend_identity": { "$ref": "canonical-records.schema.json#/$defs/BackendIdentity" },
+        "backend_identity_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "capabilities": { "oneOf": [{ "$ref": "#/$defs/AdapterCapabilities" }, { "type": "null" }] },
+        "capabilities_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "settings_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "requested_outputs_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "execution_input_projection_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "core_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "started_at_utc": { "$ref": "canonical-records.schema.json#/$defs/Timestamp" },
+        "ended_at_utc": { "$ref": "canonical-records.schema.json#/$defs/Timestamp" },
+        "runtime_seconds": { "type": "number", "minimum": 0 },
+        "resource_summary": { "$ref": "canonical-records.schema.json#/$defs/ResourceSummary" },
+        "warnings_record_count": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "warnings_file_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "side_effects_file_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "payload": {},
+        "error": {},
+        "files": { "$ref": "#/$defs/FilesMap" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "command": { "enum": ["validate", "fit", "stage"] } }, "required": ["command"] },
+          "then": { "properties": { "scientific_request_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" } } },
+          "else": { "properties": { "scientific_request_digest": { "type": "null" }, "execution_input_projection_digest": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "command": { "enum": ["describe", "self-test"] } } },
+          "then": { "properties": { "capabilities": { "type": "null" }, "capabilities_digest": { "type": "null" }, "settings_digest": { "type": "null" }, "requested_outputs_digest": { "type": "null" } } },
+          "else": { "properties": { "capabilities": { "$ref": "#/$defs/AdapterCapabilities" }, "capabilities_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, "settings_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, "requested_outputs_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "SUCCESS" }, "command": { "const": "describe" } }, "required": ["status", "command"] },
+          "then": { "properties": { "payload_schema_version": { "type": "null" }, "payload": { "$ref": "#/$defs/DescribeSuccessPayload" }, "error": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "SUCCESS" }, "command": { "const": "validate" } }, "required": ["status", "command"] },
+          "then": { "properties": { "payload_schema_version": { "const": "ebm-audit-worker-validation/2.0" }, "payload": { "$ref": "#/$defs/ValidateSuccessPayload" }, "error": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "SUCCESS" }, "command": { "const": "fit" } }, "required": ["status", "command"] },
+          "then": { "properties": { "payload_schema_version": { "const": "ebm-audit-worker-fit-payload/2.0" }, "payload": { "$ref": "#/$defs/FitSuccessPayload" }, "error": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "SUCCESS" }, "command": { "const": "stage" } }, "required": ["status", "command"] },
+          "then": { "properties": { "payload_schema_version": { "const": "ebm-audit-stage-scientific-input/2.0" }, "payload": { "$ref": "#/$defs/StageSuccessPayload" }, "error": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "SUCCESS" }, "command": { "const": "self-test" } }, "required": ["status", "command"] },
+          "then": { "properties": { "payload_schema_version": { "type": "null" }, "payload": { "$ref": "#/$defs/SelfTestSuccessPayload" }, "error": { "type": "null" } } }
+        },
+        {
+          "if": { "not": { "properties": { "status": { "const": "SUCCESS" } }, "required": ["status"] } },
+          "then": {
+            "properties": { "payload": { "type": "null" }, "error": { "$ref": "canonical-records.schema.json#/$defs/NegativeResponseError" } },
+            "allOf": [
+              {
+                "if": { "properties": { "command": { "enum": ["describe", "self-test"] } }, "required": ["command"] },
+                "then": { "properties": { "payload_schema_version": { "type": "null" } } }
+              },
+              {
+                "if": { "properties": { "command": { "const": "validate" } }, "required": ["command"] },
+                "then": { "properties": { "payload_schema_version": { "const": "ebm-audit-worker-validation/2.0" } } }
+              },
+              {
+                "if": { "properties": { "command": { "const": "fit" } }, "required": ["command"] },
+                "then": { "properties": { "payload_schema_version": { "const": "ebm-audit-worker-fit-payload/2.0" } } }
+              },
+              {
+                "if": { "properties": { "command": { "const": "stage" } }, "required": ["command"] },
+                "then": { "properties": { "payload_schema_version": { "const": "ebm-audit-stage-scientific-input/2.0" } } }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "WorkerResponseMetadataDigestPreimage": {
+      "allOf": [
+        { "$ref": "#/$defs/WorkerResponseCore" }
+      ],
+      "unevaluatedProperties": false
+    },
+    "WorkerResponse": {
+      "allOf": [
+        { "$ref": "#/$defs/WorkerResponseCore" },
+        {
+          "type": "object",
+          "required": ["response_metadata_digest"],
+          "properties": {
+            "response_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "RetainedFileEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "byte_length", "sha256"],
+      "properties": {
+        "relative_path": { "$ref": "canonical-records.schema.json#/$defs/RelativePosixPath" },
+        "byte_length": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      }
+    },
+    "SideEffectsRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "observation_scope", "inventory_root", "inventory_exclusions", "retained_request_files", "retained_output_files", "retained_workspace_files", "unobserved_activity_classes"],
+      "properties": {
+        "schema_version": { "const": "ebm-audit-side-effects/1.1" },
+        "observation_scope": { "const": "FINAL_RETAINED_TREE_ONLY" },
+        "inventory_root": { "const": "invocation" },
+        "inventory_exclusions": {
+          "const": ["response/.side-effects.json.tmp", "response/side-effects.json", "response/.response.json.tmp", "response/response.json"]
+        },
+        "retained_request_files": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/RetainedFileEntry" } },
+        "retained_output_files": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/RetainedFileEntry" } },
+        "retained_workspace_files": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/RetainedFileEntry" } },
+        "unobserved_activity_classes": {
+          "const": ["file-reads", "transient-file-creations", "transient-file-modifications", "transient-file-deletions", "denied-network-attempts", "denied-outside-path-attempts", "denied-or-transient-subprocess-activity"]
+        }
+      }
+    },
+    "ActualValidateWorkerSubjectProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actual_subject_schema_version", "command", "backend_identity_digest", "adapter_id", "adapter_version", "backend_name", "backend_version", "algorithm_id", "worker_executable_digest", "worker_code_digest", "backend_source_commit", "backend_source_digest", "environment_digest", "capabilities_digest", "settings_digest", "execution_input_projection_digest", "protocol_version", "request_schema_version", "response_schema_version", "validation_payload_schema_version", "validate_requested_outputs_digest"],
+      "properties": {
+        "actual_subject_schema_version": { "const": "ebm-audit-actual-validate-worker-subject/2.0" },
+        "command": { "const": "validate" },
+        "backend_identity_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "adapter_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "adapter_version": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "backend_name": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "backend_version": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" }, { "type": "null" }] },
+        "algorithm_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "worker_executable_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "worker_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "backend_source_commit": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/GitObjectId" }, { "type": "null" }] },
+        "backend_source_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "environment_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "capabilities_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "settings_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "protocol_version": { "const": "ebm-audit-worker/v2" },
+        "request_schema_version": { "const": "ebm-audit-worker-request/2.0" },
+        "response_schema_version": { "const": "ebm-audit-worker-response/2.0" },
+        "validation_payload_schema_version": { "const": "ebm-audit-worker-validation/2.0" },
+        "validate_requested_outputs_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      }
+    },
+    "ActualFitWorkerSubjectProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actual_subject_schema_version", "command", "attempt_id", "attempt_ordinal", "backend_identity_digest", "adapter_id", "adapter_version", "backend_name", "backend_version", "algorithm_id", "worker_executable_digest", "worker_code_digest", "backend_source_commit", "backend_source_digest", "environment_digest", "capabilities_digest", "settings_digest", "execution_input_projection_digest", "protocol_version", "request_schema_version", "response_schema_version", "worker_payload_schema_version", "fit_requested_outputs_digest"],
+      "properties": {
+        "actual_subject_schema_version": { "const": "ebm-audit-actual-fit-worker-subject/2.0" },
+        "command": { "const": "fit" },
+        "attempt_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "attempt_ordinal": { "enum": [0, 1] },
+        "backend_identity_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "adapter_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "adapter_version": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "backend_name": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "backend_version": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" }, { "type": "null" }] },
+        "algorithm_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "worker_executable_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "worker_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "backend_source_commit": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/GitObjectId" }, { "type": "null" }] },
+        "backend_source_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "environment_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "capabilities_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "settings_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "protocol_version": { "const": "ebm-audit-worker/v2" },
+        "request_schema_version": { "const": "ebm-audit-worker-request/2.0" },
+        "response_schema_version": { "const": "ebm-audit-worker-response/2.0" },
+        "worker_payload_schema_version": { "const": "ebm-audit-worker-fit-payload/2.0" },
+        "fit_requested_outputs_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      }
+    },
+    "ActualStageWorkerSubjectProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actual_subject_schema_version", "command", "stage_call_id", "fitted_artifact_sha256", "stage_model_reference_digest", "backend_identity_digest", "adapter_id", "adapter_version", "backend_name", "backend_version", "algorithm_id", "worker_executable_digest", "worker_code_digest", "backend_source_commit", "backend_source_digest", "environment_digest", "capabilities_digest", "settings_digest", "execution_input_projection_digest", "protocol_version", "request_schema_version", "response_schema_version", "stage_scientific_input_schema_version", "stage_result_schema_version", "stage_requested_outputs_digest"],
+      "properties": {
+        "actual_subject_schema_version": { "const": "ebm-audit-actual-stage-worker-subject/2.0" },
+        "command": { "const": "stage" },
+        "stage_call_id": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "fitted_artifact_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "stage_model_reference_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "backend_identity_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "adapter_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "adapter_version": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "backend_name": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "backend_version": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" }, { "type": "null" }] },
+        "algorithm_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "worker_executable_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "worker_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "backend_source_commit": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/GitObjectId" }, { "type": "null" }] },
+        "backend_source_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "environment_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "capabilities_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "settings_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "protocol_version": { "const": "ebm-audit-worker/v2" },
+        "request_schema_version": { "const": "ebm-audit-worker-request/2.0" },
+        "response_schema_version": { "const": "ebm-audit-worker-response/2.0" },
+        "stage_scientific_input_schema_version": { "const": "ebm-audit-stage-scientific-input/2.0" },
+        "stage_result_schema_version": { "const": "ebm-audit-stage-result/2.0" },
+        "stage_requested_outputs_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      }
+    },
+    "ValidateSuccessCommandEvidenceProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_evidence_schema_version", "command", "status", "request_metadata_digest", "scientific_request_digest", "response_metadata_digest", "payload_schema_version", "payload_digest_kind", "payload_digest", "requested_outputs_digest", "execution_input_projection_digest", "backend_identity_digest", "actual_validate_worker_subject_digest"],
+      "properties": {
+        "command_evidence_schema_version": { "const": "ebm-audit-validate-success-command-evidence/2.0" },
+        "command": { "const": "validate" },
+        "status": { "const": "SUCCESS" },
+        "request_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "scientific_request_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "response_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "payload_schema_version": { "const": "ebm-audit-worker-validation/2.0" },
+        "payload_digest_kind": { "const": "WORKER_VALIDATION_PAYLOAD" },
+        "payload_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "requested_outputs_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "backend_identity_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "actual_validate_worker_subject_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      },
+      "x-ebm-invariants": [
+        "validate-command-payload-digest-recomputed/1",
+        "validate-command-subject-digest-recomputed/1",
+        "command-evidence-response-binding-exact/1"
+      ]
+    },
+    "FitSuccessCommandEvidenceProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_evidence_schema_version", "command", "status", "attempt_id", "attempt_ordinal", "request_metadata_digest", "scientific_request_digest", "response_metadata_digest", "payload_schema_version", "payload_digest_kind", "payload_digest", "requested_outputs_digest", "execution_input_projection_digest", "backend_identity_digest", "actual_fit_worker_subject_digest"],
+      "properties": {
+        "command_evidence_schema_version": { "const": "ebm-audit-fit-success-command-evidence/2.0" },
+        "command": { "const": "fit" },
+        "status": { "const": "SUCCESS" },
+        "attempt_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "attempt_ordinal": { "enum": [0, 1] },
+        "request_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "scientific_request_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "response_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "payload_schema_version": { "const": "ebm-audit-worker-fit-payload/2.0" },
+        "payload_digest_kind": { "const": "WORKER_FIT_PAYLOAD" },
+        "payload_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "requested_outputs_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "backend_identity_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "actual_fit_worker_subject_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      },
+      "x-ebm-invariants": [
+        "fit-command-payload-digest-recomputed/1",
+        "fit-command-subject-digest-recomputed/1",
+        "command-evidence-response-binding-exact/1"
+      ]
+    },
+    "StageSuccessCommandEvidenceProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_evidence_schema_version", "command", "status", "stage_call_id", "request_metadata_digest", "scientific_request_digest", "response_metadata_digest", "payload_schema_version", "result_schema_version", "payload_digest_kind", "payload_digest", "requested_outputs_digest", "execution_input_projection_digest", "backend_identity_digest", "actual_stage_worker_subject_digest"],
+      "properties": {
+        "command_evidence_schema_version": { "const": "ebm-audit-stage-success-command-evidence/2.0" },
+        "command": { "const": "stage" },
+        "status": { "const": "SUCCESS" },
+        "stage_call_id": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "request_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "scientific_request_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "response_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "payload_schema_version": { "const": "ebm-audit-stage-scientific-input/2.0" },
+        "result_schema_version": { "const": "ebm-audit-stage-result/2.0" },
+        "payload_digest_kind": { "const": "WORKER_STAGE_RESULT" },
+        "payload_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "requested_outputs_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "backend_identity_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "actual_stage_worker_subject_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      }
+    },
+    "CommandEvidenceProjection": {
+      "oneOf": [
+        { "$ref": "#/$defs/ValidateSuccessCommandEvidenceProjection" },
+        { "$ref": "#/$defs/FitSuccessCommandEvidenceProjection" },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/NegativeCommandEvidenceProjection" },
+            { "properties": { "command": { "enum": ["validate", "fit"] } } }
+          ]
+        }
+      ],
+      "$comment": "Active internal contract-harness command evidence. Separate stage command evidence is not active."
+    },
+    "CommandEvidenceReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "schema_version", "digest"],
+      "properties": {
+        "kind": { "enum": ["VALIDATE_SUCCESS", "VALIDATE_NEGATIVE", "FIT_SUCCESS", "FIT_NEGATIVE"] },
+        "schema_version": { "enum": ["ebm-audit-validate-success-command-evidence/2.0", "ebm-audit-fit-success-command-evidence/2.0", "ebm-audit-negative-command-evidence/2.0"] },
+        "digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      },
+      "oneOf": [
+        { "properties": { "kind": { "const": "VALIDATE_SUCCESS" }, "schema_version": { "const": "ebm-audit-validate-success-command-evidence/2.0" } } },
+        { "properties": { "kind": { "const": "VALIDATE_NEGATIVE" }, "schema_version": { "const": "ebm-audit-negative-command-evidence/2.0" } } },
+        { "properties": { "kind": { "const": "FIT_SUCCESS" }, "schema_version": { "const": "ebm-audit-fit-success-command-evidence/2.0" } } },
+        { "properties": { "kind": { "const": "FIT_NEGATIVE" }, "schema_version": { "const": "ebm-audit-negative-command-evidence/2.0" } } }
+      ]
+    },
+    "AuthenticatedWorkerRequestEvidenceProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["request_evidence_schema_version", "protocol_version", "request_schema_version", "payload_schema_version", "command", "request_metadata_digest", "scientific_request_digest", "execution_input_projection_digest", "request_bundle_digest", "authenticated_description_response_metadata_digest", "planning_summary_id", "selected_algorithm_binding_digest"],
+      "properties": {
+        "request_evidence_schema_version": { "const": "ebm-audit-authenticated-worker-request-evidence/2.0" },
+        "protocol_version": { "const": "ebm-audit-worker/v2" },
+        "request_schema_version": { "const": "ebm-audit-worker-request/2.0" },
+        "payload_schema_version": {
+          "oneOf": [
+            { "type": "null" },
+            { "enum": ["ebm-audit-worker-validation/2.0", "ebm-audit-worker-fit-payload/2.0", "ebm-audit-stage-scientific-input/2.0"] }
+          ]
+        },
+        "command": { "$ref": "#/$defs/Command" },
+        "request_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "scientific_request_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        },
+        "execution_input_projection_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        },
+        "request_bundle_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "authenticated_description_response_metadata_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        },
+        "planning_summary_id": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        },
+        "selected_algorithm_binding_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "command": { "const": "describe" },
+            "payload_schema_version": { "type": "null" },
+            "scientific_request_digest": { "type": "null" },
+            "execution_input_projection_digest": { "type": "null" },
+            "authenticated_description_response_metadata_digest": { "type": "null" },
+            "planning_summary_id": { "type": "null" },
+            "selected_algorithm_binding_digest": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "command": { "const": "self-test" },
+            "payload_schema_version": { "type": "null" },
+            "scientific_request_digest": { "type": "null" },
+            "execution_input_projection_digest": { "type": "null" },
+            "authenticated_description_response_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "planning_summary_id": { "type": "null" },
+            "selected_algorithm_binding_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+          }
+        },
+        {
+          "properties": {
+            "command": { "const": "validate" },
+            "payload_schema_version": { "const": "ebm-audit-worker-validation/2.0" },
+            "scientific_request_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "authenticated_description_response_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "selected_algorithm_binding_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+          }
+        },
+        {
+          "properties": {
+            "command": { "const": "fit" },
+            "payload_schema_version": { "const": "ebm-audit-worker-fit-payload/2.0" },
+            "scientific_request_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "authenticated_description_response_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "selected_algorithm_binding_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+          }
+        }
+      ],
+      "$comment": "Exact active command matrix. Validate and fit carry null planning_summary_id only for test-only contract-harness evidence, or the exact digest of sealed Universe/3 preparation authority for production evidence. The null branch has no promotion or product authority; stage has no active branch."
+    },
+    "AuthenticatedWorkerExecutionEvidenceProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["execution_evidence_schema_version", "protocol_version", "response_schema_version", "payload_schema_version", "command", "status", "authenticated_request_evidence_digest", "authenticated_description_response_metadata_digest", "planning_summary_id", "selected_algorithm_binding_digest", "response_metadata_digest", "request_bundle_digest", "response_bundle_digest", "invocation_bundle_digest", "command_evidence_reference", "stdout_byte_length", "stdout_sha256", "stderr_byte_length", "stderr_sha256", "runtime_milliseconds", "containment_provider", "containment_launcher_sha256", "attempt_observability_verified"],
+      "properties": {
+        "execution_evidence_schema_version": { "const": "ebm-audit-authenticated-worker-execution-evidence/2.0" },
+        "protocol_version": { "const": "ebm-audit-worker/v2" },
+        "response_schema_version": { "const": "ebm-audit-worker-response/2.0" },
+        "payload_schema_version": {
+          "oneOf": [
+            { "type": "null" },
+            { "enum": ["ebm-audit-worker-validation/2.0", "ebm-audit-worker-fit-payload/2.0", "ebm-audit-stage-scientific-input/2.0"] }
+          ]
+        },
+        "command": { "$ref": "#/$defs/Command" },
+        "status": { "$ref": "#/$defs/WorkerStatus" },
+        "authenticated_request_evidence_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "authenticated_description_response_metadata_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        },
+        "planning_summary_id": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        },
+        "selected_algorithm_binding_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        },
+        "response_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "request_bundle_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "response_bundle_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "invocation_bundle_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "command_evidence_reference": {
+          "oneOf": [
+            { "$ref": "#/$defs/CommandEvidenceReference" },
+            { "type": "null" }
+          ]
+        },
+        "stdout_byte_length": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "stdout_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "stderr_byte_length": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "stderr_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "runtime_milliseconds": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "containment_provider": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "containment_launcher_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "attempt_observability_verified": { "type": "boolean" }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "command": { "const": "describe" },
+            "payload_schema_version": { "type": "null" },
+            "authenticated_description_response_metadata_digest": { "type": "null" },
+            "planning_summary_id": { "type": "null" },
+            "selected_algorithm_binding_digest": { "type": "null" },
+            "command_evidence_reference": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "command": { "const": "self-test" },
+            "payload_schema_version": { "type": "null" },
+            "authenticated_description_response_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "planning_summary_id": { "type": "null" },
+            "selected_algorithm_binding_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "command_evidence_reference": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "command": { "const": "validate" },
+            "status": { "const": "SUCCESS" },
+            "payload_schema_version": { "const": "ebm-audit-worker-validation/2.0" },
+            "authenticated_description_response_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "selected_algorithm_binding_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "command_evidence_reference": {
+              "allOf": [
+                { "$ref": "#/$defs/CommandEvidenceReference" },
+                { "properties": { "kind": { "const": "VALIDATE_SUCCESS" }, "schema_version": { "const": "ebm-audit-validate-success-command-evidence/2.0" } } }
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "command": { "const": "validate" },
+            "status": { "enum": ["INVALID_INPUT", "UNSUPPORTED_CAPABILITY", "INVALID_SPECIFICATION", "BACKEND_ERROR", "TIMEOUT", "PRIVACY_VIOLATION", "PROTOCOL_ERROR"] },
+            "payload_schema_version": { "const": "ebm-audit-worker-validation/2.0" },
+            "authenticated_description_response_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "selected_algorithm_binding_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "command_evidence_reference": {
+              "allOf": [
+                { "$ref": "#/$defs/CommandEvidenceReference" },
+                { "properties": { "kind": { "const": "VALIDATE_NEGATIVE" }, "schema_version": { "const": "ebm-audit-negative-command-evidence/2.0" } } }
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "command": { "const": "fit" },
+            "status": { "const": "SUCCESS" },
+            "payload_schema_version": { "const": "ebm-audit-worker-fit-payload/2.0" },
+            "authenticated_description_response_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "selected_algorithm_binding_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "command_evidence_reference": {
+              "allOf": [
+                { "$ref": "#/$defs/CommandEvidenceReference" },
+                { "properties": { "kind": { "const": "FIT_SUCCESS" }, "schema_version": { "const": "ebm-audit-fit-success-command-evidence/2.0" } } }
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "command": { "const": "fit" },
+            "status": { "enum": ["INVALID_INPUT", "UNSUPPORTED_CAPABILITY", "INVALID_SPECIFICATION", "BACKEND_ERROR", "TIMEOUT", "PRIVACY_VIOLATION", "PROTOCOL_ERROR"] },
+            "payload_schema_version": { "const": "ebm-audit-worker-fit-payload/2.0" },
+            "authenticated_description_response_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "selected_algorithm_binding_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "command_evidence_reference": {
+              "allOf": [
+                { "$ref": "#/$defs/CommandEvidenceReference" },
+                { "properties": { "kind": { "const": "FIT_NEGATIVE" }, "schema_version": { "const": "ebm-audit-negative-command-evidence/2.0" } } }
+              ]
+            }
+          }
+        }
+      ],
+      "$comment": "Exact active execution matrix. Describe and self-test have null command evidence; validate/fit bind typed success or negative evidence and distinguish test-only contract-harness evidence from production evidence by planning_summary_id. The null branch has no promotion or product authority; stage has no active branch."
+    },
+    "InvocationSafeEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "completed_response_status": { "$ref": "#/$defs/WorkerStatus" },
+        "maximum_directory_count": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "maximum_file_count": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "maximum_total_bytes": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "observation_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "observed_directory_count": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "observed_file_count": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "observed_total_bytes": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "partial_file_count": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "partial_inventory_complete": { "type": "boolean" },
+        "partial_workspace_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "response_marker_present": { "type": "boolean" },
+        "return_code": { "type": "integer", "minimum": -2147483648, "maximum": 2147483647 },
+        "runtime_milliseconds": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "stderr_byte_length": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "stderr_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "stdout_byte_length": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "stdout_sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "stream_hard_limit_bytes": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "timeout_milliseconds": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" }
+      }
+    },
+    "CoreObservedFailureDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observation_schema_version", "failure_class", "failure_code", "authenticated_request_evidence_digest", "authenticated_description_response_metadata_digest", "selected_algorithm_binding_digest", "framed_response_metadata_digest", "safe_evidence"],
+      "properties": {
+        "observation_schema_version": { "const": "ebm-audit-core-observed-failure/2.0" },
+        "failure_class": { "enum": ["TIMEOUT", "PRIVACY_VIOLATION", "PROCESS_FAILURE", "RESPONSE_MISSING", "RESPONSE_INVALID", "PROTOCOL_FAILURE", "UNEXPECTED_CORE_ERROR"] },
+        "failure_code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*(\\.[A-Z][A-Z0-9_]*)+$", "maxLength": 255 },
+        "authenticated_request_evidence_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "authenticated_description_response_metadata_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        },
+        "selected_algorithm_binding_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        },
+        "framed_response_metadata_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        },
+        "safe_evidence": { "$ref": "#/$defs/InvocationSafeEvidence" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "authenticated_description_response_metadata_digest": { "type": "null" } }, "required": ["authenticated_description_response_metadata_digest"] },
+          "then": {
+            "properties": {
+              "selected_algorithm_binding_digest": { "type": "null" }
+            }
+          },
+          "else": {
+            "properties": {
+              "selected_algorithm_binding_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+            }
+          }
+        }
+      ]
+    },
+    "NegativeCommandEvidenceProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_evidence_schema_version", "command", "status", "request_metadata_digest", "scientific_request_digest", "response_metadata_digest", "payload_schema_version", "payload_digest_kind", "payload_digest", "requested_outputs_digest", "execution_input_projection_digest", "backend_identity_digest", "capabilities_digest", "settings_digest", "error"],
+      "properties": {
+        "command_evidence_schema_version": { "const": "ebm-audit-negative-command-evidence/2.0" },
+        "command": { "enum": ["validate", "fit", "stage"] },
+        "status": { "enum": ["INVALID_INPUT", "UNSUPPORTED_CAPABILITY", "INVALID_SPECIFICATION", "BACKEND_ERROR", "TIMEOUT", "PRIVACY_VIOLATION", "PROTOCOL_ERROR"] },
+        "attempt_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "attempt_ordinal": { "enum": [0, 1] },
+        "request_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "scientific_request_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "response_metadata_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "payload_schema_version": { "enum": ["ebm-audit-worker-validation/2.0", "ebm-audit-worker-fit-payload/2.0", "ebm-audit-stage-scientific-input/2.0"] },
+        "payload_digest_kind": { "const": "NONE" },
+        "payload_digest": { "type": "null" },
+        "requested_outputs_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "execution_input_projection_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "backend_identity_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "capabilities_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "settings_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "actual_validate_worker_subject_preimage": { "$ref": "#/$defs/ActualValidateWorkerSubjectProjection" },
+        "actual_validate_worker_subject_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "actual_fit_worker_subject_preimage": { "$ref": "#/$defs/ActualFitWorkerSubjectProjection" },
+        "actual_fit_worker_subject_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "actual_stage_worker_subject_preimage": { "$ref": "#/$defs/ActualStageWorkerSubjectProjection" },
+        "actual_stage_worker_subject_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "error": { "$ref": "canonical-records.schema.json#/$defs/NegativeResponseError" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "command": { "const": "validate" } }, "required": ["command"] },
+          "then": {
+            "required": ["actual_validate_worker_subject_preimage", "actual_validate_worker_subject_digest"],
+            "properties": {
+              "payload_schema_version": { "const": "ebm-audit-worker-validation/2.0" },
+              "attempt_id": false,
+              "attempt_ordinal": false,
+              "actual_fit_worker_subject_preimage": false,
+              "actual_fit_worker_subject_digest": false,
+              "actual_stage_worker_subject_preimage": false,
+              "actual_stage_worker_subject_digest": false
+            }
+          }
+        },
+        {
+          "if": { "properties": { "command": { "const": "fit" } }, "required": ["command"] },
+          "then": {
+            "required": ["attempt_id", "attempt_ordinal", "actual_fit_worker_subject_preimage", "actual_fit_worker_subject_digest"],
+            "properties": {
+              "payload_schema_version": { "const": "ebm-audit-worker-fit-payload/2.0" },
+              "actual_validate_worker_subject_preimage": false,
+              "actual_validate_worker_subject_digest": false,
+              "actual_stage_worker_subject_preimage": false,
+              "actual_stage_worker_subject_digest": false
+            }
+          }
+        },
+        {
+          "if": { "properties": { "command": { "const": "stage" } }, "required": ["command"] },
+          "then": {
+            "required": ["actual_stage_worker_subject_preimage", "actual_stage_worker_subject_digest"],
+            "properties": {
+              "payload_schema_version": { "const": "ebm-audit-stage-scientific-input/2.0" },
+              "attempt_id": false,
+              "attempt_ordinal": false,
+              "actual_validate_worker_subject_preimage": false,
+              "actual_validate_worker_subject_digest": false,
+              "actual_fit_worker_subject_preimage": false,
+              "actual_fit_worker_subject_digest": false
+            }
+          }
+        }
+      ],
+      "x-ebm-invariants": [
+        "negative-command-payload-absent/1",
+        "negative-command-payload-version-command-compatible/1",
+        "negative-command-status-matches-error-category/1",
+        "negative-command-subject-digest-recomputed/1",
+        "command-evidence-response-binding-exact/1"
+      ]
+    }
+  }
+}

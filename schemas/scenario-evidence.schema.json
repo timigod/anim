@@ -1,0 +1,789 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Substantive scenario evidence",
+  "$ref": "#/$defs/SubstantiveScenarioFamilyEvidence",
+  "$defs": {
+    "Sha256Hex": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "Sha256Digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "DigestState": {"enum": ["PERSISTED", "DIGEST_PREIMAGE"]},
+    "EvaluationPhase": {"enum": ["DEVELOPMENT", "HELDOUT"]},
+    "OwnerClass": {"enum": [
+      "SEALED_CASE_RECORD", "SYNTHETIC_TRUTH", "SYNTHETIC_SCIENTIFIC_DATA",
+      "RESOLVED_GENERATOR_CONFIGURATION", "RESOLVED_GENERATOR_MECHANISM", "COMPONENT_SEED_MANIFEST",
+      "SEALED_RESULT_RECORD", "FIT_RESPONSE_BINDING", "CANONICAL_SCIENTIFIC_PAYLOAD",
+      "CANONICAL_ARRAY_ARTIFACT", "MATCHED_COMPARATOR_EVIDENCE", "COMPARISON_RECORD",
+      "INFLUENCE_RECORD", "PARTICIPANT_EVENT_MANIFEST", "ANALYSIS_SPEC", "BENCHMARK_OPERATION_MANIFEST",
+      "PREPROCESSING_EXECUTION_RECORD", "WARNING_RECORD", "SIDE_EFFECTS_RECORD", "REPORT_PREDICATE_OUTCOME",
+      "CANDIDATE_STRONG_EVIDENCE_DECISION", "FALSE_POSITIVE_EVIDENCE_BUNDLE",
+      "PREPARATION_AUDIT_EVIDENCE", "PREPARATION_ROW_INSTANCE_MANIFEST",
+      "SCENARIO_MATCHED_METRIC_RECORD", "REPORT_WARNING_LEDGER", "REPORT_TERMINAL_VISIBILITY",
+      "ANALYSIS_RULE_IDENTITY", "PRIVATE_CANONICAL_ARRAY_VALUE_PROJECTION", "CASE_INFLUENCE_AGGREGATE",
+      "PUBLIC_BATCH_CASE_PLAN", "PROPORTIONAL_OPERATION_PLAN", "PUBLIC_TERMINAL_RESULT",
+      "EXECUTED_BOUNDARY_RULE_IDENTITY", "EXECUTED_TRANSFORMATION_EVIDENCE",
+      "REFERENCE_FIT_GROUP_ROLE_EVIDENCE", "REPORT_CLAIM_PROJECTION"
+    ]},
+    "NaturalIdentity": {
+      "type": "object", "minProperties": 1,
+      "propertyNames": {"pattern": "^[a-z][a-z0-9_]*$"},
+      "additionalProperties": {"oneOf": [
+        {"type": "string", "minLength": 1}, {"type": "integer", "minimum": 0}, {"type": "boolean"}
+      ]}
+    },
+    "OwnerTypeBinding": {"oneOf": [
+      {"properties": {"owner_class": {"const": "PUBLIC_BATCH_CASE_PLAN"}, "owner_schema_ref": {"const": "schemas/evaluator-receipts.schema.json#/$defs/PublicBatchCasePlan"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "PROPORTIONAL_OPERATION_PLAN"}, "owner_schema_ref": {"const": "schemas/evaluator-receipts.schema.json#/$defs/ProportionalOperationPlan"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "PUBLIC_TERMINAL_RESULT"}, "owner_schema_ref": {"const": "schemas/evaluator-receipts.schema.json#/$defs/PublicTerminalResult"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "EXECUTED_BOUNDARY_RULE_IDENTITY"}, "owner_schema_ref": {"const": "schemas/scenario-evidence.schema.json#/$defs/ExecutedBoundaryRuleIdentity"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "EXECUTED_TRANSFORMATION_EVIDENCE"}, "owner_schema_ref": {"const": "schemas/scenario-evidence.schema.json#/$defs/ExecutedTransformationEvidence"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "REFERENCE_FIT_GROUP_ROLE_EVIDENCE"}, "owner_schema_ref": {"const": "schemas/scenario-evidence.schema.json#/$defs/ReferenceFitGroupRoleEvidence"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "REPORT_CLAIM_PROJECTION"}, "owner_schema_ref": {"const": "schemas/scenario-evidence.schema.json#/$defs/AuthenticatedReportClaimProjection"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "SEALED_CASE_RECORD"}, "owner_schema_ref": {"const": "schemas/evaluator-receipts.schema.json#/$defs/SealedCaseRecord"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "SYNTHETIC_TRUTH"}, "owner_schema_ref": {"const": "schemas/synthetic-truth.schema.json"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "SYNTHETIC_SCIENTIFIC_DATA"}, "owner_schema_ref": {"const": "schemas/synthetic-scientific-data.schema.json"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "RESOLVED_GENERATOR_CONFIGURATION"}, "owner_schema_ref": {"const": "schemas/synthetic-resolved-configuration.schema.json#/$defs/ResolvedGeneratorConfiguration"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "RESOLVED_GENERATOR_MECHANISM"}, "owner_schema_ref": {"const": "schemas/synthetic-resolved-configuration.schema.json#/$defs/ResolvedGeneratorMechanism"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "COMPONENT_SEED_MANIFEST"}, "owner_schema_ref": {"const": "schemas/synthetic-resolved-configuration.schema.json#/$defs/ComponentSeedManifest"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "SEALED_RESULT_RECORD"}, "owner_schema_ref": {"const": "schemas/evaluator-receipts.schema.json#/$defs/SealedResultRecord"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "FIT_RESPONSE_BINDING"}, "owner_schema_ref": {"const": "schemas/evaluator-receipts.schema.json#/$defs/FitSuccessEvaluatorWorkerResponseBinding"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "CANONICAL_SCIENTIFIC_PAYLOAD"}, "owner_schema_ref": {"const": "schemas/canonical-records.schema.json#/$defs/CanonicalScientificPayload"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "CANONICAL_ARRAY_ARTIFACT"}, "owner_schema_ref": {"const": "schemas/scenario-evidence.schema.json#/$defs/CanonicalArrayArtifactOwner"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "MATCHED_COMPARATOR_EVIDENCE"}, "owner_schema_ref": {"const": "schemas/comparator-transaction.schema.json#/$defs/MatchedComparatorEvidenceManifest"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "COMPARISON_RECORD"}, "owner_schema_ref": {"const": "schemas/canonical-records.schema.json#/$defs/ComparisonRecord"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "INFLUENCE_RECORD"}, "owner_schema_ref": {"const": "schemas/canonical-records.schema.json#/$defs/InfluenceRecord"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "PARTICIPANT_EVENT_MANIFEST"}, "owner_schema_ref": {"const": "schemas/canonical-records.schema.json#/$defs/ParticipantEventManifest"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "ANALYSIS_SPEC"}, "owner_schema_ref": {"const": "schemas/analysis-universe.schema.json#/$defs/AnalysisSpec"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "BENCHMARK_OPERATION_MANIFEST"}, "owner_schema_ref": {"const": "schemas/evaluator-receipts.schema.json#/$defs/BenchmarkOperationManifest"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "PREPROCESSING_EXECUTION_RECORD"}, "owner_schema_ref": {"const": "schemas/scenario-evidence.schema.json#/$defs/ExecutedPreprocessingExecutionRecord"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "WARNING_RECORD"}, "owner_schema_ref": {"const": "schemas/canonical-records.schema.json#/$defs/WarningRecord"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "SIDE_EFFECTS_RECORD"}, "owner_schema_ref": {"const": "schemas/worker-protocol.schema.json#/$defs/SideEffectsRecord"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "REPORT_PREDICATE_OUTCOME"}, "owner_schema_ref": {"const": "schemas/scenario-evidence.schema.json#/$defs/ReportPredicateOutcome"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "CANDIDATE_STRONG_EVIDENCE_DECISION"}, "owner_schema_ref": {"const": "schemas/scientific-invariant.schema.json#/$defs/CandidateStrongEvidenceDecision"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "FALSE_POSITIVE_EVIDENCE_BUNDLE"}, "owner_schema_ref": {"const": "schemas/scientific-invariant.schema.json#/$defs/FalsePositiveEvidenceBundle"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "PREPARATION_AUDIT_EVIDENCE"}, "owner_schema_ref": {"const": "schemas/scenario-evidence.schema.json#/$defs/PreparationAuditEvidence"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "PREPARATION_ROW_INSTANCE_MANIFEST"}, "owner_schema_ref": {"const": "schemas/scenario-evidence.schema.json#/$defs/ExecutedPreparationRowInstanceManifest"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "SCENARIO_MATCHED_METRIC_RECORD"}, "owner_schema_ref": {"const": "schemas/scenario-evidence.schema.json#/$defs/ScenarioMatchedMetricRecord"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "REPORT_WARNING_LEDGER"}, "owner_schema_ref": {"const": "schemas/scenario-evidence.schema.json#/$defs/PreRenderReportWarningLedger"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "REPORT_TERMINAL_VISIBILITY"}, "owner_schema_ref": {"const": "schemas/scenario-evidence.schema.json#/$defs/PreRenderReportTerminalVisibility"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "ANALYSIS_RULE_IDENTITY"}, "owner_schema_ref": {"const": "schemas/scenario-evidence.schema.json#/$defs/AnalysisRuleIdentity"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "PRIVATE_CANONICAL_ARRAY_VALUE_PROJECTION"}, "owner_schema_ref": {"const": "schemas/scenario-evidence.schema.json#/$defs/PrivateCanonicalArrayValueProjection"}}, "required": ["owner_class", "owner_schema_ref"]},
+      {"properties": {"owner_class": {"const": "CASE_INFLUENCE_AGGREGATE"}, "owner_schema_ref": {"const": "schemas/scenario-evidence.schema.json#/$defs/CaseInfluenceAggregate"}}, "required": ["owner_class", "owner_schema_ref"]}
+    ]},
+    "ScenarioSourceOwnerRecordDigestPreimage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["owner_class", "natural_identity", "source_record"],
+      "properties": {
+        "owner_class": {"$ref": "#/$defs/OwnerClass"},
+        "natural_identity": {"$ref": "#/$defs/NaturalIdentity"},
+        "source_record": {}
+      }
+    },
+    "ScenarioSourceOwnerReference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["owner_class", "owner_schema_ref", "source_relative_path", "source_content_sha256", "source_record_sha256", "natural_identity", "ordered_support_owner_sha256"],
+      "properties": {
+        "owner_class": {"$ref": "#/$defs/OwnerClass"},
+        "owner_schema_ref": {"type": "string", "minLength": 1},
+        "source_relative_path": {"$ref": "canonical-records.schema.json#/$defs/RelativePosixPath"},
+        "source_content_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "source_record_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "natural_identity": {"$ref": "#/$defs/NaturalIdentity"},
+        "ordered_support_owner_sha256": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/Sha256Hex"}}
+      },
+      "allOf": [{"$ref": "#/$defs/OwnerTypeBinding"}]
+    },
+    "ScenarioSourceOwnerManifestBody": {
+      "type": "object",
+      "required": ["schema_version", "digest_state", "evaluation_phase", "benchmark_subject_digest", "operation_plan_sha256", "ordered_owner_references"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-scenario-source-owner-manifest/1.0"},
+        "digest_state": {"$ref": "#/$defs/DigestState"},
+        "evaluation_phase": {"$ref": "#/$defs/EvaluationPhase"},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "operation_plan_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "ordered_owner_references": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/ScenarioSourceOwnerReference"}}
+      }
+    },
+    "ScenarioSourceOwnerManifest": {
+      "allOf": [{"$ref": "#/$defs/ScenarioSourceOwnerManifestBody"}, {"type": "object", "required": ["digest_state", "scenario_source_owner_manifest_sha256"], "properties": {"digest_state": {"const": "PERSISTED"}, "scenario_source_owner_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"}}}],
+      "unevaluatedProperties": false
+    },
+    "ScenarioSourceOwnerManifestDigestPreimage": {
+      "allOf": [{"$ref": "#/$defs/ScenarioSourceOwnerManifestBody"}, {"type": "object", "required": ["digest_state", "scenario_source_owner_manifest_sha256"], "properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}, "scenario_source_owner_manifest_sha256": {"type": "null"}}}],
+      "unevaluatedProperties": false
+    },
+    "PreparationAuditEvidence": {
+      "$comment": "Structured digest domain: ebm-audit/preparation-audit-evidence/2. Canonical preimage: #/$defs/PreparationAuditEvidenceDigestPreimage.",
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "case_id", "operation_instance_id", "analysis_spec_sha256", "input_scientific_data_sha256", "output_scientific_data_sha256", "selected_event_ids", "missingness_policy", "source_missingness_mask_sha256", "source_missing_count", "predicted_complete_case_removals", "input_row_instance_manifest_sha256", "training_row_instance_manifest_sha256", "output_row_instance_manifest_sha256", "reference_fit_row_instance_manifest_sha256", "data_accounting", "ordered_preprocessing_refit_sha256", "backend_invoked", "request_all_finite", "response_all_finite", "participant_event_manifest_sha256", "finalized_result_record_sha256", "preparation_audit_evidence_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-preparation-audit-evidence/2.0"}, "digest_state": {"$ref": "#/$defs/DigestState"},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"}, "operation_instance_id": {"$ref": "#/$defs/Sha256Digest"}, "analysis_spec_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "input_scientific_data_sha256": {"$ref": "#/$defs/Sha256Hex"}, "output_scientific_data_sha256": {"$ref": "#/$defs/Sha256Hex"}, "selected_event_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"}},
+        "missingness_policy": {"enum": ["error", "complete_case"]}, "source_missingness_mask_sha256": {"$ref": "#/$defs/Sha256Hex"}, "source_missing_count": {"type": "integer", "minimum": 0}, "predicted_complete_case_removals": {"type": "integer", "minimum": 0},
+        "input_row_instance_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"}, "training_row_instance_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"}, "output_row_instance_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"}, "reference_fit_row_instance_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "data_accounting": {"$ref": "canonical-records.schema.json#/$defs/DataAccounting"}, "ordered_preprocessing_refit_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "backend_invoked": {"type": "boolean"}, "request_all_finite": {"type": "boolean"}, "response_all_finite": {"type": "boolean"}, "participant_event_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"}, "finalized_result_record_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "preparation_audit_evidence_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"preparation_audit_evidence_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"preparation_audit_evidence_sha256": {"type": "null"}}}},
+        {"if": {"properties": {"backend_invoked": {"const": false}}, "required": ["backend_invoked"]}, "then": {"properties": {"request_all_finite": {"const": false}, "response_all_finite": {"const": false}}}}
+      ]
+    },
+    "PreparationAuditEvidenceDigestPreimage": {
+      "$comment": "Canonical preimage for structured digest domain ebm-audit/preparation-audit-evidence/2.",
+      "allOf": [
+        {"$ref": "#/$defs/PreparationAuditEvidence"},
+        {"type": "object", "required": ["digest_state", "preparation_audit_evidence_sha256"], "properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}, "preparation_audit_evidence_sha256": {"type": "null"}}}
+      ]
+    },
+    "PreparationAuditEvidenceUnavailable": {
+      "$comment": "Structured digest domain: ebm-audit/preparation-audit-evidence-unavailable/1. Canonical preimage: #/$defs/PreparationAuditEvidenceUnavailableDigestPreimage.",
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "status", "case_id", "candidate_id", "operation_instance_id", "analysis_spec_sha256", "reason_code", "preparation_audit_evidence_unavailable_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-preparation-audit-evidence-unavailable/1.0"},
+        "digest_state": {"$ref": "#/$defs/DigestState"},
+        "status": {"const": "UNAVAILABLE"},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "candidate_id": {"$ref": "#/$defs/Sha256Digest"},
+        "operation_instance_id": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Digest"}]},
+        "analysis_spec_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "reason_code": {"const": "PAE.AUTHENTICATED_REFERENCE_EXECUTION_UNAVAILABLE"},
+        "preparation_audit_evidence_unavailable_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"preparation_audit_evidence_unavailable_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"preparation_audit_evidence_unavailable_sha256": {"type": "null"}}}}
+      ]
+    },
+    "PreparationAuditEvidenceUnavailableDigestPreimage": {
+      "$comment": "Canonical preimage for structured digest domain ebm-audit/preparation-audit-evidence-unavailable/1.",
+      "allOf": [
+        {"$ref": "#/$defs/PreparationAuditEvidenceUnavailable"},
+        {"type": "object", "required": ["digest_state", "preparation_audit_evidence_unavailable_sha256"], "properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}, "preparation_audit_evidence_unavailable_sha256": {"type": "null"}}}
+      ]
+    },
+    "OrderedPreprocessingRefitDigestPreimage": {
+      "$comment": "Canonical preimage for structured digest domain ebm-audit/ordered-preprocessing-refit/1.",
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "case_id", "operation_instance_id", "analysis_spec_sha256", "ordered_preprocessing_execution_record_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-ordered-preprocessing-refit/1.0"},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "operation_instance_id": {"$ref": "#/$defs/Sha256Digest"},
+        "analysis_spec_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "ordered_preprocessing_execution_record_sha256": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/Sha256Hex"}}
+      }
+    },
+    "PreparationRowInstance": {
+      "type": "object", "additionalProperties": false, "required": ["source_row_index", "occurrence_ordinal"],
+      "properties": {"source_row_index": {"type": "integer", "minimum": 0}, "occurrence_ordinal": {"type": "integer", "minimum": 0}}
+    },
+    "PreparationRowInstanceManifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "case_id", "operation_instance_id", "row_role", "ordered_row_instances", "row_instance_manifest_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-preparation-row-instance-manifest/1.0"}, "digest_state": {"$ref": "#/$defs/DigestState"}, "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"}, "operation_instance_id": {"$ref": "#/$defs/Sha256Digest"},
+        "row_role": {"enum": ["INPUT", "TRAINING", "OUTPUT", "REFERENCE_FIT"]}, "ordered_row_instances": {"type": "array", "items": {"$ref": "#/$defs/PreparationRowInstance"}}, "row_instance_manifest_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"row_instance_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"row_instance_manifest_sha256": {"type": "null"}}}}
+      ]
+    },
+    "ExecutedPreparationRowInstanceManifest": {
+      "$comment": "Structured digest domain: ebm-audit/preparation-row-instance-manifest/2. Issued by preparation after exact operation-plan authentication.",
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "benchmark_subject_digest", "authenticated_batch_sha256", "case_operation_join_key", "proportional_operation_plan_sha256", "operation_plan_entry_sha256", "case_id", "family_id", "operation_instance_id", "row_role", "ordered_row_instances", "row_instance_manifest_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-preparation-row-instance-manifest/2.0"},
+        "digest_state": {"$ref": "#/$defs/DigestState"},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "authenticated_batch_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "case_operation_join_key": {"$ref": "evaluator-receipts.schema.json#/$defs/CaseOperationJoinKey"},
+        "proportional_operation_plan_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "operation_plan_entry_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "family_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ScenarioFamilyId"},
+        "operation_instance_id": {"$ref": "evaluator-receipts.schema.json#/$defs/ProportionalOperationInstanceId"},
+        "row_role": {"enum": ["INPUT", "TRAINING", "OUTPUT", "REFERENCE_FIT"]},
+        "ordered_row_instances": {"type": "array", "items": {"$ref": "#/$defs/PreparationRowInstance"}},
+        "row_instance_manifest_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"row_instance_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"row_instance_manifest_sha256": {"type": "null"}}}}
+      ],
+      "x-ebm-invariants": [
+        "executed-row-manifest-join-key-fields-equal-record-fields/1",
+        "executed-row-manifest-plan-hashes-authenticated-before-issuance/1",
+        "executed-row-instances-use-source-index-and-occurrence-ordinal/1"
+      ]
+    },
+    "ExecutedPreprocessingExecutionRecord": {
+      "$comment": "Structured digest domain: ebm-audit/preprocessing-execution-record/3. Direct execution evidence issued by preparation.",
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "benchmark_subject_digest", "authenticated_batch_sha256", "case_operation_join_key", "proportional_operation_plan_sha256", "operation_plan_entry_sha256", "family_id", "case_id", "operation_instance_id", "analysis_spec_sha256", "execution_role", "refit_mode", "component_seed_manifest_sha256", "input_scientific_data_sha256", "input_row_manifest_sha256", "training_row_manifest_sha256", "reference_fit_row_manifest_sha256", "output_row_manifest_sha256", "ordered_step_records", "preprocessing_parameters_sha256", "refit_procedure_sha256", "preprocessing_execution_record_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-preprocessing-execution-record/3.0"},
+        "digest_state": {"$ref": "#/$defs/DigestState"},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "authenticated_batch_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "case_operation_join_key": {"$ref": "evaluator-receipts.schema.json#/$defs/CaseOperationJoinKey"},
+        "proportional_operation_plan_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "operation_plan_entry_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "family_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ScenarioFamilyId"},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "operation_instance_id": {"$ref": "evaluator-receipts.schema.json#/$defs/ProportionalOperationInstanceId"},
+        "analysis_spec_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "execution_role": {"enum": ["SOURCE", "TRANSFORMED"]},
+        "refit_mode": {"const": "complete_refit"},
+        "component_seed_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "input_scientific_data_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "input_row_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "training_row_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "reference_fit_row_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "output_row_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "ordered_step_records": {"$ref": "#/$defs/CompleteRefitOrderedStepRecords"},
+        "preprocessing_parameters_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "refit_procedure_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "preprocessing_execution_record_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"preprocessing_execution_record_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"preprocessing_execution_record_sha256": {"type": "null"}}}}
+      ],
+      "x-ebm-invariants": [
+        "executed-preprocessing-join-key-fields-equal-record-fields/1",
+        "executed-preprocessing-plan-hashes-authenticated-before-issuance/1",
+        "executed-preprocessing-role-input-and-component-seed-authenticated/1",
+        "executed-preprocessing-complete-refit-six-step-order-exact/1",
+        "executed-preprocessing-fit-populations-equal-authenticated-training-or-reference-manifest/1",
+        "executed-preprocessing-refit-procedure-digest-excludes-fitted-values/1",
+        "executed-preprocessing-source-and-transformed-pair-binds-distinct-authenticated-role-plan-entries/1"
+      ]
+    },
+    "ExecutedTransformationEvidence": {
+      "$comment": "Structured digest domain: ebm-audit/executed-transformation-evidence/1. Direct transformation evidence; plan records never substitute for this owner.",
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "benchmark_subject_digest", "authenticated_batch_sha256", "case_operation_join_key", "proportional_operation_plan_sha256", "operation_plan_entry_sha256", "family_id", "case_id", "operation_instance_id", "source_case_id", "source_operation_instance_id", "output_case_id", "transformation_id", "executed_parameters_sha256", "source_scientific_data_sha256", "output_scientific_data_sha256", "source_axes_sha256", "output_axes_sha256", "source_missingness_sha256", "output_missingness_sha256", "source_labels_sha256", "output_labels_sha256", "source_covariates_sha256", "output_covariates_sha256", "source_participant_event_alignment_sha256", "output_participant_event_alignment_sha256", "source_row_manifest_sha256", "output_row_manifest_sha256", "data_accounting", "executed_transformation_evidence_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-executed-transformation-evidence/1.0"},
+        "digest_state": {"$ref": "#/$defs/DigestState"},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "authenticated_batch_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "case_operation_join_key": {"$ref": "evaluator-receipts.schema.json#/$defs/CaseOperationJoinKey"},
+        "proportional_operation_plan_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "operation_plan_entry_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "family_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ScenarioFamilyId"},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "operation_instance_id": {"$ref": "evaluator-receipts.schema.json#/$defs/ProportionalOperationInstanceId"},
+        "source_case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "source_operation_instance_id": {"$ref": "evaluator-receipts.schema.json#/$defs/ProportionalOperationInstanceId"},
+        "output_case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "transformation_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "executed_parameters_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "source_scientific_data_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "output_scientific_data_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "source_axes_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "output_axes_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "source_missingness_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "output_missingness_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "source_labels_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "output_labels_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "source_covariates_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "output_covariates_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "source_participant_event_alignment_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "output_participant_event_alignment_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "source_row_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "output_row_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "data_accounting": {"$ref": "canonical-records.schema.json#/$defs/DataAccounting"},
+        "executed_transformation_evidence_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"executed_transformation_evidence_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"executed_transformation_evidence_sha256": {"type": "null"}}}}
+      ],
+      "x-ebm-invariants": [
+        "executed-transformation-join-key-fields-equal-record-fields/1",
+        "executed-transformation-plan-hashes-authenticated-before-issuance/1",
+        "executed-transformation-source-output-parameters-and-accounting-exact/1",
+        "transformation-null-shared-source-fixed-by-plan-not-result/1"
+      ]
+    },
+    "ReferenceFitGroupRoleEvidence": {
+      "$comment": "Structured digest domain: ebm-audit/reference-fit-group-role-evidence/1. Direct preparation evidence for reference-only fit populations and group roles.",
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "benchmark_subject_digest", "authenticated_batch_sha256", "case_operation_join_key", "proportional_operation_plan_sha256", "operation_plan_entry_sha256", "family_id", "case_id", "operation_instance_id", "analysis_spec_sha256", "method_id", "preprocessing_execution_record_sha256", "reference_fit_row_manifest_sha256", "reference_group_row_manifest_sha256", "at_risk_group_row_manifest_sha256", "ordered_applied_group_roles", "reference_fit_group_role_evidence_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-reference-fit-group-role-evidence/1.0"},
+        "digest_state": {"$ref": "#/$defs/DigestState"},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "authenticated_batch_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "case_operation_join_key": {"$ref": "evaluator-receipts.schema.json#/$defs/CaseOperationJoinKey"},
+        "proportional_operation_plan_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "operation_plan_entry_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "family_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ScenarioFamilyId"},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "operation_instance_id": {"$ref": "evaluator-receipts.schema.json#/$defs/ProportionalOperationInstanceId"},
+        "analysis_spec_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "method_id": {"const": "reference-group-ordinary-linear-residualisation/1"},
+        "preprocessing_execution_record_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "reference_fit_row_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "reference_group_row_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "at_risk_group_row_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "ordered_applied_group_roles": {
+          "type": "array", "minItems": 2, "maxItems": 2,
+          "prefixItems": [{"const": "REFERENCE"}, {"const": "AT_RISK"}], "items": false
+        },
+        "reference_fit_group_role_evidence_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"reference_fit_group_role_evidence_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"reference_fit_group_role_evidence_sha256": {"type": "null"}}}}
+      ],
+      "x-ebm-invariants": [
+        "reference-fit-group-role-join-key-fields-equal-record-fields/1",
+        "reference-fit-population-excludes-at-risk-rows/1",
+        "reference-fit-parameters-applied-to-both-group-roles/1"
+      ]
+    },
+    "ExecutedBoundaryRuleIdentity": {
+      "$comment": "Structured digest domain: ebm-audit/executed-boundary-rule-identity/1. A configured but unexecuted rule is not evidence.",
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "benchmark_subject_digest", "authenticated_batch_sha256", "case_operation_join_key", "proportional_operation_plan_sha256", "operation_plan_entry_sha256", "family_id", "case_id", "operation_instance_id", "analysis_spec_sha256", "rule_id", "cutoff_quantile", "cutoff_value", "comparator_member_index", "executed_request_sha256", "public_terminal_result_sha256", "executed_result_sha256", "executed_boundary_rule_identity_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-executed-boundary-rule-identity/1.0"},
+        "digest_state": {"$ref": "#/$defs/DigestState"},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "authenticated_batch_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "case_operation_join_key": {"$ref": "evaluator-receipts.schema.json#/$defs/CaseOperationJoinKey"},
+        "proportional_operation_plan_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "operation_plan_entry_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "family_id": {"const": "group_boundary_sensitivity"},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "operation_instance_id": {"$ref": "evaluator-receipts.schema.json#/$defs/ProportionalOperationInstanceId"},
+        "analysis_spec_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "rule_id": {"enum": ["boundary_q50", "boundary_q35", "boundary_q65"]},
+        "cutoff_quantile": {"enum": [0.5, 0.35, 0.65]},
+        "cutoff_value": {"type": "number"},
+        "comparator_member_index": {"type": "integer", "minimum": 0},
+        "executed_request_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "public_terminal_result_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "executed_result_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "executed_boundary_rule_identity_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"executed_boundary_rule_identity_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"executed_boundary_rule_identity_sha256": {"type": "null"}}}},
+        {"if": {"properties": {"rule_id": {"const": "boundary_q50"}}, "required": ["rule_id"]}, "then": {"properties": {"cutoff_quantile": {"const": 0.5}, "comparator_member_index": {"const": 0}}}},
+        {"if": {"properties": {"rule_id": {"const": "boundary_q35"}}, "required": ["rule_id"]}, "then": {"properties": {"cutoff_quantile": {"const": 0.35}, "comparator_member_index": {"const": 1}}}},
+        {"if": {"properties": {"rule_id": {"const": "boundary_q65"}}, "required": ["rule_id"]}, "then": {"properties": {"cutoff_quantile": {"const": 0.65}, "comparator_member_index": {"const": 2}}}}
+      ],
+      "x-ebm-invariants": [
+        "executed-boundary-rule-join-key-fields-equal-record-fields/1",
+        "executed-boundary-rule-plan-hashes-authenticated-before-issuance/1",
+        "executed-boundary-rule-request-result-terminal-identity-exact/1"
+      ]
+    },
+    "AuthenticatedReportClaimProjection": {
+      "$comment": "Structured digest domain: ebm-audit/authenticated-report-claim-projection/1. Pre-render only; contains no report artifact identity.",
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "benchmark_subject_digest", "rule_registry_sha256", "ordered_non_report_meaning_record_sha256", "ordered_warning_record_sha256", "ordered_public_terminal_result_sha256", "ordered_proposed_claim_ids", "report_claim_projection_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-authenticated-report-claim-projection/1.0"},
+        "digest_state": {"$ref": "#/$defs/DigestState"},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "rule_registry_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "ordered_non_report_meaning_record_sha256": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/Sha256Hex"}},
+        "ordered_warning_record_sha256": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/Sha256Hex"}},
+        "ordered_public_terminal_result_sha256": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/Sha256Hex"}},
+        "ordered_proposed_claim_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"}},
+        "report_claim_projection_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"report_claim_projection_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"report_claim_projection_sha256": {"type": "null"}}}}
+      ],
+      "x-ebm-invariants": [
+        "report-claim-projection-pre-render-only/1",
+        "report-claim-projection-non-report-meaning-closure/1",
+        "report-claim-projection-warning-terminal-claim-order-exact/1"
+      ]
+    },
+    "PreRenderReportWarningLedger": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "benchmark_subject_digest", "case_id", "report_claim_projection_sha256", "ordered_warning_record_sha256", "warning_count", "report_warning_ledger_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-report-warning-ledger/2.0"},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "report_claim_projection_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "ordered_warning_record_sha256": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/Sha256Hex"}},
+        "warning_count": {"type": "integer", "minimum": 0},
+        "report_warning_ledger_sha256": {"$ref": "#/$defs/Sha256Hex"}
+      },
+      "x-ebm-invariants": ["pre-render-warning-ledger-count-and-order-exact/1", "pre-render-warning-ledger-no-artifact-field/1"]
+    },
+    "PreRenderReportTerminalVisibility": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "benchmark_subject_digest", "case_id", "operation_instance_id", "case_operation_join_key", "proportional_operation_plan_sha256", "operation_plan_entry_sha256", "public_terminal_result_sha256", "terminal_record_sha256", "report_claim_projection_sha256", "terminal_count", "report_terminal_visibility_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-report-terminal-visibility/2.0"},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "operation_instance_id": {"$ref": "evaluator-receipts.schema.json#/$defs/ProportionalOperationInstanceId"},
+        "case_operation_join_key": {"$ref": "evaluator-receipts.schema.json#/$defs/CaseOperationJoinKey"},
+        "proportional_operation_plan_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "operation_plan_entry_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "public_terminal_result_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "terminal_record_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "report_claim_projection_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "terminal_count": {"const": 1},
+        "report_terminal_visibility_sha256": {"$ref": "#/$defs/Sha256Hex"}
+      },
+      "x-ebm-invariants": ["pre-render-terminal-visibility-exact-plan-terminal-join/1", "pre-render-terminal-visibility-no-artifact-field/1"]
+    },
+    "ScenarioMatchedMetricOperandBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["public_batch_case_plan_sha256", "case_operation_join_key", "proportional_operation_plan_sha256", "operation_plan_entry_sha256", "public_terminal_result_sha256", "captured_run_sha256", "finalized_result_record_sha256", "canonical_scientific_payload_sha256", "operation_instance_id", "reference_chain_plan_position", "reference_chain_execution_id", "metric_source_member_name", "canonical_payload_array_pointer", "canonical_array_digest", "canonical_array_artifact_owner_sha256", "private_canonical_array_value_projection_sha256", "array_value_sha256", "recomputed_value"],
+      "properties": {
+        "public_batch_case_plan_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "case_operation_join_key": {"$ref": "evaluator-receipts.schema.json#/$defs/CaseOperationJoinKey"},
+        "proportional_operation_plan_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "operation_plan_entry_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "public_terminal_result_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "captured_run_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "finalized_result_record_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "canonical_scientific_payload_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "operation_instance_id": {"$ref": "evaluator-receipts.schema.json#/$defs/ProportionalOperationInstanceId"},
+        "reference_chain_plan_position": {"type": "integer", "minimum": 0},
+        "reference_chain_execution_id": {"$ref": "#/$defs/Sha256Digest"},
+        "metric_source_member_name": {"enum": ["order_state_chain", "central_order_permutation"]},
+        "canonical_payload_array_pointer": {"type": "string", "pattern": "^/ordered_chain_payloads/(0|[1-9][0-9]*)/arrays/(order_state_chain|central_order_permutation)$"},
+        "canonical_array_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "canonical_array_artifact_owner_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "private_canonical_array_value_projection_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "array_value_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "recomputed_value": {"oneOf": [{"type": "null"}, {"type": "number"}]}
+      }
+    },
+    "ScenarioMatchedMetricRecord": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "benchmark_subject_digest", "comparator_id", "source_variant_id", "replicate_index", "pair_index", "pairing_key", "left_member_id", "right_member_id", "metric_id", "left", "right", "truth_sha256", "derived_value", "status", "reason_codes", "scenario_matched_metric_record_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-scenario-matched-metric-record/2.0"},
+        "digest_state": {"$ref": "#/$defs/DigestState"},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "comparator_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "source_variant_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "replicate_index": {"type": "integer", "minimum": 0},
+        "pair_index": {"type": "integer", "minimum": 0},
+        "pairing_key": {"$ref": "comparator-transaction.schema.json#/$defs/PairingKey"},
+        "left_member_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "right_member_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "metric_id": {"enum": ["within-fit-mean-normalized-position-entropy/1", "central-order-kendall-distance/1"]},
+        "left": {"$ref": "#/$defs/ScenarioMatchedMetricOperandBinding"},
+        "right": {"$ref": "#/$defs/ScenarioMatchedMetricOperandBinding"},
+        "truth_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]},
+        "derived_value": {"oneOf": [{"type": "null"}, {"type": "number"}]},
+        "status": {"enum": ["ASSESSABLE", "NOT_ASSESSABLE"]},
+        "reason_codes": {"type": "array", "uniqueItems": true, "items": {"$ref": "canonical-records.schema.json#/$defs/StableCode"}},
+        "scenario_matched_metric_record_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"scenario_matched_metric_record_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"scenario_matched_metric_record_sha256": {"type": "null"}}}},
+        {"if": {"properties": {"status": {"const": "ASSESSABLE"}}, "required": ["status"]}, "then": {"properties": {"left": {"properties": {"recomputed_value": {"type": "number"}}}, "right": {"properties": {"recomputed_value": {"type": "number"}}}, "derived_value": {"type": "number"}, "reason_codes": {"maxItems": 0}}}},
+        {"if": {"properties": {"status": {"const": "NOT_ASSESSABLE"}}, "required": ["status"]}, "then": {"properties": {"left": {"properties": {"recomputed_value": {"type": "null"}}}, "right": {"properties": {"recomputed_value": {"type": "null"}}}, "derived_value": {"type": "null"}, "reason_codes": {"minItems": 1}}}},
+        {"if": {"properties": {"metric_id": {"const": "within-fit-mean-normalized-position-entropy/1"}}, "required": ["metric_id"]}, "then": {"properties": {"truth_sha256": {"type": "null"}, "left": {"properties": {"metric_source_member_name": {"const": "order_state_chain"}, "canonical_payload_array_pointer": {"pattern": "^/ordered_chain_payloads/(0|[1-9][0-9]*)/arrays/order_state_chain$"}}}, "right": {"properties": {"metric_source_member_name": {"const": "order_state_chain"}, "canonical_payload_array_pointer": {"pattern": "^/ordered_chain_payloads/(0|[1-9][0-9]*)/arrays/order_state_chain$"}}}}}},
+        {"if": {"properties": {"metric_id": {"const": "central-order-kendall-distance/1"}}, "required": ["metric_id"]}, "then": {"properties": {"truth_sha256": {"$ref": "#/$defs/Sha256Hex"}, "left": {"properties": {"metric_source_member_name": {"const": "central_order_permutation"}, "canonical_payload_array_pointer": {"pattern": "^/ordered_chain_payloads/(0|[1-9][0-9]*)/arrays/central_order_permutation$"}}}, "right": {"properties": {"metric_source_member_name": {"const": "central_order_permutation"}, "canonical_payload_array_pointer": {"pattern": "^/ordered_chain_payloads/(0|[1-9][0-9]*)/arrays/central_order_permutation$"}}}}}}
+      ],
+      "$comment": "JSON Schema validates the closed public shape only. The normative issuer algorithm in docs/spec/scenario-derivation-semantics.md authenticates every owner and recomputes both values and the named-left-minus-named-right result."
+    },
+    "ReportWarningLedger": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "benchmark_subject_digest", "case_id", "report_artifact_sha256", "ordered_warning_record_sha256", "warning_count", "terminal_index_sha256", "report_sha256", "receipt_sha256", "report_warning_ledger_sha256"],
+      "properties": {"schema_version": {"const": "ebm-audit-report-warning-ledger/1.0"}, "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"}, "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"}, "report_artifact_sha256": {"$ref": "#/$defs/Sha256Hex"}, "ordered_warning_record_sha256": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/Sha256Hex"}}, "warning_count": {"type": "integer", "minimum": 0}, "terminal_index_sha256": {"$ref": "#/$defs/Sha256Hex"}, "report_sha256": {"$ref": "#/$defs/Sha256Hex"}, "receipt_sha256": {"$ref": "#/$defs/Sha256Hex"}, "report_warning_ledger_sha256": {"$ref": "#/$defs/Sha256Hex"}}
+    },
+    "ReportTerminalVisibility": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "benchmark_subject_digest", "case_id", "sealed_result_record_sha256", "terminal_record_sha256", "terminal_index_sha256", "persisted_result_sha256", "report_sha256", "receipt_sha256", "terminal_count", "rendered_terminal_count", "report_terminal_visibility_sha256"],
+      "properties": {"schema_version": {"const": "ebm-audit-report-terminal-visibility/1.0"}, "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"}, "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"}, "sealed_result_record_sha256": {"$ref": "#/$defs/Sha256Hex"}, "terminal_record_sha256": {"$ref": "#/$defs/Sha256Hex"}, "terminal_index_sha256": {"$ref": "#/$defs/Sha256Hex"}, "persisted_result_sha256": {"$ref": "#/$defs/Sha256Hex"}, "report_sha256": {"$ref": "#/$defs/Sha256Hex"}, "receipt_sha256": {"$ref": "#/$defs/Sha256Hex"}, "terminal_count": {"type": "integer", "minimum": 0}, "rendered_terminal_count": {"type": "integer", "minimum": 0}, "report_terminal_visibility_sha256": {"$ref": "#/$defs/Sha256Hex"}}
+    },
+    "AnalysisRuleIdentity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "rule_id", "cutoff_quantile", "cutoff_value", "comparator_member_index", "analysis_spec_sha256", "analysis_rule_identity_sha256"],
+      "properties": {"schema_version": {"const": "ebm-audit-analysis-rule-identity/1.0"}, "rule_id": {"enum": ["boundary_q50", "boundary_q35", "boundary_q65"]}, "cutoff_quantile": {"enum": [0.5, 0.35, 0.65]}, "cutoff_value": {"type": "number"}, "comparator_member_index": {"type": "integer", "minimum": 0}, "analysis_spec_sha256": {"$ref": "#/$defs/Sha256Hex"}, "analysis_rule_identity_sha256": {"$ref": "#/$defs/Sha256Hex"}}
+    },
+    "PrivateCanonicalArrayValueProjection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "canonical_array_artifact_owner_sha256", "member_name", "dtype", "shape", "semantic_version", "axes", "array_value_sha256", "private_canonical_array_value_projection_sha256"],
+        "properties": {"schema_version": {"const": "ebm-audit-private-canonical-array-value-projection/1.0"}, "canonical_array_artifact_owner_sha256": {"$ref": "#/$defs/Sha256Hex"}, "member_name": {"enum": ["central_order_permutation", "order_state_chain", "pairwise_precedence", "position_probabilities", "training_row_indexes", "training_stage_posterior"]}, "dtype": {"enum": ["float64", "int32", "int64", "bool"]}, "shape": {"type": "array", "minItems": 1, "items": {"type": "integer", "minimum": 1}}, "semantic_version": {"type": "string", "minLength": 1}, "axes": {"type": "array", "items": {"type": "string", "minLength": 1}}, "array_value_sha256": {"$ref": "#/$defs/Sha256Hex"}, "private_canonical_array_value_projection_sha256": {"$ref": "#/$defs/Sha256Hex"}}
+    },
+    "InjectedSyntheticParticipantTruthIdentity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "truth_object_sha256", "injected_participant_internal_index", "injected_synthetic_participant_truth_identity_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-injected-synthetic-participant-truth-identity/1.0"},
+        "digest_state": {"$ref": "#/$defs/DigestState"},
+        "truth_object_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "injected_participant_internal_index": {"type": "integer", "minimum": 0},
+        "injected_synthetic_participant_truth_identity_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"injected_synthetic_participant_truth_identity_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"injected_synthetic_participant_truth_identity_sha256": {"type": "null"}}}}
+      ]
+    },
+    "InfluenceComponentEvidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "direction", "value", "descending_midrank", "reason_codes"],
+      "properties": {
+        "state": {"enum": ["ASSESSABLE", "NOT_ASSESSABLE"]},
+        "direction": {"const": "LARGER_IS_MORE_INFLUENTIAL"},
+        "value": {"oneOf": [{"type": "null"}, {"type": "number", "minimum": 0}]},
+        "descending_midrank": {"oneOf": [{"type": "null"}, {"type": "number", "minimum": 1}]},
+        "reason_codes": {"type": "array", "uniqueItems": true, "items": {"$ref": "canonical-records.schema.json#/$defs/StableCode"}}
+      },
+      "allOf": [
+        {"if": {"properties": {"state": {"const": "ASSESSABLE"}}, "required": ["state"]}, "then": {"properties": {"value": {"type": "number", "minimum": 0}, "descending_midrank": {"type": "number", "minimum": 1}}}},
+        {"if": {"properties": {"state": {"const": "NOT_ASSESSABLE"}}, "required": ["state"]}, "then": {"properties": {"value": {"type": "null"}, "descending_midrank": {"type": "null"}, "reason_codes": {"minItems": 1}}}}
+      ]
+    },
+    "InfluenceComponents": {
+      "type": "object", "additionalProperties": false,
+      "required": ["central_order_distance", "maximum_event_position_displacement", "pairwise_precedence_flips", "position_matrix_distance", "convergence_fit_change", "other_participants_expected_stage_distribution_change"],
+      "properties": {
+        "central_order_distance": {"$ref": "#/$defs/InfluenceComponentEvidence"},
+        "maximum_event_position_displacement": {"$ref": "#/$defs/InfluenceComponentEvidence"},
+        "pairwise_precedence_flips": {"$ref": "#/$defs/InfluenceComponentEvidence"},
+        "position_matrix_distance": {"$ref": "#/$defs/InfluenceComponentEvidence"},
+        "convergence_fit_change": {"$ref": "#/$defs/InfluenceComponentEvidence"},
+        "other_participants_expected_stage_distribution_change": {"$ref": "#/$defs/InfluenceComponentEvidence"}
+      }
+    },
+    "InfluenceRemovalEvidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "removed_participant_internal_index", "removal_identity_sha256", "removal_result_sha256", "execution_state", "convergence_state", "capability_state", "comparability_state", "components", "aggregate_equal_weight_score", "reason_codes", "influence_removal_evidence_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-influence-removal-evidence/1.0"},
+        "digest_state": {"$ref": "#/$defs/DigestState"},
+        "removed_participant_internal_index": {"type": "integer", "minimum": 0},
+        "removal_identity_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "removal_result_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]},
+        "execution_state": {"enum": ["SUCCESS", "FAILED", "MISSING"]},
+        "convergence_state": {"enum": ["CONVERGENCE_PASS", "CONVERGENCE_WARN", "CONVERGENCE_FAIL", "CONVERGENCE_NOT_ASSESSABLE"]},
+        "capability_state": {"enum": ["FULL_SIX_COMPONENT", "PARTIAL_COMPONENTS", "UNSUPPORTED", "NOT_ASSESSABLE"]},
+        "comparability_state": {"enum": ["ALL_COMPONENTS_COMPARABLE", "PARTIAL_COMPONENTS_COMPARABLE", "NOT_COMPARABLE", "NOT_ASSESSABLE"]},
+        "components": {"$ref": "#/$defs/InfluenceComponents"},
+        "aggregate_equal_weight_score": {"oneOf": [{"type": "null"}, {"type": "number", "minimum": 0, "maximum": 1}]},
+        "reason_codes": {"type": "array", "uniqueItems": true, "items": {"$ref": "canonical-records.schema.json#/$defs/StableCode"}},
+        "influence_removal_evidence_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"influence_removal_evidence_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"influence_removal_evidence_sha256": {"type": "null"}}}},
+        {"if": {"properties": {"execution_state": {"const": "MISSING"}}, "required": ["execution_state"]}, "then": {"properties": {"removal_result_sha256": {"type": "null"}, "aggregate_equal_weight_score": {"type": "null"}, "reason_codes": {"minItems": 1}}}},
+        {"if": {"properties": {"execution_state": {"const": "FAILED"}}, "required": ["execution_state"]}, "then": {"properties": {"aggregate_equal_weight_score": {"type": "null"}, "reason_codes": {"minItems": 1}}}},
+        {"if": {"properties": {"convergence_state": {"enum": ["CONVERGENCE_WARN", "CONVERGENCE_FAIL", "CONVERGENCE_NOT_ASSESSABLE"]}}, "required": ["convergence_state"]}, "then": {"properties": {"aggregate_equal_weight_score": {"type": "null"}}}},
+        {"if": {"properties": {"capability_state": {"enum": ["PARTIAL_COMPONENTS", "UNSUPPORTED", "NOT_ASSESSABLE"]}}, "required": ["capability_state"]}, "then": {"properties": {"aggregate_equal_weight_score": {"type": "null"}}}},
+        {"if": {"properties": {"comparability_state": {"enum": ["PARTIAL_COMPONENTS_COMPARABLE", "NOT_COMPARABLE", "NOT_ASSESSABLE"]}}, "required": ["comparability_state"]}, "then": {"properties": {"aggregate_equal_weight_score": {"type": "null"}}}}
+      ]
+    },
+    "CaseInfluenceAggregate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "case_id", "baseline_universe_id", "influence_rule_version", "injected_participant_truth_identity", "planned_removal_identity_sha256", "ordered_removals", "baseline_result_sha256", "baseline_execution_state", "baseline_convergence_state", "missing_removal_count", "duplicate_removal_count", "case_influence_aggregate_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-case-influence-aggregate/2.0"},
+        "digest_state": {"$ref": "#/$defs/DigestState"},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "baseline_universe_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "influence_rule_version": {"const": "influence-injected-participant-six-component-midranks/1"},
+        "injected_participant_truth_identity": {"$ref": "#/$defs/InjectedSyntheticParticipantTruthIdentity"},
+        "planned_removal_identity_sha256": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"$ref": "#/$defs/Sha256Hex"}},
+        "ordered_removals": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/InfluenceRemovalEvidence"}},
+        "baseline_result_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]},
+        "baseline_execution_state": {"enum": ["SUCCESS", "FAILED", "MISSING"]},
+        "baseline_convergence_state": {"enum": ["CONVERGENCE_PASS", "CONVERGENCE_WARN", "CONVERGENCE_FAIL", "CONVERGENCE_NOT_ASSESSABLE"]},
+        "missing_removal_count": {"type": "integer", "minimum": 0},
+        "duplicate_removal_count": {"type": "integer", "minimum": 0},
+        "case_influence_aggregate_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"case_influence_aggregate_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"case_influence_aggregate_sha256": {"type": "null"}}}},
+        {"if": {"properties": {"baseline_execution_state": {"const": "MISSING"}}, "required": ["baseline_execution_state"]}, "then": {"properties": {"baseline_result_sha256": {"type": "null"}}}}
+      ]
+    },
+    "CanonicalArrayArtifactOwnerBody": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "benchmark_subject_digest", "authenticated_batch_sha256", "family_id", "case_id", "operation_instance_id", "case_operation_join_key", "public_batch_case_plan_sha256", "proportional_operation_plan_sha256", "operation_plan_entry_sha256", "public_terminal_result_sha256", "captured_run_sha256", "chain_execution_id", "chain_id", "member_name", "fit_payload_digest", "fit_response_binding_sha256", "canonical_scientific_payload_sha256", "finalized_result_record_sha256", "fit_payload_array_pointer", "canonical_payload_array_pointer", "dtype", "shape", "semantic_version", "artifact_relative_path", "artifact_byte_length", "artifact_sha256", "array_value_sha256", "canonical_array_artifact_owner_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-canonical-array-artifact-owner/2.0"}, "digest_state": {"$ref": "#/$defs/DigestState"},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"}, "family_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ScenarioFamilyId"},
+        "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"}, "operation_instance_id": {"$ref": "evaluator-receipts.schema.json#/$defs/ProportionalOperationInstanceId"},
+        "authenticated_batch_sha256": {"$ref": "#/$defs/Sha256Hex"}, "case_operation_join_key": {"$ref": "evaluator-receipts.schema.json#/$defs/CaseOperationJoinKey"},
+        "public_batch_case_plan_sha256": {"$ref": "#/$defs/Sha256Hex"}, "proportional_operation_plan_sha256": {"$ref": "#/$defs/Sha256Hex"}, "operation_plan_entry_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "public_terminal_result_sha256": {"$ref": "#/$defs/Sha256Hex"}, "captured_run_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "chain_execution_id": {"$ref": "#/$defs/Sha256Digest"}, "chain_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "member_name": {"enum": ["central_order_permutation", "order_state_chain", "pairwise_precedence", "position_probabilities", "training_row_indexes", "training_stage_posterior"]},
+        "fit_payload_digest": {"$ref": "#/$defs/Sha256Digest"}, "fit_response_binding_sha256": {"$ref": "#/$defs/Sha256Hex"}, "canonical_scientific_payload_sha256": {"$ref": "#/$defs/Sha256Hex"}, "finalized_result_record_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "fit_payload_array_pointer": {"type": "string", "pattern": "^/array_catalog/[a-z][a-z0-9_]*$"}, "canonical_payload_array_pointer": {"type": "string", "pattern": "^/ordered_chain_payloads/[0-9]+/arrays/[a-z][a-z0-9_]*$"},
+        "dtype": {"enum": ["float64", "int32", "int64", "bool"]}, "shape": {"type": "array", "minItems": 1, "items": {"type": "integer", "minimum": 1}}, "semantic_version": {"type": "string", "minLength": 1},
+        "artifact_relative_path": {"$ref": "canonical-records.schema.json#/$defs/RelativePosixPath"}, "artifact_byte_length": {"type": "integer", "minimum": 1}, "artifact_sha256": {"$ref": "#/$defs/Sha256Hex"}, "array_value_sha256": {"$ref": "#/$defs/Sha256Hex"}, "canonical_array_artifact_owner_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"canonical_array_artifact_owner_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"canonical_array_artifact_owner_sha256": {"type": "null"}}}}
+      ],
+      "x-ebm-invariants": ["canonical-array-owner-public-case-plan-and-operation-join-exact/1", "canonical-array-owner-public-terminal-and-captured-run-exact/1", "canonical-array-owner-no-heldout-or-sealed-authority/1"]
+    },
+    "CanonicalArrayArtifactOwner": {"$ref": "#/$defs/CanonicalArrayArtifactOwnerBody"},
+    "PreprocessingStepRecord": {
+      "type": "object", "additionalProperties": false,
+      "required": ["step_id", "operation_kind", "input_manifest_sha256", "output_manifest_sha256", "fit_population_manifest_sha256", "parameters_sha256"],
+      "properties": {
+        "step_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "operation_kind": {"enum": ["ROW_SELECTION", "MISSINGNESS_FILTER", "IMPUTATION", "SCALER_FIT", "SCALER_APPLY", "TRANSFORM"]},
+        "input_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"}, "output_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "fit_population_manifest_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}, "parameters_sha256": {"$ref": "#/$defs/Sha256Hex"}
+      }
+    },
+    "CompleteRefitStepRecord": {
+      "$comment": "One complete-refit procedure step. Exact order is closed by CompleteRefitOrderedStepRecords; fit-population equality is enforced by the ExecutedPreprocessingExecutionRecord invariants.",
+      "type": "object", "additionalProperties": false,
+      "required": ["step_id", "operation_kind", "input_manifest_sha256", "output_manifest_sha256", "fit_population_manifest_sha256", "parameters_sha256"],
+      "properties": {
+        "step_id": {"enum": ["prepared-input binding", "authenticated worker invocation", "fit-result validation", "convergence derivation", "pairwise concentration", "position concentration"]},
+        "operation_kind": {"enum": ["ROW_SELECTION", "MISSINGNESS_FILTER", "IMPUTATION", "SCALER_FIT", "SCALER_APPLY", "TRANSFORM"]},
+        "input_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "output_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "fit_population_manifest_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]},
+        "parameters_sha256": {"$ref": "#/$defs/Sha256Hex"}
+      }
+    },
+    "CompleteRefitOrderedStepRecords": {
+      "type": "array", "minItems": 6, "maxItems": 6,
+      "prefixItems": [
+        {"allOf": [{"$ref": "#/$defs/CompleteRefitStepRecord"}, {"properties": {"step_id": {"const": "prepared-input binding"}}, "required": ["step_id"]}]},
+        {"allOf": [{"$ref": "#/$defs/CompleteRefitStepRecord"}, {"properties": {"step_id": {"const": "authenticated worker invocation"}}, "required": ["step_id"]}]},
+        {"allOf": [{"$ref": "#/$defs/CompleteRefitStepRecord"}, {"properties": {"step_id": {"const": "fit-result validation"}}, "required": ["step_id"]}]},
+        {"allOf": [{"$ref": "#/$defs/CompleteRefitStepRecord"}, {"properties": {"step_id": {"const": "convergence derivation"}}, "required": ["step_id"]}]},
+        {"allOf": [{"$ref": "#/$defs/CompleteRefitStepRecord"}, {"properties": {"step_id": {"const": "pairwise concentration"}}, "required": ["step_id"]}]},
+        {"allOf": [{"$ref": "#/$defs/CompleteRefitStepRecord"}, {"properties": {"step_id": {"const": "position concentration"}}, "required": ["step_id"]}]}
+      ],
+      "items": false
+    },
+    "CompleteRefitProcedureDigestPreimage": {
+      "$comment": "Canonical preimage for structured digest domain ebm-audit/complete-refit-procedure/1. It contains procedure identity only and excludes inputs, seeds, manifests, fitted parameters, fitted values, and results.",
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "refit_mode", "ordered_step_ids", "refit_procedure_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-complete-refit-procedure/1.0"},
+        "digest_state": {"const": "DIGEST_PREIMAGE"},
+        "refit_mode": {"const": "complete_refit"},
+        "ordered_step_ids": {"const": ["prepared-input binding", "authenticated worker invocation", "fit-result validation", "convergence derivation", "pairwise concentration", "position concentration"]},
+        "refit_procedure_sha256": {"type": "null"}
+      }
+    },
+    "PreprocessingExecutionRecord": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "benchmark_subject_digest", "family_id", "case_id", "operation_instance_id", "analysis_spec_sha256", "input_scientific_data_sha256", "input_row_manifest_sha256", "training_row_manifest_sha256", "output_row_manifest_sha256", "ordered_step_records", "preprocessing_parameters_sha256", "preprocessing_execution_record_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-preprocessing-execution-record/1.0"}, "digest_state": {"$ref": "#/$defs/DigestState"}, "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "family_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ScenarioFamilyId"}, "case_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"}, "operation_instance_id": {"$ref": "#/$defs/Sha256Digest"},
+        "analysis_spec_sha256": {"$ref": "#/$defs/Sha256Hex"}, "input_scientific_data_sha256": {"$ref": "#/$defs/Sha256Hex"}, "input_row_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"}, "training_row_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"}, "output_row_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "ordered_step_records": {"type": "array", "items": {"$ref": "#/$defs/PreprocessingStepRecord"}}, "preprocessing_parameters_sha256": {"$ref": "#/$defs/Sha256Hex"}, "preprocessing_execution_record_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"preprocessing_execution_record_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"preprocessing_execution_record_sha256": {"type": "null"}}}}
+      ]
+    },
+    "ReportPredicateOutcome": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "evidence_graph_digest", "benchmark_subject_digest", "family_id", "predicate_id", "cardinality_member_id", "report_claim_projection_sha256", "report_claim_projection_schema_version", "report_rule_registry_sha256", "ordered_case_ids", "derived_state", "matching_claim_ids", "forbidden_claim_count", "reason_codes", "report_predicate_outcome_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-report-predicate-outcome/1.0"}, "digest_state": {"$ref": "#/$defs/DigestState"}, "evidence_graph_digest": {"$ref": "#/$defs/Sha256Hex"}, "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "family_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ScenarioFamilyId"}, "predicate_id": {"type": "string", "pattern": "^[a-z][a-z0-9-]*/[1-9][0-9]*$"}, "cardinality_member_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"},
+        "report_claim_projection_sha256": {"$ref": "#/$defs/Sha256Hex"}, "report_claim_projection_schema_version": {"const": "ebm-audit-authenticated-report-claim-projection/1.0"}, "report_rule_registry_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "ordered_case_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"}}, "derived_state": {"enum": ["PASS", "WARN", "FAIL", "NOT_ASSESSABLE"]},
+        "matching_claim_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"}}, "forbidden_claim_count": {"type": "integer", "minimum": 0}, "reason_codes": {"type": "array", "uniqueItems": true, "items": {"$ref": "canonical-records.schema.json#/$defs/StableCode"}},
+        "report_predicate_outcome_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"report_predicate_outcome_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"report_predicate_outcome_sha256": {"type": "null"}}}}
+      ]
+    },
+    "ScenarioDerivedFieldRecord": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "evaluation_phase", "benchmark_subject_digest", "family_id", "subtype", "output_path", "output_schema_ref", "derivation_id", "ordered_owner_sha256", "value", "scenario_derived_field_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-scenario-derived-field/1.0"}, "digest_state": {"$ref": "#/$defs/DigestState"}, "evaluation_phase": {"$ref": "#/$defs/EvaluationPhase"}, "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"},
+        "family_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ScenarioFamilyId"}, "subtype": {"enum": ["NONE", "CORRELATED", "EXACT_DUPLICATE_POST_NOISE"]},
+        "output_path": {"type": "string", "pattern": "^/payload/[a-z][a-z0-9_]*(/[a-z][a-z0-9_]*)?$"}, "output_schema_ref": {"type": "string", "minLength": 1}, "derivation_id": {"type": "string", "pattern": "^[a-z][a-z0-9-]*/[1-9][0-9]*$"},
+        "ordered_owner_sha256": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/Sha256Hex"}}, "value": {}, "scenario_derived_field_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"scenario_derived_field_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"scenario_derived_field_sha256": {"type": "null"}}}}
+      ]
+    },
+    "MissingOwnerSlot": {
+      "type": "object", "additionalProperties": false, "required": ["output_path", "owner_class", "reason_code"],
+      "properties": {"output_path": {"type": "string", "minLength": 1}, "owner_class": {"$ref": "#/$defs/OwnerClass"}, "reason_code": {"$ref": "canonical-records.schema.json#/$defs/StableCode"}}
+    },
+    "ScenarioEvidenceTreeFile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["relative_path", "byte_length", "content_sha256"],
+      "properties": {
+        "relative_path": {"$ref": "canonical-records.schema.json#/$defs/RelativePosixPath"},
+        "byte_length": {"type": "integer", "minimum": 1},
+        "content_sha256": {"$ref": "#/$defs/Sha256Hex"}
+      }
+    },
+    "ScenarioEvidenceTreeManifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "digest_state", "ordered_files", "evidence_tree_manifest_sha256"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-scenario-evidence-tree-manifest/1.0"},
+        "digest_state": {"$ref": "#/$defs/DigestState"},
+        "ordered_files": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/ScenarioEvidenceTreeFile"}},
+        "evidence_tree_manifest_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+      },
+      "allOf": [
+        {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"evidence_tree_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+        {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"evidence_tree_manifest_sha256": {"type": "null"}}}}
+      ]
+    },
+    "SubstantiveScenarioFamilyEvidenceBody": {
+      "type": "object",
+      "required": ["schema_version", "digest_state", "evaluation_phase", "evidence_scope", "scientific_acceptance_eligible", "freeze_evidence_eligible", "heldout_score_eligible", "benchmark_subject_digest", "family_id", "predicate_id", "subtype_scope", "contract_sha256", "scenario_definitions_sha256", "operation_plan_sha256", "sealed_case_manifest_sha256", "sealed_results_sha256", "source_owner_manifest_sha256", "derivation_registry_sha256", "predicate_registry_sha256", "planned_count", "valid_count", "planned_case_ids", "valid_case_ids", "ordered_derived_fields", "ordered_missing_owner_slots", "evidence_state", "payload", "reason_codes"],
+      "properties": {
+        "schema_version": {"const": "ebm-audit-substantive-scenario-family-evidence/1.0"}, "digest_state": {"$ref": "#/$defs/DigestState"}, "evaluation_phase": {"$ref": "#/$defs/EvaluationPhase"},
+        "evidence_scope": {"enum": ["SUBSTANTIVE_DEVELOPMENT_SCENARIOS", "SUBSTANTIVE_HELDOUT_SCENARIOS"]}, "scientific_acceptance_eligible": {"type": "boolean"}, "freeze_evidence_eligible": {"type": "boolean"}, "heldout_score_eligible": {"type": "boolean"},
+        "benchmark_subject_digest": {"$ref": "#/$defs/Sha256Digest"}, "family_id": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ScenarioFamilyId"}, "predicate_id": {"type": "string", "pattern": "^[a-z][a-z0-9-]*/v[1-9][0-9]*$"}, "subtype_scope": {"enum": ["NONE", "COMBINED_CORRELATED_AND_EXACT_DUPLICATE"]},
+        "contract_sha256": {"$ref": "#/$defs/Sha256Hex"}, "scenario_definitions_sha256": {"$ref": "#/$defs/Sha256Hex"}, "operation_plan_sha256": {"$ref": "#/$defs/Sha256Hex"}, "sealed_case_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"}, "sealed_results_sha256": {"$ref": "#/$defs/Sha256Hex"}, "source_owner_manifest_sha256": {"$ref": "#/$defs/Sha256Hex"}, "derivation_registry_sha256": {"$ref": "#/$defs/Sha256Hex"}, "predicate_registry_sha256": {"$ref": "#/$defs/Sha256Hex"},
+        "planned_count": {"type": "integer", "minimum": 1}, "valid_count": {"type": "integer", "minimum": 0}, "planned_case_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"}}, "valid_case_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/MachineId"}},
+        "ordered_derived_fields": {"type": "array", "items": {"$ref": "#/$defs/ScenarioDerivedFieldRecord"}}, "ordered_missing_owner_slots": {"type": "array", "items": {"$ref": "#/$defs/MissingOwnerSlot"}}, "evidence_state": {"enum": ["ASSESSABLE", "NOT_ASSESSABLE"]},
+        "payload": {"oneOf": [{"type": "null"}, {"$ref": "scenario-family-payload.schema.json#/$defs/FamilyPayload"}]}, "reason_codes": {"type": "array", "uniqueItems": true, "items": {"$ref": "canonical-records.schema.json#/$defs/StableCode"}}
+      },
+      "allOf": [
+        {"if": {"properties": {"evaluation_phase": {"const": "DEVELOPMENT"}}}, "then": {"properties": {"evidence_scope": {"const": "SUBSTANTIVE_DEVELOPMENT_SCENARIOS"}, "scientific_acceptance_eligible": {"const": false}, "freeze_evidence_eligible": {"const": true}, "heldout_score_eligible": {"const": false}}}},
+        {"if": {"properties": {"evaluation_phase": {"const": "HELDOUT"}}}, "then": {"properties": {"evidence_scope": {"const": "SUBSTANTIVE_HELDOUT_SCENARIOS"}, "scientific_acceptance_eligible": {"const": true}, "freeze_evidence_eligible": {"const": false}, "heldout_score_eligible": {"const": true}}}},
+        {"if": {"properties": {"evidence_state": {"const": "ASSESSABLE"}}}, "then": {"properties": {"payload": {"$ref": "scenario-family-payload.schema.json#/$defs/FamilyPayload"}, "ordered_missing_owner_slots": {"maxItems": 0}}}},
+        {"if": {"properties": {"evidence_state": {"const": "NOT_ASSESSABLE"}}}, "then": {"properties": {"payload": {"type": "null"}, "ordered_missing_owner_slots": {"minItems": 1}, "reason_codes": {"minItems": 1}}}}
+      ]
+    },
+    "SubstantiveScenarioFamilyEvidence": {
+      "allOf": [{"$ref": "#/$defs/SubstantiveScenarioFamilyEvidenceBody"}, {"type": "object", "required": ["digest_state", "family_evidence_sha256"], "properties": {"digest_state": {"const": "PERSISTED"}, "family_evidence_sha256": {"$ref": "#/$defs/Sha256Hex"}}}], "unevaluatedProperties": false
+    },
+    "SubstantiveScenarioFamilyEvidenceDigestPreimage": {
+      "allOf": [{"$ref": "#/$defs/SubstantiveScenarioFamilyEvidenceBody"}, {"type": "object", "required": ["digest_state", "family_evidence_sha256"], "properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}, "family_evidence_sha256": {"type": "null"}}}], "unevaluatedProperties": false
+    }
+  }
+}

@@ -1,0 +1,1243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.ebm-audit.invalid/sampling-evidence.schema.json",
+  "title": "EBM Audit sealed sampling evidence v3",
+  "oneOf": [
+    { "$ref": "#/$defs/SamplingOriginAttempt" },
+    { "$ref": "#/$defs/SamplingNumericComparison" },
+    { "$ref": "#/$defs/SamplingFamilyAggregate" },
+    { "$ref": "#/$defs/SamplingLayerEvidence" }
+  ],
+  "$defs": {
+    "NonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "NullableString": {
+      "oneOf": [
+        { "$ref": "#/$defs/NonEmptyString" },
+        { "type": "null" }
+      ]
+    },
+    "Digest": {
+      "$ref": "canonical-records.schema.json#/$defs/Sha256Digest"
+    },
+    "NullableDigest": {
+      "oneOf": [
+        { "$ref": "#/$defs/Digest" },
+        { "type": "null" }
+      ]
+    },
+    "SafeInteger": {
+      "$ref": "canonical-records.schema.json#/$defs/SafeInteger"
+    },
+    "NonnegativeInteger": {
+      "allOf": [
+        { "$ref": "#/$defs/SafeInteger" },
+        { "minimum": 0 }
+      ]
+    },
+    "PositiveInteger": {
+      "allOf": [
+        { "$ref": "#/$defs/SafeInteger" },
+        { "minimum": 1 }
+      ]
+    },
+    "FiniteNumber": {
+      "type": "number",
+      "format": "finite-number"
+    },
+    "Probability": {
+      "allOf": [
+        { "$ref": "#/$defs/FiniteNumber" },
+        {
+          "minimum": 0,
+          "maximum": 1
+        }
+      ]
+    },
+    "NullableProbability": {
+      "oneOf": [
+        { "$ref": "#/$defs/Probability" },
+        { "type": "null" }
+      ]
+    },
+    "NullableFiniteNumber": {
+      "oneOf": [
+        { "$ref": "#/$defs/FiniteNumber" },
+        { "type": "null" }
+      ]
+    },
+    "TerminalStatus": {
+      "enum": [
+        "SUCCESS",
+        "CONVERGENCE_WARN",
+        "INVALID_INPUT",
+        "UNSUPPORTED_CAPABILITY",
+        "INVALID_SPECIFICATION",
+        "BACKEND_ERROR",
+        "TIMEOUT",
+        "CONVERGENCE_FAILED",
+        "CONVERGENCE_NOT_ASSESSABLE",
+        "PRIVACY_VIOLATION",
+        "PROTOCOL_ERROR"
+      ]
+    },
+    "Eligibility": {
+      "enum": [
+        "INTERPRETIVE",
+        "DESCRIPTIVE_ONLY",
+        "UNAVAILABLE"
+      ]
+    },
+    "ContributionState": {
+      "enum": [
+        "INTERPRETIVE",
+        "DESCRIPTIVE_ONLY",
+        "METRIC_NOT_ASSESSABLE",
+        "FAILED"
+      ]
+    },
+    "SamplingOperationDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "descriptor_schema_version",
+        "operation_scope",
+        "experiment_mode",
+        "sampling_method_id",
+        "sampling_design",
+        "strata_group_spec_ids",
+        "replicate_ordinal",
+        "refit_preprocessing",
+        "fixed_evaluation_cohort_policy",
+        "retained_fraction",
+        "retained_count_rounding_rule"
+      ],
+      "properties": {
+        "descriptor_schema_version": {
+          "const": "ebm-audit-sampling-operation-descriptor/1.0"
+        },
+        "operation_scope": {
+          "enum": ["replicate", "family"]
+        },
+        "experiment_mode": {
+          "enum": ["bootstrap", "subsample"]
+        },
+        "sampling_method_id": {
+          "enum": [
+            "participant-bootstrap-with-replacement/1",
+            "participant-subsample-without-replacement/1"
+          ]
+        },
+        "sampling_design": {
+          "enum": ["ordinary", "stratified"]
+        },
+        "strata_group_spec_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/NonEmptyString" }
+        },
+        "replicate_ordinal": {
+          "oneOf": [
+            { "$ref": "#/$defs/NonnegativeInteger" },
+            { "type": "null" }
+          ]
+        },
+        "refit_preprocessing": { "const": true },
+        "fixed_evaluation_cohort_policy": {
+          "enum": [
+            "fixed-baseline-cohort-or-unsupported/1",
+            "fixed-subsample-cohort-or-unsupported/1"
+          ]
+        },
+        "retained_fraction": {
+          "oneOf": [
+            {
+              "allOf": [
+                { "$ref": "#/$defs/FiniteNumber" },
+                {
+                  "exclusiveMinimum": 0,
+                  "exclusiveMaximum": 1
+                }
+              ]
+            },
+            { "type": "null" }
+          ]
+        },
+        "retained_count_rounding_rule": {
+          "oneOf": [
+            { "const": "floor-pre-operation-count-times-fraction/1" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operation_scope": { "const": "replicate" }
+            }
+          },
+          "then": {
+            "properties": {
+              "replicate_ordinal": { "$ref": "#/$defs/NonnegativeInteger" }
+            }
+          },
+          "else": {
+            "properties": {
+              "replicate_ordinal": { "type": "null" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "sampling_design": { "const": "ordinary" }
+            }
+          },
+          "then": {
+            "properties": {
+              "strata_group_spec_ids": { "maxItems": 0 }
+            }
+          },
+          "else": {
+            "properties": {
+              "strata_group_spec_ids": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "experiment_mode": { "const": "bootstrap" }
+            }
+          },
+          "then": {
+            "properties": {
+              "sampling_method_id": {
+                "const": "participant-bootstrap-with-replacement/1"
+              },
+              "fixed_evaluation_cohort_policy": {
+                "const": "fixed-baseline-cohort-or-unsupported/1"
+              },
+              "retained_fraction": { "type": "null" },
+              "retained_count_rounding_rule": { "type": "null" }
+            }
+          },
+          "else": {
+            "properties": {
+              "sampling_method_id": {
+                "const": "participant-subsample-without-replacement/1"
+              },
+              "fixed_evaluation_cohort_policy": {
+                "const": "fixed-subsample-cohort-or-unsupported/1"
+              },
+              "retained_fraction": {
+                "allOf": [
+                  { "$ref": "#/$defs/FiniteNumber" },
+                  {
+                    "exclusiveMinimum": 0,
+                    "exclusiveMaximum": 1
+                  }
+                ]
+              },
+              "retained_count_rounding_rule": {
+                "const": "floor-pre-operation-count-times-fraction/1"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "EventIdArray": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/NonEmptyString" }
+    },
+    "EventDirectionArray": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "enum": ["higher", "lower"]
+      }
+    },
+    "ProbabilityMatrix": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "array",
+        "minItems": 1,
+        "items": { "$ref": "#/$defs/Probability" }
+      }
+    },
+    "ScalarMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metric_id",
+        "status",
+        "value",
+        "reason_code",
+        "metadata_code"
+      ],
+      "properties": {
+        "metric_id": {
+          "enum": [
+            "central-order-kendall-distance/1",
+            "central-order-footrule-distance/1",
+            "top-k-overlap-fraction/1",
+            "top-k-jaccard/1",
+            "maximum-normalized-event-rank-displacement/1",
+            "position-matrix-distance/1",
+            "pairwise-matrix-distance/1",
+            "strict-pairwise-majority-flip-count/1",
+            "strict-pairwise-majority-flip-fraction/1"
+          ]
+        },
+        "status": {
+          "enum": ["ASSESSABLE", "NOT_ASSESSABLE"]
+        },
+        "value": {
+          "oneOf": [
+            { "$ref": "#/$defs/FiniteNumber" },
+            { "type": "null" }
+          ]
+        },
+        "reason_code": { "$ref": "#/$defs/NullableString" },
+        "metadata_code": {
+          "oneOf": [
+            { "const": "DEGENERATE_ONE_EVENT" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "status": { "const": "ASSESSABLE" },
+            "value": { "$ref": "#/$defs/FiniteNumber" },
+            "reason_code": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "status": { "const": "NOT_ASSESSABLE" },
+            "value": { "type": "null" },
+            "reason_code": { "$ref": "#/$defs/NonEmptyString" },
+            "metadata_code": { "type": "null" }
+          }
+        }
+      ]
+    },
+    "BooleanMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metric_id",
+        "status",
+        "value",
+        "reason_code",
+        "metadata_code"
+      ],
+      "properties": {
+        "metric_id": {
+          "enum": [
+            "first-endpoint-stability/1",
+            "last-endpoint-stability/1"
+          ]
+        },
+        "status": {
+          "enum": ["ASSESSABLE", "NOT_ASSESSABLE"]
+        },
+        "value": {
+          "oneOf": [
+            { "type": "boolean" },
+            { "type": "null" }
+          ]
+        },
+        "reason_code": { "$ref": "#/$defs/NullableString" },
+        "metadata_code": {
+          "oneOf": [
+            { "const": "DEGENERATE_ONE_EVENT" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "status": { "const": "ASSESSABLE" },
+            "value": { "type": "boolean" },
+            "reason_code": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "status": { "const": "NOT_ASSESSABLE" },
+            "value": { "type": "null" },
+            "reason_code": { "$ref": "#/$defs/NonEmptyString" },
+            "metadata_code": { "type": "null" }
+          }
+        }
+      ]
+    },
+    "TopKAndEndpointStability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "common_event_ids",
+        "common_event_count",
+        "events_only_in_subject",
+        "events_only_in_source",
+        "k",
+        "top_k_overlap",
+        "top_k_jaccard",
+        "first_event_stable",
+        "last_event_stable"
+      ],
+      "properties": {
+        "rule_id": { "const": "first-min-3-events/1" },
+        "common_event_ids": { "$ref": "#/$defs/EventIdArray" },
+        "common_event_count": { "$ref": "#/$defs/PositiveInteger" },
+        "events_only_in_subject": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/NonEmptyString" }
+        },
+        "events_only_in_source": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/NonEmptyString" }
+        },
+        "k": {
+          "oneOf": [
+            { "$ref": "#/$defs/PositiveInteger" },
+            { "type": "null" }
+          ]
+        },
+        "top_k_overlap": { "$ref": "#/$defs/ScalarMetric" },
+        "top_k_jaccard": { "$ref": "#/$defs/ScalarMetric" },
+        "first_event_stable": { "$ref": "#/$defs/BooleanMetric" },
+        "last_event_stable": { "$ref": "#/$defs/BooleanMetric" }
+      }
+    },
+    "ReferenceChainSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "chain_plan_position",
+        "chain_execution_id",
+        "final_attempt_id",
+        "chain_payload_digest",
+        "execution_evidence_digest"
+      ],
+      "properties": {
+        "chain_plan_position": { "$ref": "#/$defs/NonnegativeInteger" },
+        "chain_execution_id": { "$ref": "#/$defs/Digest" },
+        "final_attempt_id": { "$ref": "#/$defs/Digest" },
+        "chain_payload_digest": { "$ref": "#/$defs/Digest" },
+        "execution_evidence_digest": { "$ref": "#/$defs/Digest" }
+      }
+    },
+    "ReferenceSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference_chain_source",
+        "retained_state_count",
+        "modal_order_event_ids",
+        "position_probabilities",
+        "pairwise_precedence"
+      ],
+      "properties": {
+        "reference_chain_source": { "$ref": "#/$defs/ReferenceChainSource" },
+        "retained_state_count": { "$ref": "#/$defs/PositiveInteger" },
+        "modal_order_event_ids": { "$ref": "#/$defs/EventIdArray" },
+        "position_probabilities": { "$ref": "#/$defs/ProbabilityMatrix" },
+        "pairwise_precedence": { "$ref": "#/$defs/ProbabilityMatrix" }
+      }
+    },
+    "NullableReferenceSnapshot": {
+      "oneOf": [
+        { "$ref": "#/$defs/ReferenceSnapshot" },
+        { "type": "null" }
+      ]
+    },
+    "NumericIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject_analysis_spec_id",
+        "source_analysis_spec_id",
+        "subject_result_id",
+        "source_result_id",
+        "subject_candidate_record_digest",
+        "source_candidate_record_digest",
+        "operation_descriptor_digest",
+        "participant_stage_comparison_digest"
+      ],
+      "properties": {
+        "subject_analysis_spec_id": { "$ref": "#/$defs/Digest" },
+        "source_analysis_spec_id": { "$ref": "#/$defs/Digest" },
+        "subject_result_id": { "$ref": "#/$defs/Digest" },
+        "source_result_id": { "$ref": "#/$defs/Digest" },
+        "subject_candidate_record_digest": { "$ref": "#/$defs/Digest" },
+        "source_candidate_record_digest": { "$ref": "#/$defs/Digest" },
+        "operation_descriptor_digest": { "$ref": "#/$defs/Digest" },
+        "participant_stage_comparison_digest": { "$ref": "#/$defs/Digest" }
+      }
+    },
+    "EventRankShift": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "subject_rank",
+        "source_rank",
+        "absolute_rank_shift",
+        "normalized_rank_shift"
+      ],
+      "properties": {
+        "event_id": { "$ref": "#/$defs/NonEmptyString" },
+        "subject_rank": { "$ref": "#/$defs/NonnegativeInteger" },
+        "source_rank": { "$ref": "#/$defs/NonnegativeInteger" },
+        "absolute_rank_shift": { "$ref": "#/$defs/NonnegativeInteger" },
+        "normalized_rank_shift": { "$ref": "#/$defs/Probability" }
+      }
+    },
+    "EventRankShiftBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "status",
+        "reason_code",
+        "event_rows"
+      ],
+      "properties": {
+        "rule_id": { "const": "identical-event-rank-shift/1" },
+        "status": {
+          "enum": ["ASSESSABLE", "NOT_ASSESSABLE"]
+        },
+        "reason_code": { "$ref": "#/$defs/NullableString" },
+        "event_rows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EventRankShift" }
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "status": { "const": "ASSESSABLE" },
+            "reason_code": { "type": "null" },
+            "event_rows": { "minItems": 1 }
+          }
+        },
+        {
+          "properties": {
+            "status": { "const": "NOT_ASSESSABLE" },
+            "reason_code": { "$ref": "#/$defs/NonEmptyString" },
+            "event_rows": { "maxItems": 0 }
+          }
+        }
+      ]
+    },
+    "FlippedPair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_a_id",
+        "event_b_id",
+        "subject_probability_a_before_b",
+        "source_probability_a_before_b",
+        "subject_relation",
+        "source_relation"
+      ],
+      "properties": {
+        "event_a_id": { "$ref": "#/$defs/NonEmptyString" },
+        "event_b_id": { "$ref": "#/$defs/NonEmptyString" },
+        "subject_probability_a_before_b": { "$ref": "#/$defs/Probability" },
+        "source_probability_a_before_b": { "$ref": "#/$defs/Probability" },
+        "subject_relation": {
+          "enum": ["A_BEFORE_B", "B_BEFORE_A"]
+        },
+        "source_relation": {
+          "enum": ["A_BEFORE_B", "B_BEFORE_A"]
+        }
+      }
+    },
+    "PairwiseFlipBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "denominator_rule_id",
+        "strict_pairwise_majority_flip_denominator",
+        "flipped_pairs",
+        "flip_count",
+        "flip_fraction"
+      ],
+      "properties": {
+        "rule_id": { "const": "strict-pairwise-majority-flips/1" },
+        "denominator_rule_id": {
+          "const": "unordered-identical-event-pairs/1"
+        },
+        "strict_pairwise_majority_flip_denominator": {
+          "oneOf": [
+            { "$ref": "#/$defs/NonnegativeInteger" },
+            { "type": "null" }
+          ]
+        },
+        "flipped_pairs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/FlippedPair" }
+        },
+        "flip_count": { "$ref": "#/$defs/ScalarMetric" },
+        "flip_fraction": { "$ref": "#/$defs/ScalarMetric" }
+      }
+    },
+    "SamplingMetricBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparison_rule_id",
+        "kendall_distance",
+        "footrule_distance",
+        "top_k_and_endpoint_stability",
+        "maximum_normalized_event_rank_displacement",
+        "event_rank_shifts",
+        "position_matrix_distance",
+        "pairwise_matrix_distance",
+        "pairwise_majority_flips"
+      ],
+      "properties": {
+        "comparison_rule_id": {
+          "const": "sampling-identical-event-reference-comparison/2"
+        },
+        "kendall_distance": { "$ref": "#/$defs/ScalarMetric" },
+        "footrule_distance": { "$ref": "#/$defs/ScalarMetric" },
+        "top_k_and_endpoint_stability": {
+          "$ref": "#/$defs/TopKAndEndpointStability"
+        },
+        "maximum_normalized_event_rank_displacement": {
+          "$ref": "#/$defs/ScalarMetric"
+        },
+        "event_rank_shifts": { "$ref": "#/$defs/EventRankShiftBundle" },
+        "position_matrix_distance": { "$ref": "#/$defs/ScalarMetric" },
+        "pairwise_matrix_distance": { "$ref": "#/$defs/ScalarMetric" },
+        "pairwise_majority_flips": { "$ref": "#/$defs/PairwiseFlipBundle" }
+      }
+    },
+    "SamplingNumericComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_schema_version",
+        "evidence_rule_id",
+        "plan_digest",
+        "terminal_index_digest",
+        "numeric_identity",
+        "operation_descriptor",
+        "subject_universe_id",
+        "source_universe_id",
+        "subject_terminal_status",
+        "source_terminal_status",
+        "eligibility",
+        "event_ids",
+        "event_directions",
+        "stage_semantics_digest",
+        "subject_snapshot",
+        "source_snapshot",
+        "metric_bundle",
+        "participant_stage_comparison",
+        "numeric_status",
+        "reason_code",
+        "numeric_comparison_digest"
+      ],
+      "properties": {
+        "record_schema_version": {
+          "const": "ebm-audit-sampling-numeric-comparison/3.0"
+        },
+        "evidence_rule_id": {
+          "const": "sampling-source-fit-comparison/3"
+        },
+        "plan_digest": { "$ref": "#/$defs/Digest" },
+        "terminal_index_digest": { "$ref": "#/$defs/Digest" },
+        "numeric_identity": { "$ref": "#/$defs/NumericIdentity" },
+        "operation_descriptor": {
+          "allOf": [
+            { "$ref": "#/$defs/SamplingOperationDescriptor" },
+            {
+              "properties": {
+                "operation_scope": { "const": "replicate" }
+              }
+            }
+          ]
+        },
+        "subject_universe_id": { "$ref": "#/$defs/NullableDigest" },
+        "source_universe_id": { "$ref": "#/$defs/NullableDigest" },
+        "subject_terminal_status": { "$ref": "#/$defs/TerminalStatus" },
+        "source_terminal_status": { "$ref": "#/$defs/TerminalStatus" },
+        "eligibility": { "$ref": "#/$defs/Eligibility" },
+        "event_ids": { "$ref": "#/$defs/EventIdArray" },
+        "event_directions": { "$ref": "#/$defs/EventDirectionArray" },
+        "stage_semantics_digest": { "$ref": "#/$defs/Digest" },
+        "subject_snapshot": { "$ref": "#/$defs/NullableReferenceSnapshot" },
+        "source_snapshot": { "$ref": "#/$defs/NullableReferenceSnapshot" },
+        "metric_bundle": { "$ref": "#/$defs/SamplingMetricBundle" },
+        "participant_stage_comparison": {
+          "$ref": "participant-stage-comparison.schema.json#/$defs/ParticipantStageComparison"
+        },
+        "numeric_status": {
+          "enum": [
+            "FULLY_ASSESSABLE",
+            "PARTIALLY_ASSESSABLE",
+            "NOT_ASSESSABLE"
+          ]
+        },
+        "reason_code": { "$ref": "#/$defs/NullableString" },
+        "numeric_comparison_digest": { "$ref": "#/$defs/Digest" }
+      }
+    },
+    "ComparisonEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "origin_id",
+        "subject_analysis_spec_id",
+        "comparator_analysis_spec_id",
+        "derivation_rule_id",
+        "semantics"
+      ],
+      "properties": {
+        "origin_id": { "$ref": "#/$defs/Digest" },
+        "subject_analysis_spec_id": { "$ref": "#/$defs/Digest" },
+        "comparator_analysis_spec_id": { "$ref": "#/$defs/Digest" },
+        "derivation_rule_id": {
+          "const": "derived-origin-to-source/1"
+        },
+        "semantics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "order_event_alignment",
+            "native_stage_comparability"
+          ],
+          "properties": {
+            "order_event_alignment": {
+              "const": "identical-event-set"
+            },
+            "native_stage_comparability": {
+              "const": "comparable"
+            }
+          }
+        }
+      }
+    },
+    "SamplingOriginAttempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_schema_version",
+        "evidence_rule_id",
+        "plan_digest",
+        "terminal_index_digest",
+        "origin_id",
+        "analysis_declaration_id",
+        "source_declaration_digest",
+        "experiment_set_id",
+        "operation_descriptor",
+        "comparison_edge",
+        "subject_analysis_spec_id",
+        "source_analysis_spec_id",
+        "subject_result_id",
+        "source_result_id",
+        "subject_universe_id",
+        "source_universe_id",
+        "subject_terminal_status",
+        "source_terminal_status",
+        "subject_candidate_record_digest",
+        "source_candidate_record_digest",
+        "numeric_comparison_digest",
+        "contribution_state",
+        "reason_code",
+        "attempt_digest"
+      ],
+      "properties": {
+        "record_schema_version": {
+          "const": "ebm-audit-sampling-origin-attempt/3.0"
+        },
+        "evidence_rule_id": {
+          "const": "sampling-source-fit-comparison/3"
+        },
+        "plan_digest": { "$ref": "#/$defs/Digest" },
+        "terminal_index_digest": { "$ref": "#/$defs/Digest" },
+        "origin_id": { "$ref": "#/$defs/Digest" },
+        "analysis_declaration_id": { "$ref": "#/$defs/NonEmptyString" },
+        "source_declaration_digest": { "$ref": "#/$defs/Digest" },
+        "experiment_set_id": { "$ref": "#/$defs/NonEmptyString" },
+        "operation_descriptor": {
+          "allOf": [
+            { "$ref": "#/$defs/SamplingOperationDescriptor" },
+            {
+              "properties": {
+                "operation_scope": { "const": "replicate" }
+              }
+            }
+          ]
+        },
+        "comparison_edge": { "$ref": "#/$defs/ComparisonEdge" },
+        "subject_analysis_spec_id": { "$ref": "#/$defs/Digest" },
+        "source_analysis_spec_id": { "$ref": "#/$defs/Digest" },
+        "subject_result_id": { "$ref": "#/$defs/Digest" },
+        "source_result_id": { "$ref": "#/$defs/Digest" },
+        "subject_universe_id": { "$ref": "#/$defs/NullableDigest" },
+        "source_universe_id": { "$ref": "#/$defs/NullableDigest" },
+        "subject_terminal_status": { "$ref": "#/$defs/TerminalStatus" },
+        "source_terminal_status": { "$ref": "#/$defs/TerminalStatus" },
+        "subject_candidate_record_digest": { "$ref": "#/$defs/Digest" },
+        "source_candidate_record_digest": { "$ref": "#/$defs/Digest" },
+        "numeric_comparison_digest": { "$ref": "#/$defs/Digest" },
+        "contribution_state": { "$ref": "#/$defs/ContributionState" },
+        "reason_code": { "$ref": "#/$defs/NullableString" },
+        "attempt_digest": { "$ref": "#/$defs/Digest" }
+      }
+    },
+    "MetricDistribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metric_id",
+        "quantile_rule_id",
+        "status",
+        "valid_count",
+        "q10",
+        "median",
+        "q90",
+        "maximum",
+        "reason_code"
+      ],
+      "properties": {
+        "metric_id": {
+          "enum": [
+            "central-order-kendall-distance/1",
+            "central-order-footrule-distance/1",
+            "top-k-overlap-fraction/1",
+            "top-k-jaccard/1",
+            "maximum-normalized-event-rank-displacement/1",
+            "position-matrix-distance/1",
+            "pairwise-matrix-distance/1",
+            "strict-pairwise-majority-flip-fraction/1"
+          ]
+        },
+        "quantile_rule_id": { "const": "inverse-empirical-cdf/1" },
+        "status": {
+          "enum": ["ASSESSABLE", "NOT_ASSESSABLE"]
+        },
+        "valid_count": { "$ref": "#/$defs/NonnegativeInteger" },
+        "q10": { "$ref": "#/$defs/NullableProbability" },
+        "median": { "$ref": "#/$defs/NullableProbability" },
+        "q90": { "$ref": "#/$defs/NullableProbability" },
+        "maximum": { "$ref": "#/$defs/NullableProbability" },
+        "reason_code": { "$ref": "#/$defs/NullableString" }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "status": { "const": "ASSESSABLE" },
+            "valid_count": { "minimum": 1 },
+            "q10": { "$ref": "#/$defs/Probability" },
+            "median": { "$ref": "#/$defs/Probability" },
+            "q90": { "$ref": "#/$defs/Probability" },
+            "maximum": { "$ref": "#/$defs/Probability" },
+            "reason_code": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "status": { "const": "NOT_ASSESSABLE" },
+            "valid_count": { "const": 0 },
+            "q10": { "type": "null" },
+            "median": { "type": "null" },
+            "q90": { "type": "null" },
+            "maximum": { "type": "null" },
+            "reason_code": {
+              "const": "SAMPLING.NO_INTERPRETIVE_CONTRIBUTORS"
+            }
+          }
+        }
+      ]
+    },
+    "EventPositionFrequency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "contributing_count",
+        "position_counts",
+        "position_frequencies"
+      ],
+      "properties": {
+        "event_id": { "$ref": "#/$defs/NonEmptyString" },
+        "contributing_count": { "$ref": "#/$defs/PositiveInteger" },
+        "position_counts": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/NonnegativeInteger" }
+        },
+        "position_frequencies": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Probability" }
+        }
+      }
+    },
+    "PairwiseRelationFrequency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relation_basis",
+        "event_a_id",
+        "event_b_id",
+        "contributing_count",
+        "a_before_b_count",
+        "b_before_a_count",
+        "tied_count",
+        "a_before_b_frequency",
+        "b_before_a_frequency",
+        "tied_frequency"
+      ],
+      "properties": {
+        "relation_basis": {
+          "enum": [
+            "CENTRAL_ORDER",
+            "WITHIN_FIT_PAIRWISE_MAJORITY"
+          ]
+        },
+        "event_a_id": { "$ref": "#/$defs/NonEmptyString" },
+        "event_b_id": { "$ref": "#/$defs/NonEmptyString" },
+        "contributing_count": { "$ref": "#/$defs/PositiveInteger" },
+        "a_before_b_count": { "$ref": "#/$defs/NonnegativeInteger" },
+        "b_before_a_count": { "$ref": "#/$defs/NonnegativeInteger" },
+        "tied_count": { "$ref": "#/$defs/NonnegativeInteger" },
+        "a_before_b_frequency": { "$ref": "#/$defs/Probability" },
+        "b_before_a_frequency": { "$ref": "#/$defs/Probability" },
+        "tied_frequency": { "$ref": "#/$defs/Probability" }
+      }
+    },
+    "PairwiseProbabilityDistribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_a_id",
+        "event_b_id",
+        "probability_metric_id",
+        "quantile_rule_id",
+        "contributing_count",
+        "q10",
+        "median",
+        "q90",
+        "minimum",
+        "maximum",
+        "mean"
+      ],
+      "properties": {
+        "event_a_id": { "$ref": "#/$defs/NonEmptyString" },
+        "event_b_id": { "$ref": "#/$defs/NonEmptyString" },
+        "probability_metric_id": {
+          "const": "within-fit-pairwise-precedence-probability/1"
+        },
+        "quantile_rule_id": { "const": "inverse-empirical-cdf/1" },
+        "contributing_count": { "$ref": "#/$defs/PositiveInteger" },
+        "q10": { "$ref": "#/$defs/Probability" },
+        "median": { "$ref": "#/$defs/Probability" },
+        "q90": { "$ref": "#/$defs/Probability" },
+        "minimum": { "$ref": "#/$defs/Probability" },
+        "maximum": { "$ref": "#/$defs/Probability" },
+        "mean": { "$ref": "#/$defs/Probability" }
+      }
+    },
+    "EndpointStability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "k",
+        "contributing_count",
+        "first_event_stable_count",
+        "first_event_stable_frequency",
+        "last_event_stable_count",
+        "last_event_stable_frequency",
+        "reason_code"
+      ],
+      "properties": {
+        "rule_id": { "const": "first-min-3-events/1" },
+        "k": {
+          "oneOf": [
+            { "$ref": "#/$defs/PositiveInteger" },
+            { "type": "null" }
+          ]
+        },
+        "contributing_count": { "$ref": "#/$defs/NonnegativeInteger" },
+        "first_event_stable_count": { "$ref": "#/$defs/NonnegativeInteger" },
+        "first_event_stable_frequency": { "$ref": "#/$defs/NullableProbability" },
+        "last_event_stable_count": { "$ref": "#/$defs/NonnegativeInteger" },
+        "last_event_stable_frequency": { "$ref": "#/$defs/NullableProbability" },
+        "reason_code": { "$ref": "#/$defs/NullableString" }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "contributing_count": { "minimum": 1 },
+            "k": { "$ref": "#/$defs/PositiveInteger" },
+            "first_event_stable_frequency": { "$ref": "#/$defs/Probability" },
+            "last_event_stable_frequency": { "$ref": "#/$defs/Probability" },
+            "reason_code": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "contributing_count": { "const": 0 },
+            "k": { "type": "null" },
+            "first_event_stable_count": { "const": 0 },
+            "first_event_stable_frequency": { "type": "null" },
+            "last_event_stable_count": { "const": 0 },
+            "last_event_stable_frequency": { "type": "null" },
+            "reason_code": {
+              "const": "SAMPLING.NO_INTERPRETIVE_CONTRIBUTORS"
+            }
+          }
+        }
+      ]
+    },
+    "ContributionCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "INTERPRETIVE",
+        "DESCRIPTIVE_ONLY",
+        "METRIC_NOT_ASSESSABLE",
+        "FAILED"
+      ],
+      "properties": {
+        "INTERPRETIVE": { "$ref": "#/$defs/NonnegativeInteger" },
+        "DESCRIPTIVE_ONLY": { "$ref": "#/$defs/NonnegativeInteger" },
+        "METRIC_NOT_ASSESSABLE": { "$ref": "#/$defs/NonnegativeInteger" },
+        "FAILED": { "$ref": "#/$defs/NonnegativeInteger" }
+      }
+    },
+    "SamplingFamilyAggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_schema_version",
+        "evidence_rule_id",
+        "plan_digest",
+        "terminal_index_digest",
+        "experiment_set_id",
+        "source_analysis_spec_id",
+        "operation_descriptor",
+        "replicate_ordinals",
+        "planned_origin_count",
+        "planned_unique_candidate_count",
+        "unique_numeric_record_count",
+        "interpretive_numeric_count",
+        "candidate_contribution_counts",
+        "origin_contribution_counts",
+        "attempt_digests",
+        "numeric_comparison_digests",
+        "metric_summaries",
+        "event_modal_position_frequencies",
+        "endpoint_stability",
+        "central_order_relation_frequencies",
+        "within_fit_majority_relation_frequencies",
+        "within_fit_pairwise_probability_distributions",
+        "classification_status",
+        "aggregate_digest"
+      ],
+      "properties": {
+        "record_schema_version": {
+          "const": "ebm-audit-sampling-family-aggregate/3.0"
+        },
+        "evidence_rule_id": {
+          "const": "sampling-source-fit-comparison/3"
+        },
+        "plan_digest": { "$ref": "#/$defs/Digest" },
+        "terminal_index_digest": { "$ref": "#/$defs/Digest" },
+        "experiment_set_id": { "$ref": "#/$defs/NonEmptyString" },
+        "source_analysis_spec_id": { "$ref": "#/$defs/Digest" },
+        "operation_descriptor": {
+          "allOf": [
+            { "$ref": "#/$defs/SamplingOperationDescriptor" },
+            {
+              "properties": {
+                "operation_scope": { "const": "family" }
+              }
+            }
+          ]
+        },
+        "replicate_ordinals": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/NonnegativeInteger" }
+        },
+        "planned_origin_count": { "$ref": "#/$defs/PositiveInteger" },
+        "planned_unique_candidate_count": { "$ref": "#/$defs/PositiveInteger" },
+        "unique_numeric_record_count": { "$ref": "#/$defs/PositiveInteger" },
+        "interpretive_numeric_count": { "$ref": "#/$defs/NonnegativeInteger" },
+        "candidate_contribution_counts": { "$ref": "#/$defs/ContributionCounts" },
+        "origin_contribution_counts": { "$ref": "#/$defs/ContributionCounts" },
+        "attempt_digests": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Digest" }
+        },
+        "numeric_comparison_digests": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/Digest" }
+        },
+        "metric_summaries": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/MetricDistribution" }
+        },
+        "event_modal_position_frequencies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EventPositionFrequency" }
+        },
+        "endpoint_stability": { "$ref": "#/$defs/EndpointStability" },
+        "central_order_relation_frequencies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PairwiseRelationFrequency" }
+        },
+        "within_fit_majority_relation_frequencies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PairwiseRelationFrequency" }
+        },
+        "within_fit_pairwise_probability_distributions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PairwiseProbabilityDistribution" }
+        },
+        "classification_status": {
+          "const": "NO_FROZEN_SAMPLING_CLASSIFICATION"
+        },
+        "aggregate_digest": { "$ref": "#/$defs/Digest" }
+      }
+    },
+    "ComponentCoverage": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "component",
+            "implementation_status",
+            "reason_code"
+          ],
+          "properties": {
+            "component": {
+              "const": "BOOTSTRAP_ORDER_POSITION_PAIRWISE"
+            },
+            "implementation_status": { "const": "IMPLEMENTED" },
+            "reason_code": { "type": "null" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "component",
+            "implementation_status",
+            "reason_code"
+          ],
+          "properties": {
+            "component": { "const": "DECLARED_SUBSAMPLING" },
+            "implementation_status": { "const": "IMPLEMENTED" },
+            "reason_code": { "type": "null" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "component",
+            "implementation_status",
+            "reason_code"
+          ],
+          "properties": {
+            "component": { "const": "PARTICIPANT_STAGE" },
+            "implementation_status": { "const": "IMPLEMENTED" },
+            "reason_code": { "type": "null" }
+          }
+        }
+      ]
+    },
+    "SamplingLayerEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "layer_schema_version",
+        "evidence_rule_id",
+        "uncertainty_layer",
+        "pooling_policy",
+        "plan_digest",
+        "terminal_index_digest",
+        "component_coverage",
+        "attempt_count",
+        "unique_numeric_record_count",
+        "family_count",
+        "attempts",
+        "numeric_records",
+        "aggregates",
+        "classification_status",
+        "layer_digest"
+      ],
+      "properties": {
+        "layer_schema_version": {
+          "const": "ebm-audit-sampling-layer-evidence/3.0"
+        },
+        "evidence_rule_id": {
+          "const": "sampling-source-fit-comparison/3"
+        },
+        "uncertainty_layer": { "const": "SAMPLING" },
+        "pooling_policy": {
+          "const": "NON_POOLABLE_ACROSS_OPERATION_FAMILIES"
+        },
+        "plan_digest": { "$ref": "#/$defs/Digest" },
+        "terminal_index_digest": { "$ref": "#/$defs/Digest" },
+        "component_coverage": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": { "$ref": "#/$defs/ComponentCoverage" }
+        },
+        "attempt_count": { "$ref": "#/$defs/NonnegativeInteger" },
+        "unique_numeric_record_count": {
+          "$ref": "#/$defs/NonnegativeInteger"
+        },
+        "family_count": { "$ref": "#/$defs/NonnegativeInteger" },
+        "attempts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SamplingOriginAttempt" }
+        },
+        "numeric_records": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SamplingNumericComparison" }
+        },
+        "aggregates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SamplingFamilyAggregate" }
+        },
+        "classification_status": {
+          "const": "NO_FROZEN_SAMPLING_CLASSIFICATION"
+        },
+        "layer_digest": { "$ref": "#/$defs/Digest" }
+      }
+    }
+  }
+}

@@ -1,0 +1,655 @@
+schema_version: "ebm-audit-proportional-benchmark-contract/v3"
+contract_version: "0.2.3"
+contract_status: "FROZEN"
+frozen: true
+freeze_date: "2026-08-21"
+accepted_decision_date: "2026-08-21"
+contract_sha256: "2cf53a6006b174d7b2ef574a293f1499cff450491ef0359088a6889b0c288119"
+data_classification: "PUBLIC_AND_SYNTHETIC_ONLY"
+participant_data_permitted: false
+statistical_qualification_profile_required: false
+historical_research_stress_contract:
+  path: "evaluator/benchmark_contract.yaml"
+  version: "0.1.3"
+  readiness_effect: "NONE"
+
+canonical_hash_contract:
+  parser: "YAML_1_2_strict_duplicate_keys_rejected"
+  projection: "Parse to a JSON-compatible mapping, replace top-level contract_sha256 with null, encode with RFC 8785 JCS UTF-8 bytes, and change no other value."
+  digest_domain: "ebm-audit/proportional-benchmark-contract/1"
+  digest: "lowercase_hex(SHA-256(utf8(digest_domain) || NUL || canonical_projection_bytes))"
+  self_hash_rule: "stored contract_sha256 equals the digest of the projection with contract_sha256 null"
+
+authority:
+  decision: "docs/adr/ADR-0016-proportional-library-completion.md"
+  readiness_specification: "docs/spec/ebm-integration-readiness.md#version-1.1.3"
+  historical_semantics: "docs/spec/scenario-derivation-semantics.md#scenario-derivation-semantics/5"
+  meaning_source: "evaluator/scenario_derivation_registry.json"
+  report_language: "docs/spec/report-language-rules.md"
+  completion_board: "EBM Robustness Auditor/EBM Robustness Auditor — Completion Board.md"
+  precedence: "After independent exact-candidate acceptance, this bounded correction supersedes contract 0.2.1 for library readiness. It does not rewrite historical results."
+
+public_owner_artifacts:
+  readiness_specification:
+    path: "docs/spec/ebm-integration-readiness.md"
+    version: "1.1.3"
+    sha256: "5c5d39299cfb190fa5f0248febb371948777d5913f2331f4de0f896eb9c68f59"
+  scenario_derivation_registry:
+    path: "evaluator/scenario_derivation_registry.json"
+    schema_version: "ebm-audit-scenario-derivation-registry/2.3"
+    sha256: "e2f1c504b7e1118173858f494818499afc59dc277d1fdeaaded3e62de4e71e1f"
+  scenario_derivation_registry_schema:
+    path: "schemas/scenario-derivation-registry.schema.json"
+    sha256: "5ef23e3d33253bf3261a692a07efec025fcc43ebdeb7c21c0841b4513994efa1"
+  scenario_evidence_schema:
+    path: "schemas/scenario-evidence.schema.json"
+    sha256: "e3d82f819ab19d9197b8003d2c7cb2c4e53c603ac2be418d8610bddf51c234b6"
+  evaluator_receipts_schema:
+    path: "schemas/evaluator-receipts.schema.json"
+    sha256: "a641af3c1b17cbd87bc3950ac602d426cf344eaa89b61df6d6973f6a1bb032bd"
+  derivation_semantics:
+    path: "docs/spec/scenario-derivation-semantics.md"
+    contract_id: "scenario-derivation-semantics/5"
+    sha256: "6ad8721e46c70d0cea2ed062e7558ad1329d4dcf46758a9839432c40dbb815dc"
+
+preserved_historical_identities:
+  contract_0_2_1:
+    structured_sha256: "173aee28ae28244cea7b3488385aebc583e06f7986a6a08f070b42670c18bd8d"
+    raw_sha256: "d0304d51ffa9762fb13418530a407e704616c0cc7bf8d18b523871253b17c9fb"
+    independent_review_verdict: "ACCEPT_D04_0_2_1_CANDIDATE"
+  contract_0_2_0_sha256: "63cdd4a68fba0cea9e470f4a326101e448503db4214d1c2ebce1de5d9c91823a"
+  ordered_meaning_inventory_1_0_sha256: "ad2b276adc79de60339b346bd3f92ad7288d27ba304630ddafc64b9ecf1be199"
+  meaning_coverage_1_0_sha256: "c742e1bfe2fb51f630eb4585c951e4fc7b2caafb74d31abd22fbe21d2147141c"
+  proportional_record_schema_sha256: "d0f79ba45a5480c408afbedd60aaff80ec6c70c66233ed88290dbd0243d61db6"
+  scenario_derivation_registry_2_0_sha256: "aebce79e48a830decba75d3a0610dc9ad6cb79d3ed1588a8e9575b84f91f230f"
+
+corrective_amendment_0_2_3:
+  scope: "Correct the impossible ordinary operation/owner identities for mcar_missingness:/payload/preprocessing_refit_equal, mar_missingness:/payload/silent_loss_flags, and covariate_confounding:/payload/resample_leakage_count. Preserve their output types, scientific rules, and failure behaviors. Preserve the other 101 meaning identities and every unrelated challenge fact."
+  corrected_meaning_ids: ["mcar_missingness:/payload/preprocessing_refit_equal", "mar_missingness:/payload/silent_loss_flags", "covariate_confounding:/payload/resample_leakage_count"]
+  meaning_id: "mcar_missingness:/payload/preprocessing_refit_equal"
+  derivation_id: "complete-preprocessing-refit-equality/1"
+  output_schema_ref: "schemas/scenario-family-payload.schema.json#/$defs/McarEvidence/properties/preprocessing_refit_equal"
+  supersedes_unaccepted_candidate_version: "0.2.2"
+  preserved_scientific_rule: "Emit true only when the genuine ordered SOURCE then TRANSFORMED complete-refit executions have the exact six ordered steps, bind their own input, seed, role-specific plan entry, operation, and training or reference population, and have equal refit-procedure digests. This compares procedure, not fitted parameter values."
+  corrected_ordered_owner_slots:
+    - {owner_class: "PROPORTIONAL_OPERATION_PLAN", cardinality: "EXACTLY_ONE", selector: "authenticated-proportional-operation-plan/1"}
+    - {owner_class: "PREPROCESSING_EXECUTION_RECORD", cardinality: "ONE_PER_CASE", selector: "same-case-source-complete-refit/1", execution_role: "SOURCE"}
+    - {owner_class: "PREPROCESSING_EXECUTION_RECORD", cardinality: "ONE_PER_CASE", selector: "same-case-transformed-complete-refit/1", execution_role: "TRANSFORMED"}
+  direct_owner_schema:
+    schema_ref: "schemas/scenario-evidence.schema.json#/$defs/ExecutedPreprocessingExecutionRecord"
+    schema_version: "ebm-audit-preprocessing-execution-record/3.0"
+    natural_identity_fields: ["case_operation_join_key", "execution_role", "proportional_operation_plan_sha256", "operation_plan_entry_sha256"]
+    required_role_values: ["SOURCE", "TRANSFORMED"]
+    required_refit_mode: "complete_refit"
+    required_execution_fields: ["component_seed_manifest_sha256", "reference_fit_row_manifest_sha256", "refit_procedure_sha256", "ordered_step_records"]
+    exact_ordered_step_count: 6
+  ordered_operation_member_ids: ["source_refit", "transformed_refit"]
+  ordered_execution_roles: ["SOURCE", "TRANSFORMED"]
+  pair_binding_rule: "The authenticated proportional plan contains two distinct ordered MCAR entries for the same comparison case. SOURCE is first and TRANSFORMED is second. Each execution record binds its own operation ID, operation ordinal, complete case_operation_join_key, and operation_plan_entry_sha256. Both records bind the same proportional_operation_plan_sha256, benchmark subject, authenticated batch, family, and comparison case_id. Their operation IDs, ordinals, join keys, and plan-entry hashes differ. Authenticate both entries before comparing procedure digests."
+  fail_closed_rule: "One PREPARATION_AUDIT_EVIDENCE owner cannot satisfy either direct role or both roles. Exactly one genuine role-bound PREPROCESSING_EXECUTION_RECORD is required for SOURCE and exactly one is required for TRANSFORMED. Missing, duplicate, same-role, reordered-role, same-operation, same-entry, cross-plan, cross-case, or malformed role evidence is not assessable and fails the rule."
+  row_role_manifest_corrections:
+    ordered_roles: ["INPUT", "TRAINING", "OUTPUT", "REFERENCE_FIT"]
+    ordered_manifest_slots:
+      - {owner_class: "PREPARATION_ROW_INSTANCE_MANIFEST", cardinality: "ONE_PER_CASE", selector: "same-case-input-row-instance-manifest/1"}
+      - {owner_class: "PREPARATION_ROW_INSTANCE_MANIFEST", cardinality: "ONE_PER_CASE", selector: "same-case-training-row-instance-manifest/1"}
+      - {owner_class: "PREPARATION_ROW_INSTANCE_MANIFEST", cardinality: "ONE_PER_CASE", selector: "same-case-output-row-instance-manifest/1"}
+      - {owner_class: "PREPARATION_ROW_INSTANCE_MANIFEST", cardinality: "ONE_PER_CASE", selector: "same-case-reference-fit-row-instance-manifest/1"}
+    meaning_ids: ["mar_missingness:/payload/silent_loss_flags", "covariate_confounding:/payload/resample_leakage_count"]
+    selector_rule: "Each corrected meaning consumes exactly one same-case manifest for each canonical role in the declared order. A combined all-role selector, missing role, duplicate role, reordered role, or role substitution is invalid."
+  preserved_counts: {meaning_count: 104, operation_count: 104, hard_gate_count: 17, nominal_wall_clock_target_seconds: 9600, terminal_wall_clock_timeout_seconds: 10500}
+
+meaning_inventory:
+  schema_version: "ebm-audit-proportional-meaning-inventory/1.2"
+  source_path: "evaluator/scenario_derivation_registry.json"
+  source_schema_version: "ebm-audit-scenario-derivation-registry/2.3"
+  source_sha256: "e2f1c504b7e1118173858f494818499afc59dc277d1fdeaaded3e62de4e71e1f"
+  digest_domain: "ebm-audit/proportional-meaning-inventory/1.2"
+  projection_rule:
+    common_first: true
+    family_order_field: "family_order"
+    family_output_order_field: "families[].outputs"
+    common_normalization:
+      family_id: "*"
+      predicate_id: "common-lifecycle/v1"
+      subtype_partition: "NONE"
+      payload_definition: "CommonLifecycleEvidence"
+      output_schema_ref: null
+      derivation_id_source: "selector"
+      owner_slot_source: "owner_class,cardinality,selector"
+    family_fields:
+      - "family_id"
+      - "predicate_id"
+      - "subtype_partition"
+      - "payload_definition"
+    output_fields:
+      - "output_path"
+      - "output_schema_ref"
+      - "derivation_id"
+      - "owner_slots"
+      - "failure_behavior"
+    projected_fields_in_order:
+      - "ordinal"
+      - "meaning_id"
+      - "family_id"
+      - "predicate_id"
+      - "subtype_partition"
+      - "payload_definition"
+      - "output_path"
+      - "output_schema_ref"
+      - "derivation_id"
+      - "ordered_owner_slots"
+      - "failure_behavior"
+    output_type_artifact_projection:
+      order: "path lexical order"
+      projected_fields_in_order: ["path", "sha256"]
+      rule: "Project every raw schema artifact referenced by output_schema_ref. Missing, extra, duplicate, reordered, or byte-drifted schema identity invalidates the effective meaning inventory."
+    meaning_id_rule: "family_id + ':' + output_path"
+    source_rule: "Registry 2.3 directly contains every effective derivation, output schema, public owner slot, and failure behavior. Do not reapply historical amendments after projection."
+    excluded_mutable_fields:
+      - "digest_state"
+      - "scenario_derivation_registry_sha256"
+      - "semantic_validation"
+      - "implemented_output_validators"
+      - "default_validator_implementation_status"
+  ordered_count: 104
+  common_count: 2
+  family_output_count: 102
+  family_count: 23
+  first_meaning_id: "*:/planned_case_ids"
+  last_meaning_id: "within_group_feature_permutation_null:/payload/truth_scoring_mode"
+  effective_schema:
+    path: "schemas/proportional-readiness-contract.schema.json"
+    sha256: "b931717389d22eaeefa137c69f846d4a7436d6ef0a5e46775ecb2b2a960eb304"
+  output_type_artifacts:
+    - path: "schemas/proportional-readiness-contract.schema.json"
+      sha256: "b931717389d22eaeefa137c69f846d4a7436d6ef0a5e46775ecb2b2a960eb304"
+    - path: "schemas/scenario-family-payload.schema.json"
+      sha256: "b9f5abdc8ca623b8cbbdead85b250c8077864036a20e2e9a602497cf15ae619d"
+  projection_sha256: "66adadf73f8ef6b86c9806d4fe281caad8e705bdbd30cdbda0a5f1c64dabc677"
+  closure_rule: "Every projected meaning occurs exactly once. A missing, duplicate, reordered, or changed projected meaning invalidates this contract. Mutable implementation-status fields do not change this digest."
+
+effective_meaning_audit:
+  schema_version: "ebm-audit-effective-meaning-audit/1.0"
+  ordered_meaning_count: 104
+  classifications:
+    static_sound:
+      count: 39
+      rule: "The current static derivation consumes enough correctly typed evidence to prove the promised meaning."
+    incomplete_or_wrong:
+      count: 55
+      rule: "The path executes, but it omits a required owner or join, reads the wrong field or type, or returns a value that does not prove the registered meaning."
+    structurally_impossible:
+      count: 6
+      meaning_ids:
+        - "*:/valid_case_ids"
+        - "mar_missingness:/payload/terminal_contract_equal"
+        - "mar_missingness:/payload/training_row_manifest_equal"
+        - "mar_missingness:/payload/silent_loss_flags"
+        - "covariate_confounding:/payload/reference_only_fit_flags"
+        - "covariate_confounding:/payload/resample_leakage_count"
+      rule: "No schema-valid set of the current required owners can satisfy the historical derivation and registry contract."
+    missing_honest_ordinary_owner:
+      count: 4
+      meaning_ids:
+        - "*:/planned_case_ids"
+        - "group_boundary_sensitivity:/payload/ordered_rule_ids"
+        - "label_permutation_null:/payload/excluded_from_pure_no_signal_fpr_denominator"
+        - "within_group_feature_permutation_null:/payload/excluded_from_pure_no_signal_fpr_denominator"
+      rule: "The derivation design is valid, but the ordinary public path does not issue the required genuine owner."
+  frozen_conflict_only_count: 0
+  total_rule: "39 + 55 + 6 + 4 equals the closed ordered inventory of 104 meanings."
+
+preserved_semantic_decisions:
+  registry_integration_rule: "Registry 2.1 incorporates these three accepted 0.2.0 semantic decisions directly and replaces their generic operation-manifest owner with PROPORTIONAL_OPERATION_PLAN. The inventory projection must not apply them a second time."
+  decisions:
+    - meaning_id: "pure_no_signal:/payload/fpr_evidence"
+      derivation_id: "false-positive-qualification-state/2"
+      output_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/FalsePositiveQualificationState"
+      required_owner_classes: ["SYNTHETIC_TRUTH", "REPORT_PREDICATE_OUTCOME", "PROPORTIONAL_OPERATION_PLAN"]
+      output_contract:
+        schema_version: "ebm-audit-false-positive-qualification-state/2.0"
+        required_fields:
+          - "status"
+          - "reason_code"
+          - "strong_language_eligible"
+          - "cautious_fallback_required"
+          - "optional_profile"
+        expected:
+          schema_version: "ebm-audit-false-positive-qualification-state/2.0"
+          status: "NOT_STATISTICALLY_QUALIFIED"
+          reason_code: "CALIBRATION.OPTIONAL_RESEARCH_STRESS_NOT_RUN"
+          strong_language_eligible: false
+          cautious_fallback_required: true
+          optional_profile: "benchmark-contract/0.1.3"
+      scientific_rule: "Presence reports qualification state. It does not invent a false-positive rate or convert missing calibration to pass."
+    - meaning_id: "label_permutation_null:/payload/excluded_from_pure_no_signal_fpr_denominator"
+      derivation_id: "null-family-denominator-exclusion/2"
+      output_schema_ref: "schemas/scenario-family-payload.schema.json#/$defs/BoolVector"
+      required_owner_classes: ["SYNTHETIC_TRUTH", "PROPORTIONAL_OPERATION_PLAN", "EXECUTED_TRANSFORMATION_EVIDENCE", "PUBLIC_TERMINAL_RESULT"]
+      expected: true
+      scientific_rule: "A refitted transformation null is excluded from a pure-no-signal denominator by its authenticated family identity."
+    - meaning_id: "within_group_feature_permutation_null:/payload/excluded_from_pure_no_signal_fpr_denominator"
+      derivation_id: "null-family-denominator-exclusion/2"
+      output_schema_ref: "schemas/scenario-family-payload.schema.json#/$defs/BoolVector"
+      required_owner_classes: ["SYNTHETIC_TRUTH", "PROPORTIONAL_OPERATION_PLAN", "EXECUTED_TRANSFORMATION_EVIDENCE", "PUBLIC_TERMINAL_RESULT"]
+      expected: true
+      scientific_rule: "A refitted transformation null is excluded from a pure-no-signal denominator by its authenticated family identity."
+  challenge_cardinality_decisions:
+    correlated_duplicate_events:
+      historical_requirement: "six correlated plus six exact-duplicate cases"
+      challenge_requirement: "six correlated plus six exact-duplicate cases"
+      preserved_meaning: "Both subtype identities, pair evidence, partial-truth behavior, and report language must cross the ordinary path."
+    outlier_sabotage:
+      historical_requirement: "full configured research-size cohort"
+      challenge_requirement: "one eight-participant synthetic cohort, one baseline Fit, and all eight leave-one-out Fits"
+      preserved_meaning: "The complete planned removal set must identify the injected participant through the ordinary influence and report path."
+
+applicability:
+  states:
+    - "AVAILABLE"
+    - "UNAVAILABLE"
+    - "NOT_APPLICABLE"
+    - "INVALID"
+    - "FAILED"
+  full_capability:
+    required_meaning_count: 104
+    expected_state_for_every_meaning: "AVAILABLE"
+    unexplained_unavailable_count: 0
+    unexplained_not_applicable_count: 0
+    rule: "Every meaning must contain its exact typed value or typed scientific state. An assessable negative or NOT_STATISTICALLY_QUALIFIED value is AVAILABLE, not missing."
+  partial_capability:
+    rule: "A meaning whose declared prerequisites are absent is UNAVAILABLE. A meaning outside the declared model shape is NOT_APPLICABLE. Both remain visible and count as neither pass nor fail."
+    forbidden_promotions:
+      - "missing_to_pass"
+      - "missing_to_fail"
+      - "missing_to_zero"
+      - "missing_to_empty_estimate"
+      - "missing_to_inferred_output"
+  invalid_and_failed:
+    malformed_or_contradictory_input: "INVALID"
+    applicable_worker_or_derivation_failure: "FAILED"
+    rule: "INVALID and FAILED are visible terminal states. They must not be relabelled UNAVAILABLE or NOT_APPLICABLE."
+
+deterministic_meaning_proof:
+  fixture_rule: "Every one of the 104 meanings has one public-synthetic positive fixture, one missing-owner fixture, and one malformed-or-contradictory-owner fixture. Table-driven fixtures are permitted."
+  expected_result_rule: "The inventory schema reference, effective derivation, and applicability rules jointly define the exact typed expectation."
+  full_path_surfaces:
+    - "public_worker_request"
+    - "public_worker_response"
+    - "canonical_result"
+    - "validated_evidence_bundle"
+    - "grouped_derivation"
+    - "audit_result"
+    - "report_json"
+    - "applicable_csv"
+    - "self_contained_html"
+  adversarial_cases:
+    - {id: "cross_case_substitution", failure_code: "EVIDENCE.CROSS_CASE_SUBSTITUTION"}
+    - {id: "duplicate_ownership", failure_code: "EVIDENCE.DUPLICATE_OWNER"}
+    - {id: "positional_joining", failure_code: "EVIDENCE.POSITIONAL_JOIN_PROHIBITED"}
+    - {id: "caller_authored_scalar", failure_code: "EVIDENCE.CALLER_AUTHORED_DERIVATION"}
+    - {id: "wrong_selector", failure_code: "EVIDENCE.SELECTOR_MISMATCH"}
+    - {id: "wrong_cardinality", failure_code: "EVIDENCE.CARDINALITY_MISMATCH"}
+    - {id: "wrong_orientation", failure_code: "EVIDENCE.ORIENTATION_MISMATCH"}
+    - {id: "inferred_missing_evidence", failure_code: "EVIDENCE.INFERENCE_FROM_ABSENCE"}
+    - {id: "replay", failure_code: "EVIDENCE.REPLAY"}
+
+ordinary_public_owner_model:
+  schema_version: "ebm-audit-proportional-public-owner-model/1.0"
+  historical_owner_replacements:
+    SEALED_CASE_RECORD: "PUBLIC_BATCH_CASE_PLAN"
+    SEALED_RESULT_RECORD: "PUBLIC_TERMINAL_RESULT"
+    BENCHMARK_OPERATION_MANIFEST: "PROPORTIONAL_OPERATION_PLAN"
+  case_identity_fields: ["benchmark_subject_digest", "authenticated_batch_sha256", "case_id"]
+  case_operation_join_key_fields: ["benchmark_subject_digest", "authenticated_batch_sha256", "case_id", "operation_instance_id"]
+  ordinal_rule: "case_ordinal and operation_ordinal preserve authenticated plan order. They must equal their owning plan records and never replace case identity or the complete case_operation_join_key."
+  join_rule: "The first three case_operation_join_key fields must equal one genuine PUBLIC_BATCH_CASE_PLAN case identity. Every plan entry and executed owner uses that complete shared key."
+  required_cardinalities: ["EXACTLY_ONE", "ONE_PER_CASE", "ONE_PER_PLANNED_CASE", "ONE_PER_SUBTYPE_CASE", "ONE_PER_DECLARED_RULE", "ONE_PER_OPPORTUNITY"]
+  owner_bindings:
+    public_batch_case_plan:
+      owner_class: "PUBLIC_BATCH_CASE_PLAN"
+      schema_ref: "schemas/evaluator-receipts.schema.json#/$defs/PublicBatchCasePlan"
+      schema_version: "ebm-audit-public-batch-case-plan/1.0"
+      natural_identity_fields: ["benchmark_subject_digest", "authenticated_batch_sha256", "case_ordinal", "case_id"]
+      required_fields: ["schema_version", "digest_state", "benchmark_subject_digest", "authenticated_batch_sha256", "batch_context_sha256", "case_ordinal", "case_id", "family_id", "source_variant_id", "replicate_index", "input_owner_digest", "truth_evidence_digest", "public_batch_case_plan_sha256"]
+      authority: "authenticated public batch authority"
+      issuance_rule: "Issue from retained exact case context with unique contiguous zero-based case ordinals. Do not sort or reconstruct from dictionary order, filenames, result arrival, or caller input."
+      prohibition: "Authenticates shared case identity only. It does not issue an operation plan or claim that an operation executed."
+    proportional_operation_plan:
+      owner_class: "PROPORTIONAL_OPERATION_PLAN"
+      schema_ref: "schemas/evaluator-receipts.schema.json#/$defs/ProportionalOperationPlan"
+      schema_version: "ebm-audit-proportional-operation-plan/1.0"
+      natural_identity_fields: ["benchmark_subject_digest", "contract_sha256", "authenticated_batch_sha256", "proportional_operation_plan_sha256"]
+      expected_fit_count: 104
+      authority: "authenticated public planning authority"
+      issuance_rule: "Issue before execution with the exact ordered operation IDs, ordinals, case identities, complete case_operation_join_keys, structured entry hashes, applicable family/member/pair/analysis/transformation/resample/removal/refit/source/output/parameter identities, and the structured plan digest."
+      prohibition: "Do not include or infer executed row memberships, observed removals, returned results, terminal states, fitted parameters, actual transformation accounting, or claims that a planned operation ran."
+    public_terminal_result:
+      owner_class: "PUBLIC_TERMINAL_RESULT"
+      schema_ref: "schemas/evaluator-receipts.schema.json#/$defs/PublicTerminalResult"
+      schema_version: "ebm-audit-public-terminal-result/1.0"
+      natural_identity_fields: ["benchmark_subject_digest", "authenticated_batch_sha256", "case_id", "operation_instance_id"]
+      required_fields: ["schema_version", "digest_state", "benchmark_subject_digest", "authenticated_batch_sha256", "captured_run_sha256", "case_id", "family_id", "proportional_operation_plan_sha256", "operation_plan_entry_sha256", "operation_ordinal", "operation_instance_id", "case_operation_join_key", "terminal_status", "reason_code", "backend_invoked", "fit_response_binding_sha256", "canonical_scientific_payload_sha256", "finalized_result_record_sha256", "terminal_record_sha256", "public_terminal_result_sha256"]
+      authority: "capture and run authority"
+      issuance_rule: "Issue and read back exactly one terminal for each attempted operation from the exact captured run. The plan and entry hashes must equal the authenticated pre-execution operation plan."
+      captured_run_rule: "captured_run_sha256 is required terminal provenance outside the natural identity and must equal the exact issuing run."
+      success_rule: "Success requires non-null Fit-response and canonical-payload bindings. A pre-backend or failed terminal retains exact status, reason, and invocation state and does not invent success-only bindings."
+      comparator_rule: "Every comparator member, replicate, pair, transformation, removal, refit, or analysis operation consumes its own terminal. A case-level terminal or one successful member cannot substitute for another planned operation."
+    executed_boundary_rule_identity:
+      owner_class: "EXECUTED_BOUNDARY_RULE_IDENTITY"
+      schema_ref: "schemas/scenario-evidence.schema.json#/$defs/ExecutedBoundaryRuleIdentity"
+      schema_version: "ebm-audit-executed-boundary-rule-identity/1.0"
+      cardinality: "ONE_PER_DECLARED_RULE"
+      ordered_rule_ids: ["boundary_q50", "boundary_q35", "boundary_q65"]
+      rule: "Bind the exact case, operation, analysis specification, rule ID, cutoff quantile and value, comparator-member index, executed request/result identity, and self-digest. An unexecuted configured rule is not evidence."
+    executed_preparation_and_result_records:
+      required_owner_classes: ["PREPROCESSING_EXECUTION_RECORD", "PREPARATION_ROW_INSTANCE_MANIFEST", "EXECUTED_TRANSFORMATION_EVIDENCE", "PUBLIC_TERMINAL_RESULT"]
+      row_manifest_roles: ["INPUT", "TRAINING", "OUTPUT", "REFERENCE_FIT"]
+      additional_direct_evidence: ["reference-fit population", "group-role evidence", "canonical payload", "result", "warning", "side effect"]
+      required_join_fields: ["case_operation_join_key", "proportional_operation_plan_sha256", "operation_plan_entry_sha256"]
+      rule: "Preparation and capture authorities issue direct executed records and compare both plan hashes with the genuine pre-execution plan. A preparation audit digest supports these records but never replaces their exact facts."
+  lifecycle_meanings:
+    planned_case_ids: "Consume every PUBLIC_BATCH_CASE_PLAN owner in authenticated case_ordinal order."
+    valid_case_ids: "For every planned case, resolve all matching PROPORTIONAL_OPERATION_PLAN entries and left-join exactly one PUBLIC_TERMINAL_RESULT by complete case_operation_join_key and exact plan-entry hash. Emit the case ID only when every required operation has one schema-valid terminal satisfying the frozen valid-result rule. Preserve the planned denominator and visible failure state."
+  report_transaction:
+    pre_render_identity_field: "report_claim_projection_sha256"
+    pre_render_projection_schema_ref: "schemas/scenario-evidence.schema.json#/$defs/AuthenticatedReportClaimProjection"
+    report_predicate_natural_identity_fields: ["benchmark_subject_digest", "family_id", "predicate_id", "cardinality_member_id", "report_claim_projection_sha256"]
+    ordered_steps:
+      - "Assemble all non-report meanings with genuine WARNING_RECORD and per-operation PUBLIC_TERMINAL_RESULT evidence into one pre-report derivation set."
+      - "Issue one genuine pre-render report-model and claim projection from that set and the frozen report-rule registry. It contains no rendered artifact or report-artifact hash."
+      - "Derive REPORT_PREDICATE_OUTCOME and every report-predicate, warning, and terminal meaning from that exact projection and their registered genuine owners."
+      - "Assemble and digest the final ordered 104-meaning bundle."
+      - "Render JSON, applicable CSV, and self-contained HTML exactly once from the final bundle."
+      - "Read back every surface and issue one ReportSurfaceVerificationReceipt that compares all applicable meanings, states, typed values, warnings, terminals, claims, and artifact hashes."
+    surface_receipt_schema_ref: "schemas/evaluator-receipts.schema.json#/$defs/ReportSurfaceVerificationReceipt"
+    cycle_rule: "The surface receipt is terminal hard-gate evidence only. It must not re-enter the source-owner manifest, alter a meaning, or cause a second render."
+  systemic_repair_rules:
+    - "Consume every registered required owner slot. An unused required owner is a contract failure even when another owner contains a similar field or digest."
+    - "Before any field read, dispatch by validated owner_class and validate the exact schema, natural identity, structured self-digest, retained capability readback, support closure, selector, and cardinality."
+    - "Never use default true, default false, default zero, count-only success, non-empty-string truthiness, or digest presence as a scientific value."
+    - "Never reduce a SHA-256 digest to a Boolean. Equality requires the exact registered preimages and identities."
+    - "A required WARN or NOT_ASSESSABLE outcome makes the family not assessable and never becomes true, false, zero, pass, or AVAILABLE evidence."
+    - "Join comparator and payload evidence by complete subject, comparator, source-variant, replicate, pair, member, operation, result, payload, chain, and case identities. Tuple position is not identity."
+    - "Join plan and result evidence to the complete authenticated operation plan, preserve planned denominators, and enforce every required cardinality exactly."
+    - "Validate private-array member name, dtype, shape, axes, semantic version, artifact and value digests, event and row identities, and chain order before reading values."
+    - "Dispatch preparation, preprocessing, row-manifest, reference-fit, and accounting owners by type; join row instances by source_row_index and occurrence_ordinal; prove input equals retained plus declared removals with multiplicity."
+    - "Bind transformations to exact source and output cases, parameters, operation identity, axes, values, missingness, labels, covariates, and DataAccounting."
+    - "Verify the exact typed audit-result value and its JSON, applicable CSV, and self-contained HTML representations."
+    - "Missing, malformed, non-finite, cross-bound, duplicate, incomplete, or non-comparable evidence follows registered failure behavior and never emits a success value."
+
+challenge:
+  profile_id: "proportional-readiness-challenge/0.2.3"
+  attempt_limit_per_candidate: 1
+  candidate_count: 1
+  fresh_seed_root_bits: 256
+  fit_ceiling: 104
+  nominal_wall_clock_target_seconds: 9600
+  terminal_wall_clock_timeout_seconds: 10500
+  fit_invocation_timeout_seconds: 300
+  parallel_fit_limit: 4
+  non_fit_allowance_seconds: 1800
+  terminal_variance_allowance_seconds: 900
+  time_derivation: "ceil(104 / 4) * 300 seconds plus 1800 seconds for preparation, validation, reports, and receipt = 9600 seconds; the terminal timeout adds 900 seconds of host variance for 10500 seconds."
+  operation_id_rule: "Use family_id + '/' + member_id in family order and member order. Moderate member_id is pair_{00..23}/{signal|matched_pure_no_signal}, so its exact operation ID is moderate_mina_shape/pair_{00..23}/{signal|matched_pure_no_signal}."
+  coverage_rule: "No family, meaning, comparator member, refit, influence removal, or shared source may be dropped to meet the ceiling or time target."
+  fit_ledger:
+    - {family_id: "easy_known_truth", operation_group_id: "easy_known_truth", member_ids: ["ordinary"], fit_count: 1, operation: "one ordinary full-capability Fit"}
+    - family_id: "moderate_mina_shape"
+      operation_group_id: "moderate_mina_shape"
+      pair_count: 24
+      fits_per_pair: 2
+      member_ids:
+        - "pair_00/signal"
+        - "pair_00/matched_pure_no_signal"
+        - "pair_01/signal"
+        - "pair_01/matched_pure_no_signal"
+        - "pair_02/signal"
+        - "pair_02/matched_pure_no_signal"
+        - "pair_03/signal"
+        - "pair_03/matched_pure_no_signal"
+        - "pair_04/signal"
+        - "pair_04/matched_pure_no_signal"
+        - "pair_05/signal"
+        - "pair_05/matched_pure_no_signal"
+        - "pair_06/signal"
+        - "pair_06/matched_pure_no_signal"
+        - "pair_07/signal"
+        - "pair_07/matched_pure_no_signal"
+        - "pair_08/signal"
+        - "pair_08/matched_pure_no_signal"
+        - "pair_09/signal"
+        - "pair_09/matched_pure_no_signal"
+        - "pair_10/signal"
+        - "pair_10/matched_pure_no_signal"
+        - "pair_11/signal"
+        - "pair_11/matched_pure_no_signal"
+        - "pair_12/signal"
+        - "pair_12/matched_pure_no_signal"
+        - "pair_13/signal"
+        - "pair_13/matched_pure_no_signal"
+        - "pair_14/signal"
+        - "pair_14/matched_pure_no_signal"
+        - "pair_15/signal"
+        - "pair_15/matched_pure_no_signal"
+        - "pair_16/signal"
+        - "pair_16/matched_pure_no_signal"
+        - "pair_17/signal"
+        - "pair_17/matched_pure_no_signal"
+        - "pair_18/signal"
+        - "pair_18/matched_pure_no_signal"
+        - "pair_19/signal"
+        - "pair_19/matched_pure_no_signal"
+        - "pair_20/signal"
+        - "pair_20/matched_pure_no_signal"
+        - "pair_21/signal"
+        - "pair_21/matched_pure_no_signal"
+        - "pair_22/signal"
+        - "pair_22/matched_pure_no_signal"
+        - "pair_23/signal"
+        - "pair_23/matched_pure_no_signal"
+      fit_count: 48
+      operation: "twenty-four ordered pairs, each with signal then matched pure-no-signal Fit"
+    - {family_id: "small_sample", operation_group_id: "small_sample", member_ids: ["small", "matched_large"], fit_count: 2, operation: "small and matched-large comparator"}
+    - {family_id: "noise_ladder", operation_group_id: "noise_ladder", member_ids: ["level_00", "level_01", "level_02", "level_03", "level_04"], fit_count: 5, operation: "five predeclared noise levels with shared latent draws"}
+    - {family_id: "weak_pre_post_separation", operation_group_id: "weak_pre_post_separation", member_ids: ["weak", "moderate"], fit_count: 2, operation: "weak and moderate comparator"}
+    - {family_id: "incomplete_time_coverage", operation_group_id: "incomplete_time_coverage", member_ids: ["restricted", "broad"], fit_count: 2, operation: "restricted and broad-coverage comparator"}
+    - {family_id: "tightly_spaced_events", operation_group_id: "tightly_spaced_events", member_ids: ["ordinary"], fit_count: 1, operation: "one ordinary target-pair Fit"}
+    - {family_id: "slow_overlapping_transitions", operation_group_id: "slow_overlapping_transitions", member_ids: ["slow", "narrow"], fit_count: 2, operation: "slow and narrow-transition comparator"}
+    - {family_id: "outlier_sabotage", operation_group_id: "outlier_sabotage", member_ids: ["baseline", "leave_out_00", "leave_out_01", "leave_out_02", "leave_out_03", "leave_out_04", "leave_out_05", "leave_out_06", "leave_out_07"], fit_count: 9, operation: "one baseline plus eight complete leave-one-out Fits"}
+    - {family_id: "mcar_missingness", operation_group_id: "mcar_missingness", member_ids: ["source_refit", "transformed_refit"], fit_count: 2, operation: "two ordered complete refits of the same MCAR comparison case: SOURCE then TRANSFORMED"}
+    - {family_id: "mar_missingness", operation_group_id: "mar_missingness", member_ids: ["ordinary"], fit_count: 1, operation: "one declared preprocessing ordinary Fit"}
+    - {family_id: "correlated_duplicate_events", operation_group_id: "correlated_duplicate_events", member_ids: ["correlated_00", "correlated_01", "correlated_02", "correlated_03", "correlated_04", "correlated_05", "exact_duplicate_00", "exact_duplicate_01", "exact_duplicate_02", "exact_duplicate_03", "exact_duplicate_04", "exact_duplicate_05"], fit_count: 12, operation: "six correlated and six exact-duplicate subtype Fits"}
+    - {family_id: "minority_alternate_sequence", operation_group_id: "minority_alternate_sequence", member_ids: ["mixture", "single"], fit_count: 2, operation: "mixture and matched single-sequence comparator"}
+    - {family_id: "opposing_sequences_50_50", operation_group_id: "opposing_sequences_50_50", member_ids: ["ordinary"], fit_count: 1, operation: "one non-identifiable ordinary Fit"}
+    - {family_id: "near_simultaneous_events", operation_group_id: "near_simultaneous_events", member_ids: ["ordinary"], fit_count: 1, operation: "one partial-order ordinary Fit"}
+    - {family_id: "covariate_confounding", operation_group_id: "covariate_confounding", member_ids: ["adjusted", "unadjusted"], fit_count: 2, operation: "adjusted and unadjusted comparator"}
+    - {family_id: "group_boundary_sensitivity", operation_group_id: "group_boundary_sensitivity", member_ids: ["q35", "q50", "q65"], fit_count: 3, operation: "q35, q50, and q65 rules"}
+    - {family_id: "control_contamination", operation_group_id: "control_contamination", member_ids: ["contaminated", "clean"], fit_count: 2, operation: "contaminated and clean-label comparator"}
+    - {family_id: "heavy_tailed_skewed", operation_group_id: "heavy_tailed_skewed", member_ids: ["ordinary"], fit_count: 1, operation: "one ordinary Fit retaining warnings and terminal state"}
+    - {family_id: "wrong_event_direction", operation_group_id: "wrong_event_direction", member_ids: ["correct", "wrong"], fit_count: 2, operation: "correct and wrong-direction comparator"}
+    - {family_id: "pure_no_signal", operation_group_id: "pure_no_signal", member_ids: ["ordinary"], fit_count: 1, operation: "one ordinary no-signal Fit with cautious language; no statistical qualification"}
+    - {family_id: "label_permutation_null", operation_group_id: "label_permutation_null", member_ids: ["transformed_refit"], fit_count: 1, operation: "one complete refit of the shared moderate source"}
+    - {family_id: "within_group_feature_permutation_null", operation_group_id: "within_group_feature_permutation_null", member_ids: ["transformed_refit"], fit_count: 1, operation: "one complete refit of the shared moderate source"}
+  shared_fit_rules:
+    moderate_source_operation_id: "moderate_mina_shape/pair_00/signal"
+    moderate_source: "The predeclared moderate_mina_shape/pair_00/signal operation is the authenticated source for both transformation-null operations and is counted once under moderate_mina_shape. It is committed before seed creation and is never selected from results."
+    no_hidden_fits: "Validate, report rendering, deterministic replay, and pure derivation do not invoke Fit."
+
+challenge_plan:
+  schema_version: "ebm-audit-proportional-challenge-plan/0.2.3"
+  digest_domain: "ebm-audit/proportional-challenge-plan/0.2.3"
+  projection_rule: "Hash the complete challenge mapping and the explicitly derived list of all 104 ordered operation IDs. No attempt, seed, coverage, timing, Fit-ledger, ordering, or shared-source field is excluded."
+  ordered_operation_count: 104
+  projection_sha256: "3ce523d9efcd4856fc11501e7f2873c4d304a713c2b6b961869f0c4f1f74f9f5"
+
+meaning_coverage:
+  schema_version: "ebm-audit-proportional-meaning-coverage/1.2"
+  digest_domain: "ebm-audit/proportional-meaning-coverage/1.2"
+  schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/MeaningCoverageRecord"
+  projection_rule:
+    order: "meaning_inventory order"
+    family_mapping: "Each family meaning maps to the one fit_ledger row with the same family_id and to every derived family_id/member_id operation in that row."
+    common_mapping: "Both common lifecycle meanings map to operation_group_id common_lifecycle and all 104 derived operation IDs."
+    expected_state: "AVAILABLE"
+    expected_type: "Use output_schema_ref when present. The two common lifecycle meanings use common_expected_types below."
+    common_expected_types:
+      "*:/planned_case_ids": "array<case_id:string>"
+      "*:/valid_case_ids": "array<case_id:string>"
+    default_acceptance_rule: "The effective derivation returns a schema-valid typed value from exactly validated owners and the value crosses every required report surface."
+    report_surfaces: ["audit_result", "report_json", "applicable_csv", "self_contained_html"]
+    branch_expectations:
+      full_positive: {state: "AVAILABLE", readiness_effect: "CONTINUE"}
+      declared_partial_missing_capability: {state: "UNAVAILABLE", readiness_effect: "NEITHER_PASS_NOR_FAIL"}
+      declared_model_not_applicable: {state: "NOT_APPLICABLE", readiness_effect: "NEITHER_PASS_NOR_FAIL"}
+      missing_required_owner_in_full_bundle: {state: "INVALID", failure_code: "EVIDENCE.MISSING_OWNER"}
+      malformed_or_contradictory_owner: {state: "INVALID", failure_code: "EVIDENCE.OWNER_INVALID"}
+      applicable_fit_or_derivation_failure: {state: "FAILED", failure_code: "SCIENCE.APPLICABLE_OPERATION_FAILED"}
+    acceptance_overrides:
+      pure_no_signal:/payload/fpr_evidence: "Exact FalsePositiveQualificationState equals the frozen NOT_STATISTICALLY_QUALIFIED object and cautious fallback is present."
+      label_permutation_null:/payload/excluded_from_pure_no_signal_fpr_denominator: "Exact typed boolean true from authenticated transformed-null identity."
+      within_group_feature_permutation_null:/payload/excluded_from_pure_no_signal_fpr_denominator: "Exact typed boolean true from authenticated transformed-null identity."
+  ordered_count: 104
+  operation_count: 104
+  projection_sha256: "693266d3e89f1474d6472ddcc2032b52ead1f8cb1a7a579845070422c9764b66"
+  closure_rule: "Every meaning and every operation occurs in the projection. No extra operation is permitted. Any missing mapping, schema reference, derivation, branch expectation, or report surface invalidates the challenge plan."
+
+expected_results:
+  schema_version: "ebm-audit-proportional-expected-results/1.0"
+  digest_domain: "ebm-audit/proportional-expected-results/1"
+  record_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/ExpectedMeaningResultRecord"
+  projection_rule: "In meaning-inventory order, project ordinal, meaning_id, AVAILABLE expected state, exact output schema reference or common expected type, effective derivation ID, acceptance rule, report surfaces, and all six branch expectations from meaning coverage."
+  ordered_meaning_count: 104
+  projection_sha256: "20cbd9a2ee67ad13fb08044fb0f4b987effa08136a1f375b4aacc3e2baebd1cc"
+
+commitment_sequence:
+  before_seed_root:
+    - "candidate_git_commit"
+    - "candidate_tree_sha256"
+    - "contract_sha256"
+    - "meaning_inventory_sha256"
+    - "meaning_coverage_sha256"
+    - "scenario_derivation_registry_sha256"
+    - "proportional_readiness_schema_sha256"
+    - "conformance_ebm_identity_sha256"
+    - "challenge_plan_sha256"
+    - "expected_results_sha256"
+    - "hard_gate_manifest_sha256"
+  after_commitment:
+    - "create one 256-bit fresh synthetic seed root"
+    - "derive family, case, comparator, operation, and chain seeds with domain-separated HMAC-SHA-256"
+    - "write one permission-restricted immutable attempt directory"
+  tuning_rule: "A result may not change code, thresholds, schedules, seeds, expectations, or this contract. A failed scientific result ends readiness for that candidate. A pre-Fit infrastructure failure may be retried only when the receipt proves zero Fits and unchanged committed identities."
+
+scientific_validation_children:
+  schema_version: "ebm-audit-proportional-scientific-validation-children/1.0"
+  record_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/ScientificValidationChildManifestRecord"
+  conjunction: "Every child must occur exactly once with schema-valid PASS evidence. A successful process exit or coverage count cannot substitute for a child result."
+  children:
+    - {child_id: "known_truth_recovery", family_ids: ["easy_known_truth", "moderate_mina_shape"], evidence_owner: "KnownTruthRecoveryReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "The authenticated central order and fixed-cohort stages satisfy the predeclared synthetic truth rules.", failure_code: "SCIENCE.KNOWN_TRUTH_NOT_RECOVERED"}
+    - {child_id: "signal_degradation", family_ids: ["noise_ladder", "weak_pre_post_separation", "incomplete_time_coverage", "small_sample"], evidence_owner: "SignalDegradationReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "The predeclared matched comparisons show no increase in certainty as signal weakens, coverage narrows, or sample size falls.", failure_code: "SCIENCE.DEGRADATION_DIRECTION_WRONG"}
+    - {child_id: "non_identifiability", family_ids: ["opposing_sequences_50_50", "near_simultaneous_events", "minority_alternate_sequence"], evidence_owner: "NonIdentifiabilityReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Non-identifiable and partial-order truths remain explicitly uncertain and do not become one confident total order.", failure_code: "SCIENCE.NON_IDENTIFIABILITY_HIDDEN"}
+    - {child_id: "outlier_sensitivity", family_ids: ["outlier_sabotage"], evidence_owner: "OutlierSensitivityReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "The complete baseline and eight-removal comparison exposes the injected outlier effect.", failure_code: "SCIENCE.OUTLIER_SENSITIVITY_MISSED"}
+    - {child_id: "missingness_sensitivity", family_ids: ["mcar_missingness", "mar_missingness"], evidence_owner: "MissingnessSensitivityReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "MCAR and declared MAR handling remain distinct, counted, provenance-bound, and scientifically visible.", failure_code: "SCIENCE.MISSINGNESS_SENSITIVITY_MISSED"}
+    - {child_id: "participant_influence", family_ids: ["outlier_sabotage"], evidence_owner: "ParticipantInfluenceReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "The complete leave-one-out result identifies the injected influential participant without exposing participant data.", failure_code: "SCIENCE.PARTICIPANT_INFLUENCE_MISSED"}
+    - {child_id: "duplicated_and_correlated_features", family_ids: ["correlated_duplicate_events"], evidence_owner: "DuplicateFeatureReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "All six correlated and six exact-duplicate operations preserve subtype identity and apply the predeclared partial-truth and language rules.", failure_code: "SCIENCE.DUPLICATE_FEATURE_BEHAVIOR_WRONG"}
+    - {child_id: "row_invariance", family_ids: ["*"], evidence_owner: "RowInvarianceReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "A predeclared row permutation leaves identifier-joined canonical scientific results unchanged.", failure_code: "SCIENCE.ROW_INVARIANCE_FAILED"}
+    - {child_id: "column_invariance", family_ids: ["*"], evidence_owner: "ColumnInvarianceReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "A predeclared feature-column permutation with matching identifiers leaves canonical scientific results unchanged.", failure_code: "SCIENCE.COLUMN_INVARIANCE_FAILED"}
+    - {child_id: "identifier_invariance", family_ids: ["*"], evidence_owner: "IdentifierInvarianceReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "A bijective identifier relabelling leaves canonical scientific results unchanged and positional joining remains rejected.", failure_code: "SCIENCE.IDENTIFIER_INVARIANCE_FAILED"}
+    - {child_id: "different_seed_behavior", family_ids: ["easy_known_truth", "noise_ladder"], evidence_owner: "DifferentSeedReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Predeclared stochastic fields differ under a distinct derived seed while deterministic identities and interpretation rules remain stable.", failure_code: "SCIENCE.DIFFERENT_SEED_BEHAVIOR_WRONG"}
+    - {child_id: "small_event_oracle_agreement", family_ids: ["easy_known_truth", "tightly_spaced_events"], evidence_owner: "SmallEventOracleReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Applicable small-event ordering and stage calculations agree with the exact or exhaustive oracle under the declared tolerance.", failure_code: "SCIENCE.ORACLE_DISAGREEMENT"}
+    - {child_id: "burn_in_handling", family_ids: ["*"], evidence_owner: "BurnInHandlingReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Only post-burn-in samples contribute to every supported posterior summary.", failure_code: "SCIENCE.BURN_IN_HANDLING_WRONG"}
+    - {child_id: "thinning_handling", family_ids: ["*"], evidence_owner: "ThinningHandlingReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "The declared thinning schedule selects exactly the expected sample indices once.", failure_code: "SCIENCE.THINNING_HANDLING_WRONG"}
+    - {child_id: "event_index_handling", family_ids: ["easy_known_truth", "correlated_duplicate_events"], evidence_owner: "EventIndexHandlingReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Zero-based event permutations and event identifiers round-trip without off-by-one or identity substitution.", failure_code: "SCIENCE.EVENT_INDEX_HANDLING_WRONG"}
+    - {child_id: "stage_index_handling", family_ids: ["easy_known_truth"], evidence_owner: "StageIndexHandlingReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Stage indices include the declared pre-event stage and map exactly to fixed-cohort posterior columns.", failure_code: "SCIENCE.STAGE_INDEX_HANDLING_WRONG"}
+
+terminal_hard_gates:
+  manifest_schema_version: "ebm-audit-proportional-hard-gate-manifest/1.0"
+  record_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateManifestRecord"
+  binding_record_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidenceBindingRecord"
+  digest_domain: "ebm-audit/proportional-hard-gate-manifest/1"
+  ordered_count: 17
+  projection_rule: "Hash the manifest schema version, each ordered gate record, and its one same-ordinal public evidence binding. Gate IDs must match exactly and no extra gate or binding is permitted."
+  projection_sha256: "afac7470474815f4f5525d3dcc7782d17b881ba36589d28622bd1868778eb1b7"
+  conjunction: "Every listed gate must occur exactly once with schema-valid accepted_state PASS evidence. Missing, duplicate, unchecked, stale, contradictory, WARN, FAIL, or unavailable gate evidence prevents readiness."
+  evidence_bindings:
+    - {gate_id: "contract_candidate_plan_frozen", required_evidence_owners: ["CANDIDATE_PLAN_FREEZE_RECEIPT"], validation_rule: "Bind the exact non-null contract, meaning inventory, 104-row coverage, registry, proportional schema, candidate tree, conformance EBM, 104-operation challenge plan, expected results, and this 17-row gate-manifest hash before seed creation."}
+    - {gate_id: "researcher_workflow_and_handoff", required_evidence_owners: ["FRESH_ENVIRONMENT_HANDOFF_RECEIPT"], validation_rule: "Bind the exact candidate and ordinary public researcher workflow without undeclared state or developer intervention."}
+    - {gate_id: "meaning_inventory_complete", required_evidence_owners: ["PROPORTIONAL_OPERATION_PLAN", "MEANING_EVIDENCE_BUNDLE", "REPORT_SURFACE_VERIFICATION_RECEIPT"], validation_rule: "Bind all 104 ordered meanings to all 104 planned operations and exact readback of JSON, applicable CSV, and self-contained HTML."}
+    - {gate_id: "substantive_scientific_validation", required_evidence_owners: ["PROPORTIONAL_OPERATION_PLAN", "PUBLIC_TERMINAL_RESULT", "SCIENTIFIC_VALIDATION_RECEIPT"], validation_rule: "Bind every scientific child to the complete plan and exactly one terminal per attempted operation; a process exit or count cannot substitute."}
+    - {gate_id: "full_partial_capability_honesty", required_evidence_owners: ["PUBLIC_BATCH_CASE_PLAN", "PROPORTIONAL_OPERATION_PLAN", "PUBLIC_TERMINAL_RESULT", "MEANING_EVIDENCE_BUNDLE"], validation_rule: "Bind full and partial states to genuine public case, plan, per-operation terminal, and final meaning owners without inferred evidence."}
+    - {gate_id: "baseline_truthfulness", required_evidence_owners: ["PUBLIC_TERMINAL_RESULT", "CANONICAL_SCIENTIFIC_PAYLOAD"], validation_rule: "Bind baseline comparison to exact per-operation terminal and canonical payload identities; missing or failed baseline evidence cannot validate downstream robustness."}
+    - {gate_id: "no_silent_data_change", required_evidence_owners: ["PREPROCESSING_EXECUTION_RECORD", "PREPARATION_ROW_INSTANCE_MANIFEST", "EXECUTED_TRANSFORMATION_EVIDENCE"], validation_rule: "Bind direct executed preprocessing, row-instance, transformation, and DataAccounting facts to complete operation-plan entry hashes."}
+    - {gate_id: "uncertainty_separation", required_evidence_owners: ["CANONICAL_SCIENTIFIC_PAYLOAD", "MEANING_EVIDENCE_BUNDLE"], validation_rule: "Bind each uncertainty class to its exact typed payload and final meaning without collapsing states."}
+    - {gate_id: "provenance", required_evidence_owners: ["PUBLIC_BATCH_CASE_PLAN", "PROPORTIONAL_OPERATION_PLAN", "PUBLIC_TERMINAL_RESULT", "EVIDENCE_BUNDLE_RECEIPT"], validation_rule: "Bind genuine case, plan, terminal, run, result, report, and artifact identities and reject substitution or replay."}
+    - {gate_id: "privacy", required_evidence_owners: ["PRIVACY_SCAN_RECEIPT", "REPORT_SURFACE_VERIFICATION_RECEIPT"], validation_rule: "Bind privacy scans to exact default artifacts, receipts, logs, errors, and rendered-surface readback."}
+    - {gate_id: "offline_operation", required_evidence_owners: ["OFFLINE_CONTAINMENT_RECEIPT"], validation_rule: "Bind the installed ordinary local path to exact denied-network execution evidence."}
+    - {gate_id: "determinism", required_evidence_owners: ["DETERMINISM_RECEIPT", "REPORT_SURFACE_VERIFICATION_RECEIPT"], validation_rule: "Bind same-input canonical bytes and report-surface hashes plus declared different-seed behavior."}
+    - {gate_id: "visible_warnings_and_failures", required_evidence_owners: ["WARNING_RECORD", "PUBLIC_TERMINAL_RESULT", "REPORT_SURFACE_VERIFICATION_RECEIPT"], validation_rule: "Bind ordered warning and per-operation terminal digests through pre-render projection and exact final-surface readback."}
+    - {gate_id: "cautious_language", required_evidence_owners: ["REPORT_CLAIM_PROJECTION", "REPORT_SURFACE_VERIFICATION_RECEIPT"], validation_rule: "Bind deterministic claims and cautious fallback to the exact pre-render projection and rendered-surface readback."}
+    - {gate_id: "no_result_conditioned_tuning", required_evidence_owners: ["CANDIDATE_PLAN_FREEZE_RECEIPT", "PROPORTIONAL_OPERATION_PLAN", "NO_TUNING_RECEIPT"], validation_rule: "Bind the executed plan to the committed 104-operation challenge and prove no result-conditioned change or Fit-bearing retry."}
+    - {gate_id: "independent_review", required_evidence_owners: ["INDEPENDENT_REVIEW_RECEIPT"], validation_rule: "Bind independent findings and repairs to the exact candidate and immutable challenge artifacts."}
+    - {gate_id: "no_unauthorized_external_action", required_evidence_owners: ["EXTERNAL_ACTION_AUDIT_RECEIPT"], validation_rule: "Bind the local synthetic retained evidence to an exact audit of prohibited external actions."}
+  gates:
+    - {gate_id: "contract_candidate_plan_frozen", preserved_invariant_ids: ["E.contract_frozen", "E.commit_before_seed", "G.exact_identity"], evidence_owner: "CandidatePlanFreezeReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Before seed creation, bind non-null contract, meaning, coverage, candidate tree, conformance EBM, operation plan, expected-result, Fit-ledger, and hard-gate-manifest hashes.", accepted_state: "PASS", failure_code: "CONTRACT.UNFROZEN_OR_UNBOUND", receipt_field: "hard_gates.contract_candidate_plan_frozen"}
+    - {gate_id: "researcher_workflow_and_handoff", preserved_invariant_ids: ["A.standalone_product", "H.clean_environment", "I.complete_handoff"], evidence_owner: "FreshEnvironmentHandoffReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "A clean supported environment completes install, adapter scaffolding, full and partial conformance, canonical audit, report inspection, and offline use from the written handoff without developer intervention or undeclared state.", accepted_state: "PASS", failure_code: "INSTALL.RESEARCHER_WORKFLOW_FAILED", receipt_field: "hard_gates.researcher_workflow_and_handoff"}
+    - {gate_id: "meaning_inventory_complete", preserved_invariant_ids: ["C.all_meanings", "E.ordinary_path_coverage", "I.report_surfaces"], evidence_owner: "MeaningCoverageReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "All 104 hashed meanings map to the exact 104-operation plan and cross audit result, JSON, applicable CSV, and self-contained HTML with exact ReportSurfaceVerificationReceipt readback and no unexplained omission.", accepted_state: "PASS", failure_code: "CONTRACT.MEANING_INVENTORY_INCOMPLETE", receipt_field: "hard_gates.meaning_inventory_complete"}
+    - {gate_id: "substantive_scientific_validation", preserved_invariant_ids: ["C.scientific_job", "E.scientific_acceptance"], evidence_owner: "ScientificValidationReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Every ordered scientific_validation_children record occurs once with schema-valid PASS evidence; a successful process exit or coverage count is insufficient.", accepted_state: "PASS", failure_code: "SCIENCE.SUBSTANTIVE_CRITERIA_FAILED", receipt_field: "hard_gates.substantive_scientific_validation"}
+    - {gate_id: "full_partial_capability_honesty", preserved_invariant_ids: ["B.full_partial_support", "E.branch_honesty"], evidence_owner: "CapabilityConformanceReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Full capability yields 104 AVAILABLE typed meanings; declared partial omissions, non-applicability, malformed owners, and applicable failures remain the exact frozen typed states and never become passes or inferred evidence.", accepted_state: "PASS", failure_code: "CAPABILITY.MISSING_EVIDENCE_PROMOTED", receipt_field: "hard_gates.full_partial_capability_honesty"}
+    - {gate_id: "baseline_truthfulness", preserved_invariant_ids: ["D.baseline_reproduction"], evidence_owner: "BaselineReproductionReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Baseline comparison is numerical and visible; absent, unavailable, not-applicable, failed, or materially different baselines cannot validate downstream robustness.", accepted_state: "PASS", failure_code: "BASELINE.FALSE_PASS", receipt_field: "hard_gates.baseline_truthfulness"}
+    - {gate_id: "no_silent_data_change", preserved_invariant_ids: ["F.no_silent_change"], evidence_owner: "DataAccountingReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Every row, cell, transformation, exclusion, and missingness action is declared, counted, and provenance-bound; no silent drop, clip, imputation, transformation, residualisation, or relabelling occurs.", accepted_state: "PASS", failure_code: "DATA.UNDECLARED_CHANGE", receipt_field: "hard_gates.no_silent_data_change"}
+    - {gate_id: "uncertainty_separation", preserved_invariant_ids: ["C.uncertainty_separation", "E.uncertainty_separation"], evidence_owner: "ScienceLedgerReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Posterior, participant-sampling, analyst-decision, and participant-influence uncertainty remain separately labelled and are never collapsed into one confidence value.", accepted_state: "PASS", failure_code: "SCIENCE.UNCERTAINTY_COLLAPSED", receipt_field: "hard_gates.uncertainty_separation"}
+    - {gate_id: "provenance", preserved_invariant_ids: ["G.complete_provenance"], evidence_owner: "EvidenceBundleReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Every result binds auditor, worker protocol and EBM identities, input, configuration, seed, capabilities, data actions, generator truth, and artifact hashes; substitution and replay checks pass.", accepted_state: "PASS", failure_code: "PROVENANCE.IDENTITY_MISMATCH", receipt_field: "hard_gates.provenance"}
+    - {gate_id: "privacy", preserved_invariant_ids: ["F.no_participant_data", "F.default_artifact_privacy", "F.protected_boundary"], evidence_owner: "PrivacyScanReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Only public synthetic data are used and default artifacts, logs, names, errors, and provenance contain no direct identifiers or raw biomarker values; protected content remains inaccessible.", accepted_state: "PASS", failure_code: "PRIVACY.DEFAULT_ARTIFACT_DISCLOSURE", receipt_field: "hard_gates.privacy"}
+    - {gate_id: "offline_operation", preserved_invariant_ids: ["G.offline_operation"], evidence_owner: "OfflineContainmentReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "The installed ordinary local audit and report path completes with network access denied and no LLM, telemetry, cloud API, analytics service, credential, or remote asset.", accepted_state: "PASS", failure_code: "OFFLINE.NETWORK_ATTEMPT", receipt_field: "hard_gates.offline_operation"}
+    - {gate_id: "determinism", preserved_invariant_ids: ["G.same_seed_determinism", "G.different_seed_explicit", "I.deterministic_report"], evidence_owner: "DeterminismReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Identical declared inputs, identities, configuration, seed, and environment yield byte-stable canonical artifacts; declared different-seed changes match the scientific child result.", accepted_state: "PASS", failure_code: "REPORT.NONDETERMINISTIC", receipt_field: "hard_gates.determinism"}
+    - {gate_id: "visible_warnings_and_failures", preserved_invariant_ids: ["B.failed_work_visible", "C.failed_universes", "E.failed_universes"], evidence_owner: "FailureVisibilityReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Genuine warning records and per-operation public terminals remain visible in results and every applicable report surface, with exact ReportSurfaceVerificationReceipt readback.", accepted_state: "PASS", failure_code: "REPORT.FAILURE_SUPPRESSED", receipt_field: "hard_gates.visible_warnings_and_failures"}
+    - {gate_id: "cautious_language", preserved_invariant_ids: ["C.claim_limits", "E.no_signal_language", "I.interpretation_limits"], evidence_owner: "ClaimLanguageReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Deterministic language rules never equate stability with biological truth, stage with prognosis, position with time, or ordering with recoverable signal; unqualified no-signal evidence uses the frozen cautious fallback.", accepted_state: "PASS", failure_code: "REPORT.OVERCLAIM", receipt_field: "hard_gates.cautious_language"}
+    - {gate_id: "no_result_conditioned_tuning", preserved_invariant_ids: ["E.one_shot_no_tuning"], evidence_owner: "NoTuningReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "The challenge runs once after commitment; no result changes code, thresholds, schedules, seeds, expectations, plan, or contract, and any retry proves zero Fits and unchanged identities.", accepted_state: "PASS", failure_code: "CHALLENGE.POST_COMMITMENT_MUTATION", receipt_field: "hard_gates.no_result_conditioned_tuning"}
+    - {gate_id: "independent_review", preserved_invariant_ids: ["E.exact_candidate_review", "H.independent_review"], evidence_owner: "IndependentReviewReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "Implementation-independent review covers the exact candidate and artifacts, scientific and quantitative behavior, privacy, provenance, hostile misleading outputs, installation, and every repaired material finding.", accepted_state: "PASS", failure_code: "REVIEW.UNRESOLVED_CRITICAL", receipt_field: "hard_gates.independent_review"}
+    - {gate_id: "no_unauthorized_external_action", preserved_invariant_ids: ["I.local_synthetic_handoff"], evidence_owner: "ExternalActionAuditReceipt", evidence_schema_ref: "schemas/proportional-readiness-contract.schema.json#/$defs/HardGateEvidence", validation_rule: "The retained evidence is local and synthetic; no push, release, outreach, upload, publication, or other unapproved external action occurred.", accepted_state: "PASS", failure_code: "RELEASE.UNAUTHORIZED_EXTERNAL_ACTION", receipt_field: "hard_gates.no_unauthorized_external_action"}
+
+terminal_receipt:
+  schema_version: "ebm-audit-proportional-readiness-receipt/1.0"
+  required_fields:
+    - "schema_version"
+    - "attempt_id"
+    - "candidate_git_commit"
+    - "candidate_tree_sha256"
+    - "contract_sha256"
+    - "meaning_inventory_sha256"
+    - "meaning_coverage_sha256"
+    - "conformance_ebm_identity_sha256"
+    - "challenge_plan_sha256"
+    - "proportional_operation_plan_sha256"
+    - "expected_results_sha256"
+    - "hard_gate_manifest_sha256"
+    - "fresh_seed_commitment_sha256"
+    - "fit_count"
+    - "wall_clock_seconds"
+    - "covered_meaning_ids"
+    - "unavailable_meaning_ids"
+    - "not_applicable_meaning_ids"
+    - "invalid_meaning_ids"
+    - "failed_meaning_ids"
+    - "hard_gates"
+    - "artifact_hashes"
+    - "report_surface_verification_receipt_sha256"
+    - "independent_review"
+    - "no_participant_data_used"
+    - "no_unauthorized_external_action"
+    - "readiness_state"
+  pass_requirements:
+    fit_count: 104
+    covered_meaning_count: 104
+    unavailable_meaning_count: 0
+    not_applicable_meaning_count: 0
+    invalid_meaning_count: 0
+    failed_meaning_count: 0
+    hard_gate_count: 17
+    readiness_state: "READY FOR RESEARCHERS TO INTEGRATE AN EBM AND RUN THE AUDITOR LOCALLY"
+  non_claims:
+    - "No unknown or future EBM is certified."
+    - "No participant dataset or disease-order signal is certified."
+    - "No false-positive bound is claimed without a separate reviewed calibration study."
+    - "The conformance EBM remains SYNTHETIC-ONLY test infrastructure."

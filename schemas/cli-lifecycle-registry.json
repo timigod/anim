@@ -1,0 +1,179 @@
+{
+  "registry_schema_version": "ebm-audit-cli-lifecycle/4.0",
+  "purpose": "Normative machine input for candidate-execution disposition only. Every fact and the resulting opaque disposition come from one exact current SealedResultEvidenceSet rooted in one genuine PreparationTransaction and its ordered candidate authorizations. Baseline assessment remains a separate language-eligibility authority and is not an execution-classification input. MANIFEST_SEALED remains fail closed until a future exact SealedRunGateDisposition owns benchmark and other run-gate facts.",
+  "run_artifact_invariant_registry": [
+    {
+      "invariant_id": "run-state-history-is-exact-prefix/1",
+      "owner_schema_ref": "run-artifacts.schema.json#/$defs/RunArtifactState",
+      "enforcement_kind": "runtime",
+      "required": true,
+      "requires_verified_baseline_assessment": false
+    },
+    {
+      "invariant_id": "run-state-artifact-availability/1",
+      "owner_schema_ref": "run-artifacts.schema.json#/$defs/RunArtifactState",
+      "enforcement_kind": "runtime",
+      "required": true,
+      "requires_verified_baseline_assessment": false
+    },
+    {
+      "invariant_id": "candidate-terminal-prefix-and-complete-coverage/2",
+      "owner_schema_ref": "run-artifacts.schema.json#/$defs/RunArtifactState",
+      "enforcement_kind": "runtime",
+      "required": true,
+      "requires_verified_baseline_assessment": false
+    },
+    {
+      "invariant_id": "candidate-execution-disposition-derived-from-exact-result-evidence/1",
+      "owner_schema_ref": "run-artifacts.schema.json#/$defs/RunArtifactState",
+      "enforcement_kind": "runtime",
+      "required": true,
+      "requires_verified_baseline_assessment": false
+    },
+    {
+      "invariant_id": "manifest-requires-exact-run-gate-disposition/1",
+      "owner_schema_ref": "run-artifacts.schema.json#/$defs/RunArtifactState",
+      "enforcement_kind": "runtime",
+      "required": true,
+      "requires_verified_baseline_assessment": true
+    },
+    {
+      "invariant_id": "cli-lifecycle-registry-exact-resource-digest/1",
+      "owner_schema_ref": "run-artifacts.schema.json#/$defs/RunArtifactState",
+      "enforcement_kind": "runtime",
+      "required": true,
+      "requires_verified_baseline_assessment": false
+    },
+    {
+      "invariant_id": "manifest-is-last/1",
+      "owner_schema_ref": "run-artifacts.schema.json#/$defs/RunArtifactState",
+      "enforcement_kind": "schema-plus-runtime",
+      "required": true,
+      "requires_verified_baseline_assessment": false
+    },
+    {
+      "invariant_id": "no-private-path-participant-or-raw-value-fields/1",
+      "owner_schema_ref": "run-artifacts.schema.json#/$defs/RunArtifactState",
+      "enforcement_kind": "schema-plus-runtime",
+      "required": true,
+      "requires_verified_baseline_assessment": false
+    }
+  ],
+  "input_fields": [
+    "requested_candidate_count",
+    "terminal_record_count",
+    "success_count",
+    "non_success_terminal_count",
+    "privacy_failure_count",
+    "terminal_status_counts"
+  ],
+  "input_contract": {
+    "authority": "exact_current_sealed_result_evidence_set",
+    "count_type": "nonnegative I-JSON safe integer",
+    "complete_terminal_coverage_required": true,
+    "terminal_status_count_keys": [
+      "CONVERGENCE_WARN",
+      "INVALID_INPUT",
+      "UNSUPPORTED_CAPABILITY",
+      "INVALID_SPECIFICATION",
+      "BACKEND_ERROR",
+      "TIMEOUT",
+      "CONVERGENCE_FAILED",
+      "CONVERGENCE_NOT_ASSESSABLE",
+      "PRIVACY_VIOLATION",
+      "PROTOCOL_ERROR"
+    ],
+    "closed_objects": true,
+    "baseline_assessment_is_execution_input": false,
+    "prohibited_caller_fields": [
+      "unexpected_core_error_count",
+      "mandatory_gate_failure_counts",
+      "baseline_assessment_id",
+      "baseline_assessment_status",
+      "status"
+    ],
+    "caller_supplied_primary_failure_class": "PROHIBITED"
+  },
+  "derived_values": {
+    "requested_candidate_count": "len(exact sealed result evidence candidate_result_authorizations)",
+    "terminal_record_count": "len(exact sealed result evidence candidate_terminals)",
+    "success_count": "count exact candidate terminals whose final_status is SUCCESS",
+    "non_success_terminal_count": "terminal_record_count - success_count",
+    "privacy_failure_count": "terminal_status_counts.PRIVACY_VIOLATION",
+    "terminal_status_counts": "closed counts of every exact non-SUCCESS candidate terminal",
+    "primary_failure_signal_counts": {
+      "BACKEND_OR_PROTOCOL_FAILURE": "terminal_status_counts.BACKEND_ERROR + terminal_status_counts.TIMEOUT + terminal_status_counts.CONVERGENCE_FAILED + terminal_status_counts.CONVERGENCE_NOT_ASSESSABLE + terminal_status_counts.CONVERGENCE_WARN + terminal_status_counts.PROTOCOL_ERROR",
+      "WORKER_OR_CAPABILITY_UNAVAILABLE": "terminal_status_counts.UNSUPPORTED_CAPABILITY",
+      "INVALID_INPUT_OR_SPECIFICATION": "terminal_status_counts.INVALID_INPUT + terminal_status_counts.INVALID_SPECIFICATION"
+    }
+  },
+  "primary_failure_class_precedence": [
+    "BACKEND_OR_PROTOCOL_FAILURE",
+    "WORKER_OR_CAPABILITY_UNAVAILABLE",
+    "INVALID_INPUT_OR_SPECIFICATION"
+  ],
+  "primary_failure_class_derivation": "For FAILED only, select the first class in primary_failure_class_precedence whose exact terminal signal count is greater than zero. Mixed exact terminal failures retain every component count.",
+  "terminal_state_precedence": [
+    {
+      "state": "PRIVACY_FAILED",
+      "predicate": "privacy_failure_count > 0",
+      "exit_code": 14
+    },
+    {
+      "state": "FAILED",
+      "predicate": "privacy_failure_count == 0 AND success_count == 0",
+      "exit_code_by_derived_primary_failure_class": {
+        "INVALID_INPUT_OR_SPECIFICATION": 10,
+        "WORKER_OR_CAPABILITY_UNAVAILABLE": 11,
+        "BACKEND_OR_PROTOCOL_FAILURE": 15
+      }
+    },
+    {
+      "state": "PARTIAL",
+      "predicate": "privacy_failure_count == 0 AND success_count > 0 AND non_success_terminal_count > 0",
+      "exit_code": 12
+    },
+    {
+      "state": "COMPLETE",
+      "predicate": "success_count == requested_candidate_count AND non_success_terminal_count == 0",
+      "exit_code": 0
+    }
+  ],
+  "invariants": [
+    "classification accepts one exact current SealedResultEvidenceSet and no caller count, status, baseline, benchmark, mandatory-gate, or unexpected-core field",
+    "the sealed result-evidence set is revalidated on every disposition read",
+    "requested_candidate_count is greater than zero and terminal_record_count equals requested_candidate_count because the terminal index cannot seal without exact complete coverage",
+    "success_count + non_success_terminal_count equals terminal_record_count",
+    "sum(terminal_status_counts.*) equals non_success_terminal_count",
+    "privacy_failure_count equals terminal_status_counts.PRIVACY_VIOLATION and has first precedence",
+    "CONVERGENCE_WARN is non-success for candidate-execution completion even though it may retain descriptive scientific payloads",
+    "a baseline assessment can unlock only validated report language for the same exact sealed set; it cannot change COMPLETE, PARTIAL, FAILED, or PRIVACY_FAILED",
+    "pre-plan, incomplete-run, and unexpected-core aborts have separate CLI abort semantics and do not fabricate candidate-execution dispositions",
+    "BENCHMARK_FAILED and UNEXPECTED_CORE_ERROR are not candidate-execution primary failure classes; exit 13 remains reserved for a future exact benchmark or run-gate owner",
+    "MANIFEST_SEALED is prohibited until an exact SealedRunGateDisposition owner exists; zero counts, PASS defaults, report presence, or baseline assessment cannot substitute for that owner",
+    "each exact sealed evidence set reuses one live noncopyable, nonserializable candidate-execution disposition without retaining a dead disposition or its run graph"
+  ],
+  "worker_statuses": [
+    "SUCCESS",
+    "INVALID_INPUT",
+    "UNSUPPORTED_CAPABILITY",
+    "INVALID_SPECIFICATION",
+    "BACKEND_ERROR",
+    "TIMEOUT",
+    "PRIVACY_VIOLATION",
+    "PROTOCOL_ERROR"
+  ],
+  "core_final_statuses": [
+    "SUCCESS",
+    "CONVERGENCE_WARN",
+    "INVALID_INPUT",
+    "UNSUPPORTED_CAPABILITY",
+    "INVALID_SPECIFICATION",
+    "BACKEND_ERROR",
+    "TIMEOUT",
+    "CONVERGENCE_FAILED",
+    "CONVERGENCE_NOT_ASSESSABLE",
+    "PRIVACY_VIOLATION",
+    "PROTOCOL_ERROR"
+  ]
+}

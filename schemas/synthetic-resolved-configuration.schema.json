@@ -1,0 +1,6002 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Closed synthetic generator configuration and derivation manifests",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "resolved_configuration",
+    "resolved_parameter_manifest",
+    "resolved_generator_mechanism",
+    "component_seed_manifest"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "ebm-audit-synthetic-resolution-bundle/1.0"
+    },
+    "resolved_configuration": {
+      "$ref": "#/$defs/ResolvedGeneratorConfiguration"
+    },
+    "resolved_parameter_manifest": {
+      "$ref": "#/$defs/ResolvedParameterManifest"
+    },
+    "resolved_generator_mechanism": {
+      "$ref": "#/$defs/ResolvedGeneratorMechanism"
+    },
+    "component_seed_manifest": {
+      "$ref": "#/$defs/ComponentSeedManifest"
+    }
+  },
+  "$defs": {
+    "Sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "Sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "UInt64Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{16}$"
+    },
+    "UInt128Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "MachineId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"
+    },
+    "EventId": {
+      "type": "string",
+      "pattern": "^E[0-9]{2}$"
+    },
+    "FiniteScalar": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "FiniteScalarArray": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/FiniteScalar"
+      }
+    },
+    "ResolvedValue": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/FiniteScalar"
+        },
+        {
+          "$ref": "#/$defs/FiniteScalarArray"
+        }
+      ]
+    },
+    "FieldValueType": {
+      "enum": [
+        "boolean",
+        "closed_enum",
+        "direction_tuple",
+        "event_id_pair",
+        "event_id_tuple",
+        "finite_float64",
+        "finite_float64_event_tuple",
+        "finite_float64_or_event_tuple",
+        "finite_float64_tuple",
+        "fixed_float64_interval",
+        "float64_gt_2",
+        "machine_id",
+        "machine_id_tuple",
+        "nonnegative_float64",
+        "nonnegative_float64_or_event_tuple",
+        "nonnegative_uint32",
+        "positive_float64",
+        "positive_float64_or_event_tuple",
+        "positive_float64_tuple",
+        "positive_uint16",
+        "positive_uint32",
+    "probability_event_tuple",
+    "probability_float64",
+    "nullable_probability_float64",
+        "uint16",
+        "uint32",
+        "variant_reference"
+      ]
+    },
+    "AllowedForm": {
+      "enum": [
+        "derived_value",
+        "fixed",
+    "fixed_or_derived",
+    "fixed_or_not_applicable",
+        "fixed_ordered_tuple",
+        "fixed_variant_value",
+        "inclusive_scalar_range",
+        "inclusive_scalar_range_or_fixed_default",
+        "inclusive_scalar_range_or_fixed_variant",
+        "literal_endpoint_vector",
+        "ordered_enum_choices_or_fixed",
+        "pre_root_stratum_or_fixed_variant",
+        "ordered_value_grid"
+      ]
+    },
+    "DrawRule": {
+      "enum": [
+        "decimal_tick",
+        "decimal_tick_if_range",
+        "derived_from_pair_mode",
+        "derived_selector",
+        "fixed",
+        "inclusive_discrete_uniform",
+        "inclusive_discrete_uniform_if_range",
+        "ordered_enum_uniform_unless_stratified",
+        "pre_root_stratum",
+        "source_binding_only",
+        "ordered_grid_uniform"
+      ]
+    },
+    "ParameterResolutionSource": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "value"],
+          "properties": {
+            "kind": {"const": "FIXED"},
+            "value": {"$ref": "#/$defs/ResolvedValue"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "minimum", "maximum"],
+          "properties": {
+            "kind": {"const": "INCLUSIVE_INTEGER_RANGE"},
+            "minimum": {"type": "integer"},
+            "maximum": {"type": "integer"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "minimum_tick", "maximum_tick", "tick_scale"],
+          "properties": {
+            "kind": {"const": "DECIMAL_TICK_RANGE"},
+            "minimum_tick": {"type": "integer"},
+            "maximum_tick": {"type": "integer"},
+            "tick_scale": {"const": 1000000}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "ordered_values"],
+          "properties": {
+            "kind": {"const": "ORDERED_CHOICES"},
+            "ordered_values": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"$ref": "#/$defs/ResolvedValue"}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "derivation_id", "ordered_input_field_ids"],
+          "properties": {
+            "kind": {"const": "DERIVED"},
+            "derivation_id": {"type": "string", "minLength": 3},
+            "ordered_input_field_ids": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/MachineId"},
+              "uniqueItems": true
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "reason_id"],
+          "properties": {
+            "kind": {"const": "NOT_APPLICABLE"},
+            "reason_id": {"$ref": "#/$defs/MachineId"}
+          }
+        }
+      ]
+    },
+    "FieldDrawLedgerEntryCore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field_id",
+        "value_type",
+        "allowed_form",
+        "source_kind",
+        "source_reference",
+        "draw_rule",
+        "draw_consumed",
+        "draw_index",
+        "sampled_integer",
+        "resolution_source",
+        "resolved_destination_json_pointer",
+        "resolved_value"
+      ],
+      "properties": {
+        "field_id": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "value_type": {
+          "$ref": "#/$defs/FieldValueType"
+        },
+        "allowed_form": {
+          "$ref": "#/$defs/AllowedForm"
+        },
+        "source_kind": {
+          "enum": [
+            "COMMON_DEFAULT",
+            "FAMILY_MECHANISM",
+            "DEVELOPMENT_VARIANT",
+            "HELDOUT_STRATUM",
+            "HELDOUT_ROOT_DRAW",
+            "EVALUATOR_DERIVATION",
+            "TRANSFORMED_SOURCE_BINDING",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "source_reference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "draw_rule": {
+          "$ref": "#/$defs/DrawRule"
+        },
+        "draw_index": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0
+            }
+          ]
+        },
+        "sampled_integer": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "integer"}
+          ],
+          "$comment": "Signed values are required for decimal-tick ranges with negative endpoints."
+        },
+        "resolution_source": {
+          "$ref": "#/$defs/ParameterResolutionSource"
+        },
+        "resolved_destination_json_pointer": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^/(?:[^~/]|~0|~1)+(?:/(?:[^~/]|~0|~1)+)*$"}
+          ]
+        },
+        "resolved_value": {
+          "$ref": "#/$defs/ResolvedValue"
+        },
+        "draw_consumed": {
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "draw_consumed": {
+                "const": false
+              }
+            },
+            "required": [
+              "draw_consumed"
+            ]
+          },
+          "then": {
+            "properties": {
+              "draw_index": {
+                "type": "null"
+              },
+              "sampled_integer": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "draw_consumed": {
+                "const": true
+              }
+            },
+            "required": [
+              "draw_consumed"
+            ]
+          },
+          "then": {
+            "properties": {
+              "draw_index": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sampled_integer": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "FieldDrawLedgerEntry": {
+      "oneOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "participants"
+                },
+                "value_type": {
+                  "const": "uint32"
+                },
+                "allowed_form": {
+                  "enum": [
+                    "inclusive_scalar_range",
+                    "ordered_value_grid"
+                  ]
+                },
+                "draw_rule": {
+                  "enum": [
+                    "inclusive_discrete_uniform",
+                    "ordered_grid_uniform"
+                  ]
+                },
+                "resolved_value": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                }
+              },
+              "oneOf": [
+                {
+                  "properties": {
+                    "allowed_form": {
+                      "const": "inclusive_scalar_range"
+                    },
+                    "draw_rule": {
+                      "const": "inclusive_discrete_uniform"
+                    }
+                  },
+                  "required": ["allowed_form", "draw_rule"]
+                },
+                {
+                  "properties": {
+                    "allowed_form": {
+                      "const": "ordered_value_grid"
+                    },
+                    "draw_rule": {
+                      "const": "ordered_grid_uniform"
+                    }
+                  },
+                  "required": ["allowed_form", "draw_rule"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "events"
+                },
+                "value_type": {
+                  "const": "uint16"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "inclusive_discrete_uniform"
+                },
+                "resolved_value": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 65535
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "event_ids"
+                },
+                "value_type": {
+                  "const": "event_id_tuple"
+                },
+                "allowed_form": {
+                  "const": "derived_value"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "$ref": "#/$defs/EventId"
+                  },
+                  "uniqueItems": true
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "event_directions"
+                },
+                "value_type": {
+                  "const": "direction_tuple"
+                },
+                "allowed_form": {
+                  "const": "derived_value"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "enum": [
+                      "higher",
+                      "lower"
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "baseline"
+                },
+                "value_type": {
+                  "const": "finite_float64_or_event_tuple"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range_or_fixed_default"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick_if_range"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "event_center_range"
+                },
+                "value_type": {
+                  "const": "fixed_float64_interval"
+                },
+                "allowed_form": {
+                  "const": "literal_endpoint_vector"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "items": false,
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "event_centers"
+                },
+                "value_type": {
+                  "const": "finite_float64_event_tuple"
+                },
+                "allowed_form": {
+                  "const": "derived_value"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "transition_width"
+                },
+                "value_type": {
+                  "const": "positive_float64_or_event_tuple"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range_or_fixed_default"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick_if_range"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "amplitude"
+                },
+                "value_type": {
+                  "const": "nonnegative_float64_or_event_tuple"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range_or_fixed_default"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick_if_range"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "participant_random_effect_sd"
+                },
+                "value_type": {
+                  "const": "nonnegative_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range_or_fixed_default"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick_if_range"
+                },
+                "resolved_value": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "participant_random_effect_loading"
+                },
+                "value_type": {
+                  "const": "finite_float64_or_event_tuple"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range_or_fixed_default"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick_if_range"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "measurement_noise_family"
+                },
+                "value_type": {
+                  "const": "closed_enum"
+                },
+                "allowed_form": {
+                  "const": "ordered_enum_choices_or_fixed"
+                },
+                "draw_rule": {
+                  "const": "ordered_enum_uniform_unless_stratified"
+                },
+                "resolved_value": {
+                  "enum": [
+                    "multivariate_normal",
+                    "multivariate_student_t",
+                    "normal_plus_centered_lognormal",
+                    "student_t_plus_centered_lognormal"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "measurement_noise_sd"
+                },
+                "value_type": {
+                  "const": "positive_float64_or_event_tuple"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range_or_fixed_default"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick_if_range"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "equicorrelation"
+                },
+                "value_type": {
+                  "const": "finite_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range_or_fixed_default"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick_if_range"
+                },
+                "resolved_value": {
+                  "type": "number"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "reference_sampling_window"
+                },
+                "value_type": {
+                  "const": "fixed_float64_interval"
+                },
+                "allowed_form": {
+                  "const": "literal_endpoint_vector"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "items": false,
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "at_risk_sampling_window"
+                },
+                "value_type": {
+                  "const": "fixed_float64_interval"
+                },
+                "allowed_form": {
+                  "const": "literal_endpoint_vector"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "items": false,
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "reference_sampling_window_low"
+                },
+                "value_type": {
+                  "const": "finite_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "at_risk_sampling_window_high"
+                },
+                "value_type": {
+                  "const": "finite_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "latent_sampling_window"
+                },
+                "value_type": {
+                  "const": "fixed_float64_interval"
+                },
+                "allowed_form": {
+                  "const": "literal_endpoint_vector"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ],
+                      "items": false,
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "reference_fraction"
+                },
+                "value_type": {
+                  "const": "probability_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range_or_fixed_default"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick_if_range"
+                },
+                "resolved_value": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "missingness"
+                },
+                "value_type": {
+                  "const": "closed_enum"
+                },
+                "allowed_form": {
+                  "const": "fixed_or_derived"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "enum": [
+                    "none",
+                    "MCAR",
+                    "MAR"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "outliers"
+                },
+                "value_type": {
+                  "const": "closed_enum"
+                },
+                "allowed_form": {
+                  "const": "fixed_or_derived"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "enum": [
+                    "none",
+                    "cell_offset",
+                    "participant_sabotage"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "covariates"
+                },
+                "value_type": {
+                  "const": "closed_enum"
+                },
+                "allowed_form": {
+                  "const": "fixed_or_derived"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "enum": [
+                    "none",
+                    "one_standard_normal",
+                    "one_group_shifted_normal"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "truth_type"
+                },
+                "value_type": {
+                  "const": "closed_enum"
+                },
+                "allowed_form": {
+                  "const": "fixed"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "enum": [
+                    "strict_total_order",
+                    "strict_total_order_weak_signal",
+                    "strict_total_order_with_known_sabotage",
+                    "strict_or_partial_as_declared",
+                    "mixture_of_strict_orders_not_single_truth",
+                    "non_identifiable_single_order",
+                    "partial_order_with_equivalence_blocks",
+                    "strict_total_order_with_label_noise",
+                    "strict_total_order_with_direction_sabotage",
+                    "no_recoverable_order_or_stage",
+                    "refitted_null_transformation"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "adjacent_center_gap"
+                },
+                "value_type": {
+                  "const": "positive_float64"
+                },
+                "allowed_form": {
+                  "const": "fixed_variant_value"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "adjacent_center_gap_over_width"
+                },
+                "value_type": {
+                  "const": "positive_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "affected_events"
+                },
+                "value_type": {
+                  "const": "positive_uint16"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "inclusive_discrete_uniform"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 65535
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "alternate_inversions"
+                },
+                "value_type": {
+                  "const": "nonnegative_uint32"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "inclusive_discrete_uniform"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "base_boundary_rule_id"
+                },
+                "value_type": {
+                  "const": "machine_id"
+                },
+                "allowed_form": {
+                  "const": "fixed"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/MachineId"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "base_quantile_cutoff"
+                },
+                "value_type": {
+                  "const": "nullable_probability_float64"
+                },
+                "allowed_form": {
+                  "const": "fixed_or_not_applicable"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "boundary_quantile_shift"
+                },
+                "value_type": {
+                  "const": "finite_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "boundary_quantile_shifts"
+                },
+                "value_type": {
+                  "const": "finite_float64_tuple"
+                },
+                "allowed_form": {
+                  "const": "fixed_ordered_tuple"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "boundary_rule_ids"
+                },
+                "value_type": {
+                  "const": "machine_id_tuple"
+                },
+                "allowed_form": {
+                  "const": "fixed_ordered_tuple"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "$ref": "#/$defs/MachineId"
+                      },
+                      "uniqueItems": true
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "center_gap_over_width"
+                },
+                "value_type": {
+                  "const": "nonnegative_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "centered_lognormal_sigma"
+                },
+                "value_type": {
+                  "const": "nonnegative_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "centered_lognormal_weight"
+                },
+                "value_type": {
+                  "const": "nonnegative_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "contamination_fraction"
+                },
+                "value_type": {
+                  "const": "probability_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "covariate_event_effect"
+                },
+                "value_type": {
+                  "const": "finite_float64_or_event_tuple"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "oneOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "number"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "covariate_log_odds_coefficient"
+                },
+                "value_type": {
+                  "const": "finite_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "declared_rules"
+                },
+                "value_type": {
+                  "const": "positive_uint16"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "inclusive_discrete_uniform"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 65535
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "duplicate_center_gap"
+                },
+                "value_type": {
+                  "const": "nonnegative_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range_or_fixed_variant"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick_if_range"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "duplicate_pair_correlation"
+                },
+                "value_type": {
+                  "const": "finite_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range_or_fixed_variant"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick_if_range"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "equivalence_block_event_ids"
+                },
+                "value_type": {
+                  "const": "event_id_tuple"
+                },
+                "allowed_form": {
+                  "const": "fixed_ordered_tuple"
+                },
+                "draw_rule": {
+                  "const": "derived_selector"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "$ref": "#/$defs/EventId"
+                      },
+                      "uniqueItems": true
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "equivalence_block_size"
+                },
+                "value_type": {
+                  "const": "positive_uint16"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "inclusive_discrete_uniform"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 65535
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "event_covariate_effect"
+                },
+                "value_type": {
+                  "const": "finite_float64_or_event_tuple"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "oneOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "number"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "event_missing_probabilities"
+                },
+                "value_type": {
+                  "const": "probability_event_tuple"
+                },
+                "allowed_form": {
+                  "const": "fixed_ordered_tuple"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "event_missing_probability"
+                },
+                "value_type": {
+                  "const": "probability_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "group_event_effect"
+                },
+                "value_type": {
+                  "const": "finite_float64_or_event_tuple"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "oneOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "number"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "group_log_odds_coefficient"
+                },
+                "value_type": {
+                  "const": "finite_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "injected_participants"
+                },
+                "value_type": {
+                  "const": "positive_uint16"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "inclusive_discrete_uniform"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 65535
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "latent_group_distribution"
+                },
+                "value_type": {
+                  "const": "closed_enum"
+                },
+                "allowed_form": {
+                  "const": "fixed"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "enum": [
+                        "identical"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "levels"
+                },
+                "value_type": {
+                  "const": "positive_uint16"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "inclusive_discrete_uniform"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 65535
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "marginal_missing_probability"
+                },
+                "value_type": {
+                  "const": "probability_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "matched_latent_draws_across_levels"
+                },
+                "value_type": {
+                  "const": "boolean"
+                },
+                "allowed_form": {
+                  "const": "fixed"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "measurement_noise_sd_levels"
+                },
+                "value_type": {
+                  "const": "positive_float64_tuple"
+                },
+                "allowed_form": {
+                  "const": "fixed_ordered_tuple"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "minority_fraction"
+                },
+                "value_type": {
+                  "const": "probability_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "offset_noise_sd"
+                },
+                "value_type": {
+                  "const": "finite_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "opposing_relation_fraction"
+                },
+                "value_type": {
+                  "const": "probability_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "pair_direction_rule"
+                },
+                "value_type": {
+                  "const": "closed_enum"
+                },
+                "allowed_form": {
+                  "const": "fixed"
+                },
+                "draw_rule": {
+                  "const": "derived_from_pair_mode"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "enum": [
+                        "retain_common_directions",
+                        "target_equals_source"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "pair_event_ids"
+                },
+                "value_type": {
+                  "const": "event_id_pair"
+                },
+                "allowed_form": {
+                  "const": "fixed_ordered_tuple"
+                },
+                "draw_rule": {
+                  "const": "derived_selector"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "$ref": "#/$defs/EventId"
+                        },
+                        {
+                          "$ref": "#/$defs/EventId"
+                        }
+                      ],
+                      "items": false,
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "uniqueItems": true
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "pair_mode"
+                },
+                "value_type": {
+                  "const": "closed_enum"
+                },
+                "allowed_form": {
+                  "const": "pre_root_stratum_or_fixed_variant"
+                },
+                "draw_rule": {
+                  "const": "pre_root_stratum"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "enum": [
+                        "correlated",
+                        "exact_duplicate_post_noise"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "permutations_per_source"
+                },
+                "value_type": {
+                  "const": "positive_uint32"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range_or_fixed_variant"
+                },
+                "draw_rule": {
+                  "const": "inclusive_discrete_uniform_if_range"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 4294967295
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "reversed_direction_events"
+                },
+                "value_type": {
+                  "const": "positive_uint16"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "inclusive_discrete_uniform"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 65535
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "source_events"
+                },
+                "value_type": {
+                  "const": "uint16"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "source_binding_only"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "source_participants"
+                },
+                "value_type": {
+                  "const": "uint32"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "source_binding_only"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "source_variant"
+                },
+                "value_type": {
+                  "const": "variant_reference"
+                },
+                "allowed_form": {
+                  "const": "fixed"
+                },
+                "draw_rule": {
+                  "const": "fixed"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}/[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "standardized_group_covariate_difference"
+                },
+                "value_type": {
+                  "const": "nonnegative_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "student_t_df"
+                },
+                "value_type": {
+                  "const": "float64_gt_2"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "exclusiveMinimum": 2
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "subgroup_fraction"
+                },
+                "value_type": {
+                  "const": "probability_float64"
+                },
+                "allowed_form": {
+                  "const": "inclusive_scalar_range_or_fixed_variant"
+                },
+                "draw_rule": {
+                  "const": "decimal_tick_if_range"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "target_pair_event_ids"
+                },
+                "value_type": {
+                  "const": "event_id_pair"
+                },
+                "allowed_form": {
+                  "const": "fixed_ordered_tuple"
+                },
+                "draw_rule": {
+                  "const": "derived_selector"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "$ref": "#/$defs/EventId"
+                        },
+                        {
+                          "$ref": "#/$defs/EventId"
+                        }
+                      ],
+                      "items": false,
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "uniqueItems": true
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/FieldDrawLedgerEntryCore"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "field_id": {
+                  "const": "wrong_direction_event_ids"
+                },
+                "value_type": {
+                  "const": "event_id_tuple"
+                },
+                "allowed_form": {
+                  "const": "fixed_ordered_tuple"
+                },
+                "draw_rule": {
+                  "const": "derived_selector"
+                },
+                "resolved_value": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "$ref": "#/$defs/EventId"
+                      },
+                      "uniqueItems": true
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "$comment": "The 71 branches are extensionally equal to evaluator/development_scenarios.yaml generator_field_registry.fields in ordered_field_ids order. Each branch binds field identity, declared value type, allowed form, ledger draw_rule (the registry heldout_draw value), and the canonical non-null value shape. A null resolved_value is permitted only for scenario-specific fields that are semantically inapplicable; it is never permitted for the common resolved fields."
+    },
+    "DependencyRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage",
+        "stage_index",
+        "input_field_ids",
+        "output_json_pointers",
+        "status",
+        "rng_draw_count",
+        "output_digest"
+      ],
+      "properties": {
+        "stage": {
+          "enum": [
+            "participants",
+            "events",
+            "group_counts",
+            "mechanism",
+            "event_arrays",
+            "covariance_validity",
+            "matched_comparator_overrides"
+          ]
+        },
+        "stage_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6
+        },
+        "input_field_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/MachineId"
+          },
+          "uniqueItems": true
+        },
+        "output_json_pointers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^/"
+          },
+          "uniqueItems": true
+        },
+        "status": {
+          "enum": [
+            "APPLIED",
+            "VALIDATED",
+            "GENERATOR_INVALID"
+          ]
+        },
+        "rng_draw_count": {
+          "const": 0,
+          "$comment": "Dependency resolution is deterministic and consumes no RNG draw, including event_arrays.group_effect."
+        },
+        "output_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        }
+      }
+    },
+    "ResolvedGeneratorConfiguration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "digest_state",
+        "synthetic_marker",
+        "scenario_family_id",
+        "variant_id",
+        "replicate_index",
+        "dimensions",
+        "event_ids",
+        "event_directions",
+        "event_parameters",
+        "measurement_noise",
+        "latent_sampling",
+        "group_generation",
+        "covariates",
+        "participant_effect",
+        "missingness",
+        "outliers",
+        "scenario_parameters",
+        "analysis_configuration",
+        "dependency_records",
+        "resolved_generator_configuration_sha256"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ebm-audit-resolved-generator-configuration/1.0"
+        },
+        "digest_state": {
+          "enum": [
+            "PERSISTED",
+            "DIGEST_PREIMAGE"
+          ]
+        },
+        "synthetic_marker": {
+          "const": "SYNTHETIC"
+        },
+        "scenario_family_id": {
+          "$ref": "#/$defs/ScenarioFamilyId"
+        },
+        "variant_id": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "replicate_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dimensions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "participant_count",
+            "event_count"
+          ],
+          "properties": {
+            "participant_count": {
+              "type": "integer",
+              "minimum": 2
+            },
+            "event_count": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 12
+            }
+          }
+        },
+        "event_ids": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/EventId"
+          }
+        },
+        "event_directions": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 12,
+          "items": {
+            "enum": [
+              "higher",
+              "lower"
+            ]
+          }
+        },
+        "event_parameters": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "baseline",
+            "amplitude",
+            "transition_width",
+            "event_centers",
+            "covariate_effect",
+            "group_effect",
+            "participant_effect_loading"
+          ],
+          "properties": {
+            "baseline": {
+              "$ref": "#/$defs/NumberArray"
+            },
+            "amplitude": {
+              "$ref": "#/$defs/NumberArray"
+            },
+            "transition_width": {
+              "$ref": "#/$defs/PositiveNumberArray"
+            },
+            "event_centers": {
+              "$ref": "#/$defs/NumberArray"
+            },
+            "covariate_effect": {
+              "$ref": "#/$defs/NumberArray"
+            },
+            "group_effect": {
+              "$ref": "#/$defs/NumberArray",
+              "$comment": "Complete event-ID-ordered gamma vector in gamma_i*h_j, where h_j is exactly 0 for reference and 1 for at_risk. Resolved without an RNG draw during dependency stage event_arrays and applied before participant-effect and measurement-noise terms."
+            },
+            "participant_effect_loading": {
+              "$ref": "#/$defs/NumberArray"
+            }
+          }
+        },
+        "measurement_noise": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "family",
+            "standard_deviations",
+            "equicorrelation",
+            "correlation_matrix",
+            "student_t_df",
+            "centered_lognormal_sigma",
+            "centered_lognormal_weight"
+          ],
+          "properties": {
+            "family": {
+              "enum": [
+                "multivariate_normal",
+                "multivariate_student_t",
+                "normal_plus_centered_lognormal",
+                "student_t_plus_centered_lognormal"
+              ]
+            },
+            "standard_deviations": {
+              "$ref": "#/$defs/PositiveNumberArray"
+            },
+            "equicorrelation": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1
+            },
+            "correlation_matrix": {
+              "$ref": "#/$defs/NumberMatrix"
+            },
+            "student_t_df": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number",
+                  "exclusiveMinimum": 2
+                }
+              ]
+            },
+            "centered_lognormal_sigma": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number",
+                  "minimum": 0
+                }
+              ]
+            },
+            "centered_lognormal_weight": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number",
+                  "minimum": 0
+                }
+              ]
+            }
+          }
+        },
+        "latent_sampling": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "reference_window",
+            "at_risk_window",
+            "group_independent_window"
+          ],
+          "properties": {
+            "mode": {
+              "enum": [
+                "GROUP_WINDOWS",
+                "GROUP_INDEPENDENT_WINDOW",
+                "DISCRETE_STAGE_MIXTURE"
+              ]
+            },
+            "reference_window": {
+              "$ref": "#/$defs/IntervalOrNull"
+            },
+            "at_risk_window": {
+              "$ref": "#/$defs/IntervalOrNull"
+            },
+            "group_independent_window": {
+              "$ref": "#/$defs/IntervalOrNull"
+            }
+          }
+        },
+        "group_generation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "reference_fraction",
+            "reference_count",
+            "at_risk_count",
+            "boundary_rule_id",
+            "quantile_cutoff"
+          ],
+          "properties": {
+            "reference_fraction": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "reference_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "at_risk_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "boundary_rule_id": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/MachineId"
+                }
+              ]
+            },
+            "quantile_cutoff": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "exclusiveMaximum": 1
+                }
+              ]
+            }
+          }
+        },
+        "covariates": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "standardized_group_difference"
+          ],
+          "properties": {
+            "mode": {
+              "enum": [
+                "none",
+                "one_standard_normal",
+                "one_group_shifted_normal"
+              ]
+            },
+            "standardized_group_difference": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        },
+        "participant_effect": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "standard_deviation"
+          ],
+          "properties": {
+            "standard_deviation": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "missingness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "family",
+            "event_probabilities",
+            "marginal_probability",
+            "covariate_log_odds_coefficient",
+            "group_log_odds_coefficient"
+          ],
+          "properties": {
+            "family": {
+              "enum": [
+                "none",
+                "MCAR",
+                "MAR"
+              ]
+            },
+            "event_probabilities": {
+              "$ref": "#/$defs/ProbabilityArray"
+            },
+            "marginal_probability": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              ]
+            },
+            "covariate_log_odds_coefficient": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "group_log_odds_coefficient": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        },
+        "outliers": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "injected_participant_count",
+            "affected_event_count",
+            "offset_noise_sd"
+          ],
+          "properties": {
+            "mode": {
+              "enum": [
+                "none",
+                "cell_offset",
+                "participant_sabotage"
+              ]
+            },
+            "injected_participant_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "affected_event_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "offset_noise_sd": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        },
+        "scenario_parameters": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "truth_type",
+            "pair_mode",
+            "pair_event_ids",
+            "equivalence_block_event_ids",
+            "alternate_inversions",
+            "minority_fraction",
+            "opposing_relation_fraction",
+            "contamination_fraction",
+            "wrong_direction_event_ids",
+            "measurement_noise_sd_levels",
+        "boundary_rule_ids",
+        "boundary_quantile_shifts",
+        "base_quantile_cutoff"
+          ],
+          "properties": {
+            "truth_type": {
+              "$ref": "#/$defs/TruthType"
+            },
+            "pair_mode": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "enum": [
+                    "correlated",
+                    "exact_duplicate_post_noise"
+                  ]
+                }
+              ]
+            },
+            "pair_event_ids": {
+              "$ref": "#/$defs/EventIdArray"
+            },
+            "equivalence_block_event_ids": {
+              "$ref": "#/$defs/EventIdArray"
+            },
+            "alternate_inversions": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              ]
+            },
+            "minority_fraction": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              ]
+            },
+            "opposing_relation_fraction": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              ]
+            },
+            "contamination_fraction": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              ]
+            },
+            "wrong_direction_event_ids": {
+              "$ref": "#/$defs/EventIdArray"
+            },
+            "measurement_noise_sd_levels": {
+              "$ref": "#/$defs/NumberArray"
+            },
+            "boundary_rule_ids": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MachineId"
+              }
+            },
+        "boundary_quantile_shifts": {
+          "$ref": "#/$defs/NumberArray"
+        },
+        "base_quantile_cutoff": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 1
+            }
+          ]
+        }
+      },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "boundary_rule_ids": {
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "boundary_rule_ids"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "base_quantile_cutoff": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "exclusiveMaximum": 1
+                  },
+                  "boundary_quantile_shifts": {
+                    "minItems": 1
+                  }
+                }
+              },
+              "else": {
+                "properties": {
+                  "base_quantile_cutoff": {
+                    "type": "null"
+                  },
+                  "boundary_quantile_shifts": {
+                    "const": []
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "analysis_configuration": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "reference_only_residualisation",
+            "event_spec_directions",
+            "mcmc_profile_id"
+          ],
+          "properties": {
+            "reference_only_residualisation": {
+              "type": "boolean"
+            },
+            "event_spec_directions": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "higher",
+                  "lower"
+                ]
+              }
+            },
+            "mcmc_profile_id": {
+              "$ref": "#/$defs/MachineId"
+            }
+          }
+        },
+        "dependency_records": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/DependencyRecord"
+                },
+                {
+                  "properties": {
+                    "stage": {"const": "participants"},
+                    "stage_index": {"const": 0},
+                    "input_field_ids": {"const": ["participants", "source_participants"]},
+                    "output_json_pointers": {"const": ["/dimensions/participant_count"]},
+                    "status": {"const": "APPLIED"},
+                    "rng_draw_count": {"const": 0}
+                  },
+                  "required": [
+                    "stage",
+                    "stage_index"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/DependencyRecord"
+                },
+                {
+                  "properties": {
+                    "stage": {"const": "events"},
+                    "stage_index": {"const": 1},
+                    "input_field_ids": {"const": ["events", "source_events", "event_ids", "event_directions"]},
+                    "output_json_pointers": {"const": ["/dimensions/event_count", "/event_ids", "/event_directions"]},
+                    "status": {"const": "APPLIED"},
+                    "rng_draw_count": {"const": 0}
+                  },
+                  "required": [
+                    "stage",
+                    "stage_index"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/DependencyRecord"
+                },
+                {
+                  "properties": {
+                    "stage": {"const": "group_counts"},
+                    "stage_index": {"const": 2},
+                    "input_field_ids": {"const": ["participants", "reference_fraction", "base_boundary_rule_id", "base_quantile_cutoff", "boundary_quantile_shift", "boundary_quantile_shifts", "boundary_rule_ids", "declared_rules"]},
+                    "output_json_pointers": {"const": ["/group_generation"]},
+                    "status": {"const": "APPLIED"},
+                    "rng_draw_count": {"const": 0}
+                  },
+                  "required": [
+                    "stage",
+                    "stage_index"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/DependencyRecord"
+                },
+                {
+                  "properties": {
+                    "stage": {"const": "mechanism"},
+                    "stage_index": {"const": 3},
+                    "input_field_ids": {"const": ["reference_sampling_window", "at_risk_sampling_window", "reference_sampling_window_low", "at_risk_sampling_window_high", "latent_sampling_window", "participant_random_effect_sd", "missingness", "outliers", "covariates", "truth_type", "adjacent_center_gap", "adjacent_center_gap_over_width", "affected_events", "alternate_inversions", "center_gap_over_width", "contamination_fraction", "covariate_log_odds_coefficient", "equivalence_block_event_ids", "equivalence_block_size", "event_missing_probabilities", "event_missing_probability", "group_log_odds_coefficient", "injected_participants", "latent_group_distribution", "levels", "marginal_missing_probability", "matched_latent_draws_across_levels", "measurement_noise_sd_levels", "minority_fraction", "offset_noise_sd", "opposing_relation_fraction", "pair_direction_rule", "pair_event_ids", "pair_mode", "permutations_per_source", "reversed_direction_events", "standardized_group_covariate_difference", "subgroup_fraction", "target_pair_event_ids", "wrong_direction_event_ids"]},
+                    "output_json_pointers": {"const": ["/latent_sampling", "/covariates", "/participant_effect", "/missingness", "/outliers", "/scenario_parameters"]},
+                    "status": {"const": "APPLIED"},
+                    "rng_draw_count": {"const": 0}
+                  },
+                  "required": [
+                    "stage",
+                    "stage_index"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/DependencyRecord"
+                },
+                {
+                  "properties": {
+                    "stage": {"const": "event_arrays"},
+                    "stage_index": {"const": 4},
+                    "input_field_ids": {"const": ["events", "event_center_range", "baseline", "event_centers", "transition_width", "amplitude", "covariate_event_effect", "event_covariate_effect", "group_event_effect", "participant_random_effect_loading", "adjacent_center_gap", "adjacent_center_gap_over_width", "center_gap_over_width", "duplicate_center_gap", "equivalence_block_event_ids", "pair_event_ids", "pair_mode", "target_pair_event_ids"]},
+                    "output_json_pointers": {"const": ["/event_parameters"]},
+                    "status": {"const": "APPLIED"},
+                    "rng_draw_count": {"const": 0}
+                  },
+                  "required": [
+                    "stage",
+                    "stage_index"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/DependencyRecord"
+                },
+                {
+                  "properties": {
+                    "stage": {"const": "covariance_validity"},
+                    "stage_index": {"const": 5},
+                    "input_field_ids": {"const": ["events", "measurement_noise_family", "measurement_noise_sd", "equicorrelation", "duplicate_pair_correlation", "pair_event_ids", "pair_mode", "student_t_df", "centered_lognormal_sigma", "centered_lognormal_weight"]},
+                    "output_json_pointers": {"const": ["/measurement_noise"]},
+                    "status": {"const": "VALIDATED"},
+                    "rng_draw_count": {"const": 0}
+                  },
+                  "required": [
+                    "stage",
+                    "stage_index"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/DependencyRecord"
+                },
+                {
+                  "properties": {
+                    "stage": {"const": "matched_comparator_overrides"},
+                    "stage_index": {"const": 6},
+                    "input_field_ids": {"const": ["event_directions", "wrong_direction_event_ids", "source_variant"]},
+                    "output_json_pointers": {"const": ["/analysis_configuration"]},
+                    "status": {"const": "APPLIED"},
+                    "rng_draw_count": {"const": 0}
+                  },
+                  "required": [
+                    "stage",
+                    "stage_index"
+                  ]
+                }
+              ]
+            }
+          ],
+          "items": false
+        },
+        "resolved_generator_configuration_sha256": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Sha256Hex"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "digest_state": {
+                "const": "PERSISTED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "resolved_generator_configuration_sha256": {
+                "$ref": "#/$defs/Sha256Hex"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "digest_state": {
+                "const": "DIGEST_PREIMAGE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "resolved_generator_configuration_sha256": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ResolvedParameterManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "digest_state",
+        "scenario_family_id",
+        "variant_id",
+        "replicate_index",
+        "resolution_mode",
+        "source_contract_sha256",
+        "source_parameter_manifest_sha256",
+        "ordered_field_ids",
+        "field_draws",
+        "parameter_draw_count",
+        "parameters_component_seed",
+        "resolved_parameter_manifest_sha256"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ebm-audit-resolved-parameter-manifest/1.0"
+        },
+        "digest_state": {
+          "enum": [
+            "PERSISTED",
+            "DIGEST_PREIMAGE"
+          ]
+        },
+        "scenario_family_id": {
+          "$ref": "#/$defs/ScenarioFamilyId"
+        },
+        "variant_id": {
+          "$ref": "#/$defs/MachineId"
+        },
+        "replicate_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "resolution_mode": {
+          "enum": [
+            "DEVELOPMENT_VARIANT",
+            "HELDOUT_RANGE",
+            "TRANSFORMED_SOURCE"
+          ]
+        },
+        "source_contract_sha256": {
+          "$ref": "#/$defs/Sha256Hex",
+          "$comment": "Recomputed by the evaluator from the exact selected scenario registry sources; a submitted digest is not authority."
+        },
+        "source_parameter_manifest_sha256": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/Sha256Hex"}
+          ],
+          "$comment": "Non-null only for TRANSFORMED_SOURCE and authenticated independently by the evaluator."
+        },
+        "ordered_field_ids": {
+          "const": [
+            "participants",
+            "events",
+            "event_ids",
+            "event_directions",
+            "baseline",
+            "event_center_range",
+            "event_centers",
+            "transition_width",
+            "amplitude",
+            "participant_random_effect_sd",
+            "participant_random_effect_loading",
+            "measurement_noise_family",
+            "measurement_noise_sd",
+            "equicorrelation",
+            "reference_sampling_window",
+            "at_risk_sampling_window",
+            "reference_sampling_window_low",
+            "at_risk_sampling_window_high",
+            "latent_sampling_window",
+            "reference_fraction",
+            "missingness",
+            "outliers",
+            "covariates",
+            "truth_type",
+            "adjacent_center_gap",
+            "adjacent_center_gap_over_width",
+            "affected_events",
+            "alternate_inversions",
+            "base_boundary_rule_id",
+            "base_quantile_cutoff",
+            "boundary_quantile_shift",
+            "boundary_quantile_shifts",
+            "boundary_rule_ids",
+            "center_gap_over_width",
+            "centered_lognormal_sigma",
+            "centered_lognormal_weight",
+            "contamination_fraction",
+            "covariate_event_effect",
+            "covariate_log_odds_coefficient",
+            "declared_rules",
+            "duplicate_center_gap",
+            "duplicate_pair_correlation",
+            "equivalence_block_event_ids",
+            "equivalence_block_size",
+            "event_covariate_effect",
+            "event_missing_probabilities",
+            "event_missing_probability",
+            "group_event_effect",
+            "group_log_odds_coefficient",
+            "injected_participants",
+            "latent_group_distribution",
+            "levels",
+            "marginal_missing_probability",
+            "matched_latent_draws_across_levels",
+            "measurement_noise_sd_levels",
+            "minority_fraction",
+            "offset_noise_sd",
+            "opposing_relation_fraction",
+            "pair_direction_rule",
+            "pair_event_ids",
+            "pair_mode",
+            "permutations_per_source",
+            "reversed_direction_events",
+            "source_events",
+            "source_participants",
+            "source_variant",
+            "standardized_group_covariate_difference",
+            "student_t_df",
+            "subgroup_fraction",
+            "target_pair_event_ids",
+            "wrong_direction_event_ids"
+          ]
+        },
+        "field_draws": {
+          "type": "array",
+          "minItems": 71,
+          "maxItems": 71,
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "participants"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "events"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "event_ids"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "event_directions"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "baseline"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "event_center_range"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "event_centers"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "transition_width"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "amplitude"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "participant_random_effect_sd"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "participant_random_effect_loading"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "measurement_noise_family"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "measurement_noise_sd"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "equicorrelation"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "reference_sampling_window"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "at_risk_sampling_window"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "reference_sampling_window_low"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "at_risk_sampling_window_high"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "latent_sampling_window"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "reference_fraction"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "missingness"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "outliers"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "covariates"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "truth_type"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "adjacent_center_gap"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "adjacent_center_gap_over_width"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "affected_events"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "alternate_inversions"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "base_boundary_rule_id"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "base_quantile_cutoff"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "boundary_quantile_shift"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "boundary_quantile_shifts"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "boundary_rule_ids"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "center_gap_over_width"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "centered_lognormal_sigma"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "centered_lognormal_weight"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "contamination_fraction"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "covariate_event_effect"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "covariate_log_odds_coefficient"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "declared_rules"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "duplicate_center_gap"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "duplicate_pair_correlation"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "equivalence_block_event_ids"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "equivalence_block_size"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "event_covariate_effect"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "event_missing_probabilities"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "event_missing_probability"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "group_event_effect"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "group_log_odds_coefficient"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "injected_participants"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "latent_group_distribution"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "levels"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "marginal_missing_probability"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "matched_latent_draws_across_levels"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "measurement_noise_sd_levels"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "minority_fraction"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "offset_noise_sd"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "opposing_relation_fraction"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "pair_direction_rule"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "pair_event_ids"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "pair_mode"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "permutations_per_source"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "reversed_direction_events"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "source_events"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "source_participants"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "source_variant"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "standardized_group_covariate_difference"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "student_t_df"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "subgroup_fraction"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "target_pair_event_ids"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/FieldDrawLedgerEntry"
+                },
+                {
+                  "properties": {
+                    "field_id": {
+                      "const": "wrong_direction_event_ids"
+                    }
+                  },
+                  "required": [
+                    "field_id"
+                  ]
+                }
+              ]
+            }
+          ],
+          "items": false
+        },
+        "parameter_draw_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "parameters_component_seed": {
+          "$ref": "#/$defs/UInt128Hex"
+        },
+        "resolved_parameter_manifest_sha256": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Sha256Hex"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "digest_state": {
+                "const": "PERSISTED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "resolved_parameter_manifest_sha256": {
+                "$ref": "#/$defs/Sha256Hex"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "digest_state": {
+                "const": "DIGEST_PREIMAGE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "resolved_parameter_manifest_sha256": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ResolvedGeneratorMechanism": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "digest_state",
+        "scenario_family_id",
+        "mechanism_kind",
+        "strict_order_identifiable",
+        "base_order",
+        "subgroup_orders",
+        "equivalence_blocks",
+        "target_event_ids",
+        "affected_tail_event_ids",
+        "wrong_direction_event_ids",
+        "pre_root_stratum_id",
+        "group_indicator_encoding",
+        "group_effect_application",
+        "group_effect_dependency_stage",
+        "group_effect_rng_draw_count",
+        "dependency_records_sha256",
+        "resolved_generator_mechanism_sha256"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ebm-audit-resolved-generator-mechanism/1.0"
+        },
+        "scenario_family_id": {
+          "$ref": "#/$defs/ScenarioFamilyId"
+        },
+        "digest_state": {
+          "enum": [
+            "PERSISTED",
+            "DIGEST_PREIMAGE"
+          ]
+        },
+        "mechanism_kind": {
+          "enum": [
+            "STRICT_TOTAL_ORDER",
+            "MINORITY_ALTERNATE_SEQUENCE",
+            "OPPOSING_SEQUENCES_50_50",
+            "EQUIVALENCE_BLOCKS",
+            "EXACT_DUPLICATE_POST_NOISE",
+            "LABEL_CONTAMINATION",
+            "REFITTED_NULL_TRANSFORMATION",
+            "PURE_NO_SIGNAL"
+          ]
+        },
+        "strict_order_identifiable": {
+          "type": "boolean"
+        },
+        "base_order": {
+          "$ref": "#/$defs/EventIdArray"
+        },
+        "subgroup_orders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EventIdArray"
+          }
+        },
+        "equivalence_blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EventIdArray"
+          }
+        },
+        "target_event_ids": {
+          "$ref": "#/$defs/EventIdArray"
+        },
+        "affected_tail_event_ids": {
+          "$ref": "#/$defs/EventIdArray"
+        },
+        "wrong_direction_event_ids": {
+          "$ref": "#/$defs/EventIdArray"
+        },
+        "pre_root_stratum_id": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/MachineId"
+            }
+          ]
+        },
+        "group_indicator_encoding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reference", "at_risk"],
+          "properties": {
+            "reference": {"const": 0},
+            "at_risk": {"const": 1}
+          }
+        },
+        "group_effect_application": {
+          "const": "gamma_i_times_binary_group_indicator_before_participant_and_noise"
+        },
+        "group_effect_dependency_stage": {
+          "const": "event_arrays"
+        },
+        "group_effect_rng_draw_count": {
+          "const": 0
+        },
+        "dependency_records_sha256": {
+          "$ref": "#/$defs/Sha256Hex"
+        },
+        "resolved_generator_mechanism_sha256": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Sha256Hex"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "digest_state": {
+                "const": "PERSISTED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "resolved_generator_mechanism_sha256": {
+                "$ref": "#/$defs/Sha256Hex"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "digest_state": {
+                "const": "DIGEST_PREIMAGE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "resolved_generator_mechanism_sha256": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ComponentSeedRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_path",
+        "root_kind",
+        "full_digest",
+        "seed_128",
+        "numpy_version",
+        "bit_generator",
+        "shared"
+      ],
+      "properties": {
+        "component_path": {
+          "enum": [
+            "parameters",
+            "group_assignment",
+            "latent_time",
+            "covariates",
+            "participant_effect",
+            "subgroup_assignment",
+            "measurement_normal",
+            "measurement_scale",
+            "measurement_skew",
+            "contamination",
+            "outliers",
+            "missingness",
+            "label_permutation",
+            "within_group_feature_permutation"
+          ]
+        },
+        "root_kind": {
+          "enum": [
+            "CASE_SEED",
+            "SHARED_DRAW_SEED",
+            "OPERATION_SEED"
+          ]
+        },
+        "full_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "seed_128": {
+          "$ref": "#/$defs/UInt128Hex"
+        },
+        "numpy_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bit_generator": {
+          "const": "PCG64DXSM"
+        },
+        "shared": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ComponentRootAssignmentContext": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": {"const": "ORDINARY_CASE"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "comparator_id", "source_variant_id", "pair_index"],
+          "properties": {
+            "kind": {"const": "DEVELOPMENT_MATCHED_COMPARATOR"},
+            "comparator_id": {"$ref": "#/$defs/MachineId"},
+            "source_variant_id": {"type": "string", "minLength": 3},
+            "pair_index": {"type": "integer", "minimum": 0}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "source_case_id", "null_family_id", "null_replicate_index"],
+          "properties": {
+            "kind": {"const": "DEVELOPMENT_NULL_OPERATION"},
+            "source_case_id": {"type": "string", "minLength": 1},
+            "null_family_id": {"enum": ["label_permutation_null", "within_group_feature_permutation_null"]},
+            "null_replicate_index": {"type": "integer", "minimum": 0}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "comparator_id", "source_variant_id", "pair_index"],
+          "properties": {
+            "kind": {"const": "HELDOUT_MATCHED_COMPARATOR"},
+            "comparator_id": {"$ref": "#/$defs/MachineId"},
+            "source_variant_id": {"type": "string", "minLength": 3},
+            "pair_index": {"type": "integer", "minimum": 0}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "operation_instance_id", "null_family_id"],
+          "properties": {
+            "kind": {"const": "HELDOUT_NULL_OPERATION"},
+            "operation_instance_id": {"$ref": "#/$defs/Sha256Digest"},
+            "null_family_id": {"enum": ["label_permutation_null", "within_group_feature_permutation_null"]}
+          }
+        }
+      ]
+    },
+    "ComponentSeedManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "digest_state",
+        "scenario_family_id",
+        "root_assignment_context",
+        "case_seed",
+        "shared_draw_seed",
+        "operation_seed",
+        "shared_component_paths",
+        "operation_component_paths",
+        "ordered_component_paths",
+        "components",
+        "component_seed_manifest_sha256"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ebm-audit-component-seed-manifest/1.0"
+        },
+        "digest_state": {
+          "enum": [
+            "PERSISTED",
+            "DIGEST_PREIMAGE"
+          ]
+        },
+        "scenario_family_id": {
+          "$ref": "#/$defs/ScenarioFamilyId"
+        },
+        "root_assignment_context": {
+          "$ref": "#/$defs/ComponentRootAssignmentContext",
+          "$comment": "The evaluator supplies and resolves the expected context; the manifest may only repeat it."
+        },
+        "case_seed": {
+          "$ref": "#/$defs/UInt64Hex"
+        },
+        "shared_draw_seed": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/UInt64Hex"
+            }
+          ]
+        },
+        "operation_seed": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/UInt64Hex"
+            }
+          ]
+        },
+        "shared_component_paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "parameters",
+              "group_assignment",
+              "latent_time",
+              "covariates",
+              "participant_effect",
+              "subgroup_assignment",
+              "measurement_normal",
+              "measurement_scale",
+              "measurement_skew",
+              "contamination",
+              "outliers",
+              "missingness",
+              "label_permutation",
+              "within_group_feature_permutation"
+            ]
+          }
+        },
+        "operation_component_paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "label_permutation",
+              "within_group_feature_permutation"
+            ]
+          }
+        },
+        "ordered_component_paths": {
+          "const": [
+            "parameters",
+            "group_assignment",
+            "latent_time",
+            "covariates",
+            "participant_effect",
+            "subgroup_assignment",
+            "measurement_normal",
+            "measurement_scale",
+            "measurement_skew",
+            "contamination",
+            "outliers",
+            "missingness",
+            "label_permutation",
+            "within_group_feature_permutation"
+          ]
+        },
+        "components": {
+          "type": "array",
+          "minItems": 14,
+          "maxItems": 14,
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ComponentSeedRecord"
+                },
+                {
+                  "properties": {
+                    "component_path": {
+                      "const": "parameters"
+                    }
+                  },
+                  "required": [
+                    "component_path"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ComponentSeedRecord"
+                },
+                {
+                  "properties": {
+                    "component_path": {
+                      "const": "group_assignment"
+                    }
+                  },
+                  "required": [
+                    "component_path"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ComponentSeedRecord"
+                },
+                {
+                  "properties": {
+                    "component_path": {
+                      "const": "latent_time"
+                    }
+                  },
+                  "required": [
+                    "component_path"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ComponentSeedRecord"
+                },
+                {
+                  "properties": {
+                    "component_path": {
+                      "const": "covariates"
+                    }
+                  },
+                  "required": [
+                    "component_path"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ComponentSeedRecord"
+                },
+                {
+                  "properties": {
+                    "component_path": {
+                      "const": "participant_effect"
+                    }
+                  },
+                  "required": [
+                    "component_path"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ComponentSeedRecord"
+                },
+                {
+                  "properties": {
+                    "component_path": {
+                      "const": "subgroup_assignment"
+                    }
+                  },
+                  "required": [
+                    "component_path"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ComponentSeedRecord"
+                },
+                {
+                  "properties": {
+                    "component_path": {
+                      "const": "measurement_normal"
+                    }
+                  },
+                  "required": [
+                    "component_path"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ComponentSeedRecord"
+                },
+                {
+                  "properties": {
+                    "component_path": {
+                      "const": "measurement_scale"
+                    }
+                  },
+                  "required": [
+                    "component_path"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ComponentSeedRecord"
+                },
+                {
+                  "properties": {
+                    "component_path": {
+                      "const": "measurement_skew"
+                    }
+                  },
+                  "required": [
+                    "component_path"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ComponentSeedRecord"
+                },
+                {
+                  "properties": {
+                    "component_path": {
+                      "const": "contamination"
+                    }
+                  },
+                  "required": [
+                    "component_path"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ComponentSeedRecord"
+                },
+                {
+                  "properties": {
+                    "component_path": {
+                      "const": "outliers"
+                    }
+                  },
+                  "required": [
+                    "component_path"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ComponentSeedRecord"
+                },
+                {
+                  "properties": {
+                    "component_path": {
+                      "const": "missingness"
+                    }
+                  },
+                  "required": [
+                    "component_path"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ComponentSeedRecord"
+                },
+                {
+                  "properties": {
+                    "component_path": {
+                      "const": "label_permutation"
+                    }
+                  },
+                  "required": [
+                    "component_path"
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ComponentSeedRecord"
+                },
+                {
+                  "properties": {
+                    "component_path": {
+                      "const": "within_group_feature_permutation"
+                    }
+                  },
+                  "required": [
+                    "component_path"
+                  ]
+                }
+              ]
+            }
+          ],
+          "items": false
+        },
+        "component_seed_manifest_sha256": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Sha256Hex"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "digest_state": {
+                "const": "PERSISTED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "component_seed_manifest_sha256": {
+                "$ref": "#/$defs/Sha256Hex"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "digest_state": {
+                "const": "DIGEST_PREIMAGE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "component_seed_manifest_sha256": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "shared_draw_seed": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "shared_draw_seed"
+            ]
+          },
+          "then": {
+            "properties": {
+              "shared_component_paths": {
+                "const": []
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "shared_component_paths": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation_seed": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "operation_seed"
+            ]
+          },
+          "then": {
+            "properties": {
+              "operation_component_paths": {
+                "const": []
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "operation_component_paths": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "NumberArray": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "PositiveNumberArray": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      }
+    },
+    "ProbabilityArray": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "NumberMatrix": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/NumberArray"
+      }
+    },
+    "Interval": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "IntervalOrNull": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/Interval"
+        }
+      ]
+    },
+    "EventIdArray": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/EventId"
+      }
+    },
+    "TruthType": {
+      "$comment": "Every type except no_recoverable_order_or_stage and refitted_null_transformation requires THRESHOLD_STAGE truth with one aligned numeric stage per participant. Those two no-recoverable-signal types require stage truth NONE with an empty participant-stage vector.",
+      "enum": [
+        "strict_total_order",
+        "strict_total_order_weak_signal",
+        "strict_total_order_with_known_sabotage",
+        "strict_or_partial_as_declared",
+        "mixture_of_strict_orders_not_single_truth",
+        "non_identifiable_single_order",
+        "partial_order_with_equivalence_blocks",
+        "strict_total_order_with_label_noise",
+        "strict_total_order_with_direction_sabotage",
+        "no_recoverable_order_or_stage",
+        "refitted_null_transformation"
+      ]
+    },
+    "ScenarioFamilyId": {
+      "enum": [
+        "easy_known_truth",
+        "moderate_mina_shape",
+        "small_sample",
+        "noise_ladder",
+        "weak_pre_post_separation",
+        "incomplete_time_coverage",
+        "tightly_spaced_events",
+        "slow_overlapping_transitions",
+        "outlier_sabotage",
+        "mcar_missingness",
+        "mar_missingness",
+        "correlated_duplicate_events",
+        "minority_alternate_sequence",
+        "opposing_sequences_50_50",
+        "near_simultaneous_events",
+        "covariate_confounding",
+        "group_boundary_sensitivity",
+        "control_contamination",
+        "heavy_tailed_skewed",
+        "wrong_event_direction",
+        "pure_no_signal",
+        "label_permutation_null",
+        "within_group_feature_permutation_null"
+      ]
+    }
+  }
+}

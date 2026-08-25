@@ -1,0 +1,95 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://local.ebm-audit.invalid/schemas/profile-characterization-run.schema.json",
+    "title": "Profile-characterization aggregate run manifest",
+    "$ref": "#/$defs/ProfileCharacterizationRunManifest",
+    "$defs": {
+        "Digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "RawSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "CoordinateReceipt": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "coordinate_ordinal",
+                "plan_coordinate_sha256",
+                "run_root_id",
+                "profile_execution_identity_sha256",
+                "result_group_manifest_relative_path",
+                "result_group_manifest_sha256",
+                "result_count",
+                "fit_count"
+            ],
+            "properties": {
+                "coordinate_ordinal": {"type": "integer", "minimum": 0, "maximum": 5},
+                "plan_coordinate_sha256": {"$ref": "#/$defs/Digest"},
+                "run_root_id": {"$ref": "#/$defs/Digest"},
+                "profile_execution_identity_sha256": {"$ref": "#/$defs/RawSha256"},
+                "result_group_manifest_relative_path": {
+                    "type": "string",
+                    "pattern": "^profile-results/coordinate-[0-9]{8}/profile-result-group-manifest\\.json$"
+                },
+                "result_group_manifest_sha256": {"$ref": "#/$defs/Digest"},
+                "result_count": {"const": 3},
+                "fit_count": {"const": 9}
+            }
+        },
+        "ProfileCharacterizationRunManifest": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "profile_characterization_run_manifest_schema_version",
+                "manifest_kind",
+                "completion_state",
+                "run_root_id",
+                "profile_characterization_plan_receipt_sha256",
+                "profile_execution_identity_sha256",
+                "backend_identity_digest",
+                "resolved_source_config_digest",
+                "source_config_bytes_sha256",
+                "scenario_authority_bytes_sha256",
+                "worker_config_bytes_sha256",
+                "coordinate_count",
+                "result_count",
+                "fit_count",
+                "ordered_coordinate_receipts"
+            ],
+            "properties": {
+                "profile_characterization_run_manifest_schema_version": {
+                    "const": "ebm-audit-profile-characterization-run-manifest/1.0"
+                },
+                "manifest_kind": {"const": "PROFILE_CHARACTERIZATION_RUN"},
+                "completion_state": {"const": "COMPLETE"},
+                "run_root_id": {"$ref": "#/$defs/Digest"},
+                "profile_characterization_plan_receipt_sha256": {"$ref": "#/$defs/RawSha256"},
+                "profile_execution_identity_sha256": {"$ref": "#/$defs/RawSha256"},
+                "backend_identity_digest": {"$ref": "#/$defs/Digest"},
+                "resolved_source_config_digest": {"$ref": "#/$defs/Digest"},
+                "source_config_bytes_sha256": {"$ref": "#/$defs/Digest"},
+                "scenario_authority_bytes_sha256": {"$ref": "#/$defs/Digest"},
+                "worker_config_bytes_sha256": {"$ref": "#/$defs/Digest"},
+                "coordinate_count": {"const": 6},
+                "result_count": {"const": 18},
+                "fit_count": {"const": 54},
+                "ordered_coordinate_receipts": {
+                    "type": "array",
+                    "minItems": 6,
+                    "maxItems": 6,
+                    "allOf": [
+                        {"items": {"$ref": "#/$defs/CoordinateReceipt"}},
+                        {
+                            "prefixItems": [
+                                {"properties": {"coordinate_ordinal": {"const": 0}}},
+                                {"properties": {"coordinate_ordinal": {"const": 1}}},
+                                {"properties": {"coordinate_ordinal": {"const": 2}}},
+                                {"properties": {"coordinate_ordinal": {"const": 3}}},
+                                {"properties": {"coordinate_ordinal": {"const": 4}}},
+                                {"properties": {"coordinate_ordinal": {"const": 5}}}
+                            ],
+                            "items": false
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

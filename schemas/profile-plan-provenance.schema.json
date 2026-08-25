@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "profile-plan-provenance.schema.json",
+  "title": "EBM Audit sealed profile-plan provenance safe projection",
+  "$ref": "#/$defs/ProfilePlanProvenanceProjection",
+  "$defs": {
+    "Sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "GitSha1Oid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "GitSha256Oid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "ProfilePlanSourceSetDigest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_role",
+        "source_set_sha256",
+        "entry_count"
+      ],
+      "properties": {
+        "source_role": {
+          "enum": [
+            "generator_sha256",
+            "metrics_rules_sha256",
+            "report_language_rules_sha256",
+            "evaluator_source_sha256",
+            "normative_authority_sha256"
+          ]
+        },
+        "source_set_sha256": {
+          "$ref": "#/$defs/Sha256Hex"
+        },
+        "entry_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "ProfilePlanProvenanceAttestationBody": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attestation_schema_version",
+        "attestation_state",
+        "git_object_format",
+        "git_commit",
+        "candidate_sha256",
+        "contract_sha256",
+        "ordered_source_set_digests",
+        "profile_execution_source_manifest_sha256",
+        "candidate_entry_count",
+        "source_set_entry_count",
+        "execution_source_entry_count",
+        "attestation_receipt_sha256"
+      ],
+      "properties": {
+        "attestation_schema_version": {
+          "const": "ebm-audit-profile-plan-provenance-attestation/1.0"
+        },
+        "attestation_state": {
+          "const": "CLEAN_COMMITTED_TREE_ATTESTED"
+        },
+        "git_object_format": {
+          "enum": [
+            "sha1",
+            "sha256"
+          ]
+        },
+        "git_commit": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/GitSha1Oid"
+            },
+            {
+              "$ref": "#/$defs/GitSha256Oid"
+            }
+          ]
+        },
+        "candidate_sha256": {
+          "$ref": "#/$defs/Sha256Hex"
+        },
+        "contract_sha256": {
+          "$ref": "#/$defs/Sha256Hex"
+        },
+        "ordered_source_set_digests": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ProfilePlanSourceSetDigest"
+                },
+                {
+                  "properties": {
+                    "source_role": {
+                      "const": "generator_sha256"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ProfilePlanSourceSetDigest"
+                },
+                {
+                  "properties": {
+                    "source_role": {
+                      "const": "metrics_rules_sha256"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ProfilePlanSourceSetDigest"
+                },
+                {
+                  "properties": {
+                    "source_role": {
+                      "const": "report_language_rules_sha256"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ProfilePlanSourceSetDigest"
+                },
+                {
+                  "properties": {
+                    "source_role": {
+                      "const": "evaluator_source_sha256"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ProfilePlanSourceSetDigest"
+                },
+                {
+                  "properties": {
+                    "source_role": {
+                      "const": "normative_authority_sha256"
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "items": false
+        },
+        "profile_execution_source_manifest_sha256": {
+          "$ref": "#/$defs/Sha256Hex"
+        },
+        "candidate_entry_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "source_set_entry_count": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 9007199254740991
+        },
+        "execution_source_entry_count": {
+          "const": 6
+        },
+        "attestation_receipt_sha256": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Sha256Hex"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "git_object_format": {
+                "const": "sha1"
+              }
+            },
+            "required": [
+              "git_object_format"
+            ]
+          },
+          "then": {
+            "properties": {
+              "git_commit": {
+                "$ref": "#/$defs/GitSha1Oid"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "git_commit": {
+                "$ref": "#/$defs/GitSha256Oid"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ProfilePlanProvenanceAttestationDigestPreimage": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/ProfilePlanProvenanceAttestationBody"
+        },
+        {
+          "properties": {
+            "attestation_receipt_sha256": {
+              "type": "null"
+            }
+          }
+        }
+      ]
+    },
+    "ProfilePlanProvenanceAttestation": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/ProfilePlanProvenanceAttestationBody"
+        },
+        {
+          "properties": {
+            "attestation_receipt_sha256": {
+              "$ref": "#/$defs/Sha256Hex"
+            }
+          }
+        }
+      ]
+    },
+    "ProfilePlanProvenanceProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projection_schema_version",
+        "owner_state",
+        "attestation"
+      ],
+      "properties": {
+        "projection_schema_version": {
+          "const": "ebm-audit-profile-plan-provenance-projection/1.0"
+        },
+        "owner_state": {
+          "enum": [
+            "FRESH",
+            "CONSUMED"
+          ]
+        },
+        "attestation": {
+          "$ref": "#/$defs/ProfilePlanProvenanceAttestation"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1341 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "audit-config.schema.json",
+  "title": "EBM Audit local audit configuration v0.3",
+  "oneOf": [
+    { "$ref": "#/$defs/AuditConfig" },
+    { "$ref": "#/$defs/ResolvedPublicConfig" }
+  ],
+  "$defs": {
+    "PhysicalColumn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_column", "physical_type"],
+      "properties": {
+        "source_column": { "$ref": "canonical-records.schema.json#/$defs/SourceColumnName" },
+        "physical_type": { "enum": ["string", "integer", "float64", "boolean"] }
+      }
+    },
+    "CsvFormat": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "encoding",
+        "delimiter",
+        "quote_character",
+        "header",
+        "line_ending",
+        "allow_quoted_newlines",
+        "trim_whitespace",
+        "locale",
+        "infer_types",
+        "implicit_na_tokens",
+        "missing_tokens",
+        "true_tokens",
+        "false_tokens",
+        "columns"
+      ],
+      "properties": {
+        "kind": { "const": "csv" },
+        "encoding": { "const": "utf-8" },
+        "delimiter": { "type": "string", "minLength": 1, "maxLength": 1, "format": "unicode-nfc" },
+        "quote_character": { "type": "string", "minLength": 1, "maxLength": 1, "format": "unicode-nfc" },
+        "header": { "const": true },
+        "line_ending": { "enum": ["lf", "crlf"] },
+        "allow_quoted_newlines": { "const": false },
+        "trim_whitespace": { "const": false },
+        "locale": { "type": "null" },
+        "infer_types": { "const": false },
+        "implicit_na_tokens": { "const": false },
+        "missing_tokens": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/NfcString" }
+        },
+        "true_tokens": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/NfcString" }
+        },
+        "false_tokens": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/NfcString" }
+        },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/PhysicalColumn" }
+        }
+      },
+      "$comment": "The declared column order is the exact required CSV header order. Parsing never trims, guesses types, applies locale rules, or invents missing-value tokens."
+    },
+    "InputSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "byte_digest_method", "expected_byte_digest", "variant", "format"],
+      "properties": {
+        "path": { "$ref": "canonical-records.schema.json#/$defs/RelativePosixPath" },
+        "byte_digest_method": { "const": "sha256-exact-file-bytes/1" },
+        "expected_byte_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "variant": { "$ref": "canonical-records.schema.json#/$defs/DataVariant" },
+        "format": { "$ref": "#/$defs/CsvFormat" }
+      },
+      "$comment": "Complete physical input owner. Runtime requires variant.source_digest_method exact-file/1 and exact equality between expected_byte_digest and variant.source_digest; neither field is inferred. Raw variant label and provenance remain private and enter only path-free identity preimages and the sealed dataset catalog."
+    },
+    "DevelopmentScenarioAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "expected_byte_digest"],
+      "properties": {
+        "path": { "$ref": "canonical-records.schema.json#/$defs/RelativePosixPath" },
+        "expected_byte_digest": {
+          "$ref": "canonical-records.schema.json#/$defs/Sha256Digest"
+        }
+      },
+      "$comment": "Private local path plus exact-byte identity for the registered public development scenario authority. Only the digest enters public projections."
+    },
+    "DevelopmentScenarioAuthorityPublicProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_byte_digest"],
+      "properties": {
+        "expected_byte_digest": {
+          "$ref": "canonical-records.schema.json#/$defs/Sha256Digest"
+        }
+      }
+    },
+    "ColumnRoles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "participant_id_column",
+        "events",
+        "groups",
+        "covariates",
+        "metadata",
+        "ignored_columns"
+      ],
+      "properties": {
+        "participant_id_column": { "$ref": "canonical-records.schema.json#/$defs/SourceColumnName" },
+        "events": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/EventSpec" }
+        },
+        "groups": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/GroupSpec" }
+        },
+        "covariates": {
+          "type": "array",
+          "items": { "$ref": "canonical-records.schema.json#/$defs/CovariateSpec" }
+        },
+        "metadata": {
+          "type": "array",
+          "items": { "$ref": "canonical-records.schema.json#/$defs/MetadataSpec" }
+        },
+        "ignored_columns": {
+          "type": "array",
+          "items": { "$ref": "canonical-records.schema.json#/$defs/IgnoredColumn" }
+        }
+      }
+    },
+    "ExternalMissingnessVariant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "path", "byte_digest"],
+      "properties": {
+        "status": { "enum": ["NOT_DECLARED", "DECLARED"] },
+        "path": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/RelativePosixPath" },
+            { "type": "null" }
+          ]
+        },
+        "byte_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "NOT_DECLARED" } }, "required": ["status"] },
+          "then": { "properties": { "path": { "type": "null" }, "byte_digest": { "type": "null" } } },
+          "else": {
+            "properties": {
+              "path": { "$ref": "canonical-records.schema.json#/$defs/RelativePosixPath" },
+              "byte_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+            }
+          }
+        }
+      ]
+    },
+    "WorkerBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["config_path", "worker_config_digest", "worker_identity_digest", "protocol_version"],
+      "properties": {
+        "config_path": { "$ref": "canonical-records.schema.json#/$defs/RelativePosixPath" },
+        "worker_config_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "worker_identity_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "protocol_version": { "const": "ebm-audit-worker/v2" }
+      }
+    },
+    "BaselineReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "path", "byte_digest", "interpretation"],
+      "properties": {
+        "status": {
+          "enum": [
+            "NOT_SUPPLIED",
+            "SUPPLIED_STRUCTURAL_ONLY",
+            "SUPPLIED_INDEPENDENTLY_VERIFIED"
+          ]
+        },
+        "path": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/RelativePosixPath" },
+            { "type": "null" }
+          ]
+        },
+        "byte_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        },
+        "interpretation": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "NOT_SUPPLIED" } }, "required": ["status"] },
+          "then": { "properties": { "path": { "type": "null" }, "byte_digest": { "type": "null" } } },
+          "else": {
+            "properties": {
+              "path": { "$ref": "canonical-records.schema.json#/$defs/RelativePosixPath" },
+              "byte_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+            }
+          }
+        }
+      ]
+    },
+    "AxisChoiceSelection": {
+      "$ref": "analysis-universe.schema.json#/$defs/AxisChoiceSelection"
+    },
+    "DatasetVariantAxisAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "value"],
+      "properties": {
+        "path": { "const": "/dataset_variant_intent" },
+        "value": { "$ref": "analysis-universe.schema.json#/$defs/DatasetVariantIntent" }
+      }
+    },
+    "CohortRuleAxisAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "value"],
+      "properties": {
+        "path": { "const": "/cohort_rule" },
+        "value": { "$ref": "analysis-universe.schema.json#/$defs/CohortIntent" }
+      }
+    },
+    "EventSetAxisAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "value"],
+      "properties": {
+        "path": { "const": "/event_set" },
+        "value": { "$ref": "analysis-universe.schema.json#/$defs/EventSet" }
+      }
+    },
+    "EventDirectionsAxisAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "value"],
+      "properties": {
+        "path": { "const": "/event_directions" },
+        "value": { "$ref": "analysis-universe.schema.json#/$defs/EventDirections" }
+      }
+    },
+    "PreprocessingAxisAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "value"],
+      "properties": {
+        "path": { "const": "/preprocessing" },
+        "value": { "$ref": "analysis-universe.schema.json#/$defs/PreprocessingSpec" }
+      }
+    },
+    "OutlierPolicyAxisAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "value"],
+      "properties": {
+        "path": { "const": "/outlier_policy" },
+        "value": { "$ref": "analysis-universe.schema.json#/$defs/OutlierPolicy" }
+      }
+    },
+    "MissingnessPolicyAxisAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "value"],
+      "properties": {
+        "path": { "const": "/missingness_policy" },
+        "value": { "$ref": "analysis-universe.schema.json#/$defs/MissingnessChoice" }
+      }
+    },
+    "CovariateAdjustmentAxisAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "value"],
+      "properties": {
+        "path": { "const": "/covariate_adjustment" },
+        "value": { "$ref": "analysis-universe.schema.json#/$defs/CovariateAdjustment" }
+      }
+    },
+    "BackendAxisAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "value"],
+      "properties": {
+        "path": { "const": "/backend" },
+        "value": { "$ref": "analysis-universe.schema.json#/$defs/BackendSpec" }
+      },
+      "$comment": "A backend choice replaces the complete digest-bound BackendSpec. A detached /backend/settings patch is forbidden."
+    },
+    "McmcAxisAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "value"],
+      "properties": {
+        "path": { "const": "/mcmc" },
+        "value": {
+          "oneOf": [
+            { "$ref": "analysis-universe.schema.json#/$defs/McmcSpec" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "AxisAssignment": {
+      "oneOf": [
+        { "$ref": "#/$defs/DatasetVariantAxisAssignment" },
+        { "$ref": "#/$defs/CohortRuleAxisAssignment" },
+        { "$ref": "#/$defs/EventSetAxisAssignment" },
+        { "$ref": "#/$defs/EventDirectionsAxisAssignment" },
+        { "$ref": "#/$defs/PreprocessingAxisAssignment" },
+        { "$ref": "#/$defs/OutlierPolicyAxisAssignment" },
+        { "$ref": "#/$defs/MissingnessPolicyAxisAssignment" },
+        { "$ref": "#/$defs/CovariateAdjustmentAxisAssignment" },
+        { "$ref": "#/$defs/BackendAxisAssignment" },
+        { "$ref": "#/$defs/McmcAxisAssignment" }
+      ]
+    },
+    "AxisChoiceDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["choice_id", "assignments", "rationale"],
+      "properties": {
+        "choice_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "assignments": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/AxisAssignment" }
+        },
+        "rationale": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" }
+      }
+    },
+    "AxisDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "axis_id",
+        "semantic_target",
+        "owned_analysis_spec_paths",
+        "baseline_choice_id",
+        "rationale",
+        "choices"
+      ],
+      "properties": {
+        "axis_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "semantic_target": {
+          "enum": [
+            "dataset-variant",
+            "cohort-rule",
+            "event-set",
+            "event-directions",
+            "preprocessing",
+            "outlier-policy",
+            "missingness-policy",
+            "covariate-adjustment",
+            "mcmc",
+            "backend-settings"
+          ]
+        },
+        "owned_analysis_spec_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "/dataset_variant_intent",
+              "/cohort_rule",
+              "/event_set",
+              "/event_directions",
+              "/preprocessing",
+              "/outlier_policy",
+              "/missingness_policy",
+              "/covariate_adjustment",
+              "/mcmc",
+              "/backend"
+            ]
+          }
+        },
+        "baseline_choice_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "rationale": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "choices": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/AxisChoiceDefinition" }
+        }
+      }
+    },
+    "ComposedExperimentMember": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["member_id", "axis_choices", "rationale"],
+      "properties": {
+        "member_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "axis_choices": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/AxisChoiceSelection" }
+        },
+        "rationale": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" }
+      },
+      "$comment": "The compiler derives the complete AnalysisSpec and analysis_spec_id. They are not caller assertions."
+    },
+    "CustomExperimentMember": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["member_id", "analysis_spec_id", "analysis_spec", "rationale"],
+      "properties": {
+        "member_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "analysis_spec_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "analysis_spec": { "$ref": "analysis-universe.schema.json#/$defs/AnalysisSpec" },
+        "rationale": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" }
+      }
+    },
+    "ExperimentMember": {
+      "oneOf": [
+        { "$ref": "#/$defs/ComposedExperimentMember" },
+        { "$ref": "#/$defs/CustomExperimentMember" }
+      ]
+    },
+    "BootstrapDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_analysis_spec_ids",
+        "source_variant_id",
+        "derived_source_variant_id",
+        "sampling_method_id",
+        "sampling_design",
+        "strata_group_spec_ids",
+        "refit_preprocessing",
+        "fixed_evaluation_cohort_policy"
+      ],
+      "properties": {
+        "source_analysis_spec_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+        },
+        "source_variant_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "derived_source_variant_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "sampling_method_id": { "const": "participant-bootstrap-with-replacement/1" },
+        "sampling_design": { "enum": ["ordinary", "stratified"] },
+        "strata_group_spec_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/MachineId" }
+        },
+        "refit_preprocessing": { "const": true },
+        "fixed_evaluation_cohort_policy": { "const": "fixed-baseline-cohort-or-unsupported/1" }
+      }
+    },
+    "SubsampleDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_analysis_spec_ids",
+        "source_variant_id",
+        "derived_source_variant_id",
+        "sampling_method_id",
+        "sampling_design",
+        "retained_fraction",
+        "strata_group_spec_ids",
+        "refit_preprocessing",
+        "fixed_evaluation_cohort_policy"
+      ],
+      "properties": {
+        "source_analysis_spec_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+        },
+        "source_variant_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "derived_source_variant_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "sampling_method_id": { "const": "participant-subsample-without-replacement/1" },
+        "sampling_design": { "enum": ["ordinary", "stratified"] },
+        "retained_fraction": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1 },
+        "strata_group_spec_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/MachineId" }
+        },
+        "refit_preprocessing": { "const": true },
+        "fixed_evaluation_cohort_policy": { "const": "fixed-subsample-cohort-or-unsupported/1" }
+      }
+    },
+    "InfluenceDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_analysis_spec_ids",
+        "source_variant_id",
+        "derived_source_variant_id",
+        "removal_method_id",
+        "removal_kind",
+        "named_group_spec_ids",
+        "refit_preprocessing",
+        "fixed_non_removed_cohort_policy"
+      ],
+      "properties": {
+        "source_analysis_spec_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+        },
+        "source_variant_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "derived_source_variant_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "removal_method_id": { "const": "exact-participant-or-named-group-removal/1" },
+        "removal_kind": { "enum": ["leave-one-participant-out", "named-group-removal"] },
+        "named_group_spec_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/MachineId" }
+        },
+        "removal_selection": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["selection_rule_id", "selected_removal_count"],
+              "properties": {
+                "selection_rule_id": { "const": "first-private-canonical-membership-slots/1" },
+                "selected_removal_count": { "type": "integer", "minimum": 1 }
+              }
+            },
+            { "type": "null" }
+          ]
+        },
+        "refit_preprocessing": { "const": true },
+        "fixed_non_removed_cohort_policy": { "const": "fixed-non-removed-baseline-cohort-or-unsupported/1" }
+      },
+      "$comment": "Participant selections are compiled to private internal row indexes after input validation; direct identifiers are never configuration fields."
+    },
+    "NullFamilyDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "null_family_id",
+        "source_analysis_spec_ids",
+        "source_variant_id",
+        "derived_source_variant_id",
+        "null_method_id",
+        "transformation",
+        "within_group_spec_id",
+        "refit_preprocessing",
+        "preserves_group_conditional_event_marginals",
+        "rationale"
+      ],
+      "properties": {
+        "null_family_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "source_analysis_spec_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+        },
+        "source_variant_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "derived_source_variant_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "null_method_id": {
+          "enum": [
+            "pure-no-signal-synthetic/1",
+            "label-permutation/1",
+            "featurewise-within-group-participant-permutation/1"
+          ]
+        },
+        "transformation": { "enum": ["pure-no-signal-synthetic", "label-permutation", "featurewise-participant-permutation"] },
+        "within_group_spec_id": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+            { "type": "null" }
+          ]
+        },
+        "refit_preprocessing": { "const": true },
+        "preserves_group_conditional_event_marginals": { "type": "boolean" },
+        "rationale": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" }
+      }
+    },
+    "ExperimentSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "experiment_set_id",
+        "mode",
+        "enabled",
+        "rationale",
+        "axes",
+        "members",
+        "bootstrap",
+        "subsample",
+        "influence",
+        "null_families"
+      ],
+      "properties": {
+        "experiment_set_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "mode": {
+          "enum": [
+            "baseline",
+            "one-axis",
+            "declared-combinations",
+            "full-factorial",
+            "bootstrap",
+            "subsample",
+            "influence",
+            "null",
+            "custom"
+          ]
+        },
+        "enabled": { "type": "boolean" },
+        "rationale": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+        "axes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AxisDefinition" }
+        },
+        "members": { "type": "array", "items": { "$ref": "#/$defs/ExperimentMember" } },
+        "bootstrap": {
+          "oneOf": [
+            { "$ref": "#/$defs/BootstrapDeclaration" },
+            { "type": "null" }
+          ]
+        },
+        "subsample": {
+          "oneOf": [
+            { "$ref": "#/$defs/SubsampleDeclaration" },
+            { "type": "null" }
+          ]
+        },
+        "influence": {
+          "oneOf": [
+            { "$ref": "#/$defs/InfluenceDeclaration" },
+            { "type": "null" }
+          ]
+        },
+        "null_families": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/NullFamilyDeclaration" }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "enum": ["one-axis", "declared-combinations", "full-factorial"]
+              }
+            },
+            "required": ["mode"]
+          },
+          "then": {
+            "properties": {
+              "members": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/ComposedExperimentMember" }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "mode": { "const": "custom" } },
+            "required": ["mode"]
+          },
+          "then": {
+            "properties": {
+              "members": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/CustomExperimentMember" }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "enum": ["baseline", "bootstrap", "subsample", "influence", "null"]
+              }
+            },
+            "required": ["mode"]
+          },
+          "then": { "properties": { "members": { "maxItems": 0 } } }
+        }
+      ]
+    },
+    "ExperimentDeclarations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allow_full_factorial", "full_factorial_override_rationale", "sets"],
+      "properties": {
+        "allow_full_factorial": { "type": "boolean" },
+        "full_factorial_override_rationale": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+            { "type": "null" }
+          ]
+        },
+        "sets": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/ExperimentSet" }
+        }
+      }
+    },
+    "Profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile_id",
+        "ordinary_universe_limit",
+        "ordinary_limit_override_rationale",
+        "max_total_fits",
+        "max_wall_seconds",
+        "max_parallel_workers",
+        "bootstrap_replicates",
+        "subsample_replicates",
+        "influence_max_removals",
+        "null_replicates_per_family",
+        "fit_budget_overflow_policy",
+        "influence_ceiling_policy"
+      ],
+      "properties": {
+        "profile_id": { "enum": ["quick", "full", "release"] },
+        "ordinary_universe_limit": { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+        "ordinary_limit_override_rationale": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" },
+            { "type": "null" }
+          ]
+        },
+        "max_total_fits": { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+        "max_wall_seconds": { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+        "max_parallel_workers": { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+        "bootstrap_replicates": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "subsample_replicates": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "influence_max_removals": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "null_replicates_per_family": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "fit_budget_overflow_policy": { "const": "error-before-execution/1" },
+        "influence_ceiling_policy": { "const": "error-if-exact-removal-count-exceeds-ceiling/1" }
+      }
+    },
+    "Profiles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["quick", "full", "release"],
+      "properties": {
+        "quick": { "$ref": "#/$defs/Profile" },
+        "full": { "$ref": "#/$defs/Profile" },
+        "release": { "$ref": "#/$defs/Profile" }
+      }
+    },
+    "TemplateDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "contains_real_rows", "status", "note"],
+      "properties": {
+        "kind": { "enum": ["synthetic", "idris-2025-public-structural"] },
+        "contains_real_rows": { "const": false },
+        "status": {
+          "enum": [
+            "READY_SYNTHETIC_EXAMPLE",
+            "REQUIRES_LOCAL_MAPPING_CONFIRMATION",
+            "CONFIRMED_LOCAL_CONFIGURATION"
+          ]
+        },
+        "note": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "kind": { "const": "idris-2025-public-structural" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "REQUIRES_LOCAL_MAPPING_CONFIRMATION",
+                  "CONFIRMED_LOCAL_CONFIGURATION"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "OutputBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "layout_version", "overwrite", "private_directory_mode"],
+      "properties": {
+        "root": { "$ref": "canonical-records.schema.json#/$defs/RelativePosixPath" },
+        "layout_version": { "const": "ebm-audit-run-layout/1" },
+        "overwrite": { "const": false },
+        "private_directory_mode": { "const": "0700" }
+      }
+    },
+    "SourceVariantDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_variant_id",
+        "variant_kind",
+        "source_variant_id_ref",
+        "method_id",
+        "rationale"
+      ],
+      "properties": {
+        "source_variant_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "variant_kind": {
+          "enum": [
+            "baseline-input",
+            "external-missingness",
+            "bootstrap-resample",
+            "participant-subsample",
+            "influence-removal",
+            "null-transformation"
+          ]
+        },
+        "source_variant_id_ref": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+            { "type": "null" }
+          ]
+        },
+        "method_id": {
+          "enum": [
+            "exact-input-bytes/1",
+            "external-missingness-variant/1",
+            "participant-bootstrap-with-replacement/1",
+            "participant-subsample-without-replacement/1",
+            "exact-participant-or-named-group-removal/1",
+            "pure-no-signal-synthetic/1",
+            "label-permutation/1",
+            "featurewise-within-group-participant-permutation/1"
+          ]
+        },
+        "rationale": { "$ref": "canonical-records.schema.json#/$defs/NonEmptyString" }
+      }
+    },
+    "Randomness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["master_seed", "seed_derivation_version"],
+      "properties": {
+        "master_seed": { "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" },
+        "seed_derivation_version": { "const": "hmac-sha256-u64be-v2" }
+      },
+      "$comment": "The master seed is mandatory input. Resolution never generates or replaces it."
+    },
+    "BootstrapOperationSeedParameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sampling_method_id", "sampling_design", "strata_group_spec_ids", "refit_preprocessing", "fixed_evaluation_cohort_policy"],
+      "properties": {
+        "sampling_method_id": { "const": "participant-bootstrap-with-replacement/1" },
+        "sampling_design": { "enum": ["ordinary", "stratified"] },
+        "strata_group_spec_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/MachineId" }
+        },
+        "refit_preprocessing": { "const": true },
+        "fixed_evaluation_cohort_policy": { "const": "fixed-baseline-cohort-or-unsupported/1" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "sampling_design": { "const": "ordinary" } }, "required": ["sampling_design"] },
+          "then": { "properties": { "strata_group_spec_ids": { "maxItems": 0 } } },
+          "else": { "properties": { "strata_group_spec_ids": { "minItems": 1 } } }
+        }
+      ]
+    },
+    "SubsampleOperationSeedParameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sampling_method_id", "sampling_design", "retained_fraction", "retained_count_rounding_rule", "strata_group_spec_ids", "refit_preprocessing", "fixed_evaluation_cohort_policy"],
+      "properties": {
+        "sampling_method_id": { "const": "participant-subsample-without-replacement/1" },
+        "sampling_design": { "enum": ["ordinary", "stratified"] },
+        "retained_fraction": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1 },
+        "retained_count_rounding_rule": { "const": "floor-pre-operation-count-times-fraction/1" },
+        "strata_group_spec_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/MachineId" }
+        },
+        "refit_preprocessing": { "const": true },
+        "fixed_evaluation_cohort_policy": { "const": "fixed-subsample-cohort-or-unsupported/1" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "sampling_design": { "const": "ordinary" } }, "required": ["sampling_design"] },
+          "then": { "properties": { "strata_group_spec_ids": { "maxItems": 0 } } },
+          "else": { "properties": { "strata_group_spec_ids": { "minItems": 1 } } }
+        }
+      ]
+    },
+    "PureNoSignalNullSeedParameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["null_family_id", "null_method_id", "transformation", "within_group_spec_id", "refit_preprocessing", "preserves_group_conditional_event_marginals"],
+      "properties": {
+        "null_family_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "null_method_id": { "const": "pure-no-signal-synthetic/1" },
+        "transformation": { "const": "pure-no-signal-synthetic" },
+        "within_group_spec_id": { "type": "null" },
+        "refit_preprocessing": { "const": true },
+        "preserves_group_conditional_event_marginals": { "const": false }
+      }
+    },
+    "LabelPermutationNullSeedParameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["null_family_id", "null_method_id", "transformation", "within_group_spec_id", "refit_preprocessing", "preserves_group_conditional_event_marginals"],
+      "properties": {
+        "null_family_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "null_method_id": { "const": "label-permutation/1" },
+        "transformation": { "const": "label-permutation" },
+        "within_group_spec_id": { "type": "null" },
+        "refit_preprocessing": { "const": true },
+        "preserves_group_conditional_event_marginals": { "const": false }
+      }
+    },
+    "WithinGroupFeaturePermutationNullSeedParameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["null_family_id", "null_method_id", "transformation", "within_group_spec_id", "refit_preprocessing", "preserves_group_conditional_event_marginals"],
+      "properties": {
+        "null_family_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "null_method_id": { "const": "featurewise-within-group-participant-permutation/1" },
+        "transformation": { "const": "featurewise-participant-permutation" },
+        "within_group_spec_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "refit_preprocessing": { "const": true },
+        "preserves_group_conditional_event_marginals": { "const": true }
+      }
+    },
+    "NullOperationSeedParameters": {
+      "oneOf": [
+        { "$ref": "#/$defs/PureNoSignalNullSeedParameters" },
+        { "$ref": "#/$defs/LabelPermutationNullSeedParameters" },
+        { "$ref": "#/$defs/WithinGroupFeaturePermutationNullSeedParameters" }
+      ]
+    },
+    "OperationRandomizationSeedPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "seed_preimage_schema_version",
+        "seed_derivation_version",
+        "seed_use",
+        "operation_kind",
+        "source_analysis_spec_id",
+        "source_variant_id",
+        "derived_source_variant_id",
+        "replicate_ordinal",
+        "operation_parameters"
+      ],
+      "properties": {
+        "seed_preimage_schema_version": { "const": "ebm-audit-product-seed-preimage/2.0" },
+        "seed_derivation_version": { "const": "hmac-sha256-u64be-v2" },
+        "seed_use": { "const": "operation" },
+        "operation_kind": { "enum": ["bootstrap", "subsample", "null"] },
+        "source_analysis_spec_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "source_variant_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "derived_source_variant_id": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "replicate_ordinal": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "operation_parameters": {
+          "oneOf": [
+            { "$ref": "#/$defs/BootstrapOperationSeedParameters" },
+            { "$ref": "#/$defs/SubsampleOperationSeedParameters" },
+            { "$ref": "#/$defs/NullOperationSeedParameters" }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "operation_kind": { "const": "bootstrap" } }, "required": ["operation_kind"] },
+          "then": { "properties": { "operation_parameters": { "$ref": "#/$defs/BootstrapOperationSeedParameters" } } }
+        },
+        {
+          "if": { "properties": { "operation_kind": { "const": "subsample" } }, "required": ["operation_kind"] },
+          "then": { "properties": { "operation_parameters": { "$ref": "#/$defs/SubsampleOperationSeedParameters" } } }
+        },
+        {
+          "if": { "properties": { "operation_kind": { "const": "null" } }, "required": ["operation_kind"] },
+          "then": { "properties": { "operation_parameters": { "$ref": "#/$defs/NullOperationSeedParameters" } } }
+        }
+      ],
+      "$comment": "This owner exists before operation randomization. Experiment-set provenance is deliberately absent: equal complete operation tuples share a draw across origins. null_family_id is execution-semantic ownership of an independent null randomization series. A derived analysis identity or realized row/transformation manifest is forbidden here."
+    },
+    "UniverseChainSeedPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seed_preimage_schema_version", "seed_derivation_version", "seed_use", "operation_kind", "analysis_spec_id", "chain_ordinal"],
+      "properties": {
+        "seed_preimage_schema_version": { "const": "ebm-audit-product-seed-preimage/2.0" },
+        "seed_derivation_version": { "const": "hmac-sha256-u64be-v2" },
+        "seed_use": { "const": "universe-chain" },
+        "operation_kind": { "enum": ["ordinary", "bootstrap", "subsample", "influence", "null"] },
+        "analysis_spec_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "chain_ordinal": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" }
+      },
+      "$comment": "The final analysis specification already binds the realized operation. The operation kind must be recomputed from that specification before this owner is accepted."
+    },
+    "ProductSeedPreimage": {
+      "oneOf": [
+        { "$ref": "#/$defs/OperationRandomizationSeedPreimage" },
+        { "$ref": "#/$defs/UniverseChainSeedPreimage" }
+      ],
+      "$comment": "The one public-product seed owner. Ordinary and influence operations have no operation-randomization branch; their fitted analyses receive universe-chain seeds after the final AnalysisSpec exists. Evaluator-held roots and identities are forbidden."
+    },
+    "ValidatedDatasetSummaryPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_schema_version",
+        "resolved_config_digest",
+        "input_byte_digest",
+        "input_format_digest",
+        "column_roles_digest",
+        "canonical_dataset_digest",
+        "admission_rule_id",
+        "row_count",
+        "participant_count",
+        "event_count",
+        "group_spec_count",
+        "covariate_count",
+        "metadata_count",
+        "dropped_row_count"
+      ],
+      "properties": {
+        "summary_schema_version": { "const": "ebm-audit-validated-dataset-summary/1.0" },
+        "resolved_config_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "input_byte_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "input_format_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "column_roles_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "canonical_dataset_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "admission_rule_id": { "const": "lossless-row-admission/1" },
+        "row_count": { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+        "participant_count": { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+        "event_count": { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+        "group_spec_count": { "$ref": "canonical-records.schema.json#/$defs/PositiveSafeInteger" },
+        "covariate_count": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "metadata_count": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "dropped_row_count": { "const": 0 }
+      },
+      "$comment": "Public aggregate identity only. Private row indexes and direct identifiers are forbidden by closure."
+    },
+    "ValidatedDatasetSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "summary_digest"],
+      "properties": {
+        "summary": { "$ref": "#/$defs/ValidatedDatasetSummaryPreimage" },
+        "summary_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      },
+      "$comment": "Persisted public aggregate. Runtime recomputes summary_digest from summary under ebm-audit/validated-dataset-summary/1; possession of this record does not confer access to the prepared private table."
+    },
+    "PreparedAuditDatasetBindingPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding_schema_version", "authorization_id", "source_admission_id", "audit_dataset_digest", "summary_digest"],
+      "properties": {
+        "binding_schema_version": { "const": "ebm-audit-prepared-audit-dataset-binding/1.0" },
+        "authorization_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "source_admission_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "audit_dataset_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "summary_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      },
+      "$comment": "Public aggregate binding for the identity-keyed PreparedAuditDataset capability. The private catalog and parsed table remain in the runtime registry and cannot be reconstructed from this owner."
+    },
+    "AuditConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "config_schema_version",
+        "template",
+        "offline",
+        "input",
+        "column_roles",
+        "external_missingness_variant",
+        "worker",
+        "baseline_reference",
+        "baseline_analysis",
+        "source_variants",
+        "experiments",
+        "profiles",
+        "randomness",
+        "output"
+      ],
+      "properties": {
+        "config_schema_version": { "const": "ebm-audit-config/0.3" },
+        "template": { "$ref": "#/$defs/TemplateDeclaration" },
+        "offline": { "const": true },
+        "input": { "$ref": "#/$defs/InputSource" },
+        "development_scenario_authority": {
+          "$ref": "#/$defs/DevelopmentScenarioAuthority"
+        },
+        "column_roles": { "$ref": "#/$defs/ColumnRoles" },
+        "external_missingness_variant": { "$ref": "#/$defs/ExternalMissingnessVariant" },
+        "worker": { "$ref": "#/$defs/WorkerBinding" },
+        "baseline_reference": { "$ref": "#/$defs/BaselineReference" },
+        "baseline_analysis": { "$ref": "analysis-universe.schema.json#/$defs/AnalysisSpec" },
+        "source_variants": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/SourceVariantDefinition" }
+        },
+        "experiments": { "$ref": "#/$defs/ExperimentDeclarations" },
+        "profiles": { "$ref": "#/$defs/Profiles" },
+        "randomness": { "$ref": "#/$defs/Randomness" },
+        "output": { "$ref": "#/$defs/OutputBinding" }
+      }
+    },
+    "AuditConfigPublicProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "config_schema_version",
+        "template",
+        "offline",
+        "input",
+        "column_roles",
+        "external_missingness_variant",
+        "worker",
+        "baseline_reference",
+        "baseline_analysis",
+        "source_variants",
+        "experiments",
+        "profiles",
+        "randomness",
+        "output"
+      ],
+      "properties": {
+        "config_schema_version": { "const": "ebm-audit-config/0.3" },
+        "template": { "$ref": "#/$defs/TemplateDeclaration" },
+        "offline": { "const": true },
+        "input": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["byte_digest_method", "expected_byte_digest", "variant", "format"],
+          "properties": {
+            "byte_digest_method": { "const": "sha256-exact-file-bytes/1" },
+            "expected_byte_digest": {
+              "$ref": "canonical-records.schema.json#/$defs/Sha256Digest"
+            },
+            "variant": { "$ref": "canonical-records.schema.json#/$defs/DataVariant" },
+            "format": { "$ref": "#/$defs/CsvFormat" }
+          }
+        },
+        "development_scenario_authority": {
+          "$ref": "#/$defs/DevelopmentScenarioAuthorityPublicProjection"
+        },
+        "column_roles": { "$ref": "#/$defs/ColumnRoles" },
+        "external_missingness_variant": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "byte_digest"],
+          "properties": {
+            "status": { "enum": ["NOT_DECLARED", "DECLARED"] },
+            "byte_digest": {
+              "oneOf": [
+                { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+                { "type": "null" }
+              ]
+            }
+          }
+        },
+        "worker": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["worker_config_digest", "worker_identity_digest", "protocol_version"],
+          "properties": {
+            "worker_config_digest": {
+              "$ref": "canonical-records.schema.json#/$defs/Sha256Digest"
+            },
+            "worker_identity_digest": {
+              "$ref": "canonical-records.schema.json#/$defs/Sha256Digest"
+            },
+            "protocol_version": { "const": "ebm-audit-worker/v2" }
+          }
+        },
+        "baseline_reference": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "byte_digest", "interpretation"],
+          "properties": {
+            "status": {
+              "enum": [
+                "NOT_SUPPLIED",
+                "SUPPLIED_STRUCTURAL_ONLY",
+                "SUPPLIED_INDEPENDENTLY_VERIFIED"
+              ]
+            },
+            "byte_digest": {
+              "oneOf": [
+                { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+                { "type": "null" }
+              ]
+            },
+            "interpretation": {
+              "$ref": "canonical-records.schema.json#/$defs/NonEmptyString"
+            }
+          }
+        },
+        "baseline_analysis": { "$ref": "analysis-universe.schema.json#/$defs/AnalysisSpec" },
+        "source_variants": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/SourceVariantDefinition" }
+        },
+        "experiments": { "$ref": "#/$defs/ExperimentDeclarations" },
+        "profiles": { "$ref": "#/$defs/Profiles" },
+        "randomness": { "$ref": "#/$defs/Randomness" },
+        "output": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["layout_version", "overwrite", "private_directory_mode"],
+          "properties": {
+            "layout_version": { "const": "ebm-audit-run-layout/1" },
+            "overwrite": { "const": false },
+            "private_directory_mode": { "const": "0700" }
+          }
+        }
+      },
+      "$comment": "Exact path-free source-configuration digest preimage used transiently during resolution. It includes the complete physical DataVariant so label and provenance changes alter the source identity, but those raw strings are never copied into ResolvedPublicConfig."
+    },
+    "ResolvedPublicConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resolved_config_schema_version",
+        "source_config_digest",
+        "template_kind",
+        "template_status",
+        "confirmation_issue_codes",
+        "input_byte_digest",
+        "input_format_digest",
+        "column_roles_digest",
+        "external_missingness_status",
+        "external_missingness_byte_digest",
+        "worker_config_digest",
+        "worker_identity_digest",
+        "scientific_backend_registry_digest",
+        "baseline_reference_status",
+        "baseline_reference_digest",
+        "baseline_analysis_spec_id",
+        "source_variant_registry_digest",
+        "experiment_declarations_digest",
+        "profiles_digest",
+        "master_seed",
+        "seed_derivation_version",
+        "output_layout_version",
+        "output_overwrite",
+        "private_directory_mode",
+        "offline"
+      ],
+      "properties": {
+        "resolved_config_schema_version": { "const": "ebm-audit-resolved-public-config/0.3" },
+        "source_config_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "template_kind": { "enum": ["synthetic", "idris-2025-public-structural"] },
+        "template_status": {
+          "enum": [
+            "READY_SYNTHETIC_EXAMPLE",
+            "REQUIRES_LOCAL_MAPPING_CONFIRMATION",
+            "CONFIRMED_LOCAL_CONFIGURATION"
+          ]
+        },
+        "confirmation_issue_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/StableCode" }
+        },
+        "input_byte_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "input_format_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "column_roles_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "external_missingness_status": { "enum": ["NOT_DECLARED", "DECLARED"] },
+        "external_missingness_byte_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        },
+        "development_scenario_authority_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        },
+        "worker_config_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "worker_identity_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "scientific_backend_registry_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "baseline_reference_status": { "enum": ["NOT_SUPPLIED", "SUPPLIED_STRUCTURAL_ONLY", "SUPPLIED_INDEPENDENTLY_VERIFIED"] },
+        "baseline_reference_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        },
+        "baseline_analysis_spec_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "source_variant_registry_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "experiment_declarations_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "profiles_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "master_seed": { "$ref": "canonical-records.schema.json#/$defs/UInt64Hex" },
+        "seed_derivation_version": { "const": "hmac-sha256-u64be-v2" },
+        "output_layout_version": { "const": "ebm-audit-run-layout/1" },
+        "output_overwrite": { "const": false },
+        "private_directory_mode": { "const": "0700" },
+        "offline": { "const": true }
+      },
+      "$comment": "This is the path-free public projection. Local paths exist only in the in-memory PrivatePathBindings."
+    }
+  }
+}

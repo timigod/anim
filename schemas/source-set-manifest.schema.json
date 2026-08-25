@@ -1,0 +1,353 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "source-set-manifest.schema.json",
+  "title": "EBM Audit source-set and candidate-tree manifests",
+  "$ref": "#/$defs/SourceSetManifest",
+  "$defs": {
+    "Sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "Sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "GitSha1Oid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "GitSha256Oid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "RelativePosixPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)[^\\u0000-\\u001f\\u007f\\\\]+$"
+    },
+    "GitTreeEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "git_mode",
+        "kind",
+        "byte_length",
+        "sha256"
+      ],
+      "properties": {
+        "path": { "$ref": "#/$defs/RelativePosixPath" },
+        "git_mode": { "enum": ["100644", "100755", "120000"] },
+        "kind": { "enum": ["file", "symlink"] },
+        "byte_length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "sha256": { "$ref": "#/$defs/Sha256Digest" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "kind": { "const": "symlink" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": { "git_mode": { "const": "120000" } }
+          },
+          "else": {
+            "properties": { "git_mode": { "enum": ["100644", "100755"] } }
+          }
+        }
+      ]
+    },
+    "SourceSetManifestCore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "declared_roots",
+        "entries"
+      ],
+      "properties": {
+        "schema_version": { "const": "ebm-audit-source-set/1.0" },
+        "declared_roots": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/RelativePosixPath" }
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/GitTreeEntry" }
+        }
+      },
+      "x-ebm-invariants": [
+        "source-set-paths-already-nfc/1",
+        "source-set-order-and-uniqueness-exact/1",
+        "source-set-root-coverage-exact/1",
+        "source-set-entry-byte-identity-exact/1"
+      ]
+    },
+    "SourceSetManifest": {
+      "oneOf": [
+        { "$ref": "#/$defs/GeneratorSourceSetManifest" },
+        { "$ref": "#/$defs/MetricsRulesSourceSetManifest" },
+        { "$ref": "#/$defs/ReportLanguageRulesSourceSetManifest" },
+        { "$ref": "#/$defs/EvaluatorSourceSetManifest" },
+        { "$ref": "#/$defs/NormativeAuthoritySourceSetManifest" }
+      ]
+    },
+    "GeneratorSourceSetManifest": {
+      "allOf": [
+        { "$ref": "#/$defs/SourceSetManifestCore" },
+        {
+          "properties": {
+            "declared_roots": {
+              "const": [
+                "docs/spec/synthetic-and-null-validation.md",
+                "src/ebm_audit/synthetic",
+                "uv.lock"
+              ]
+            },
+            "entries": {
+              "items": {
+                "oneOf": [
+                  { "properties": { "path": { "const": "docs/spec/synthetic-and-null-validation.md" } }, "required": ["path"] },
+                  { "properties": { "path": { "pattern": "^src/ebm_audit/synthetic/" } }, "required": ["path"] },
+                  { "properties": { "path": { "const": "uv.lock" } }, "required": ["path"] }
+                ]
+              },
+              "allOf": [
+                { "contains": { "properties": { "path": { "const": "docs/spec/synthetic-and-null-validation.md" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 },
+                { "contains": { "properties": { "path": { "pattern": "^src/ebm_audit/synthetic/" } }, "required": ["path"] }, "minContains": 1 },
+                { "contains": { "properties": { "path": { "const": "uv.lock" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "MetricsRulesSourceSetManifest": {
+      "allOf": [
+        { "$ref": "#/$defs/SourceSetManifestCore" },
+        {
+          "properties": {
+            "declared_roots": { "const": ["docs/spec/metrics-and-uncertainty.md"] },
+            "entries": {
+              "items": { "properties": { "path": { "const": "docs/spec/metrics-and-uncertainty.md" } }, "required": ["path"] },
+              "contains": { "properties": { "path": { "const": "docs/spec/metrics-and-uncertainty.md" } }, "required": ["path"] },
+              "minContains": 1,
+              "maxContains": 1
+            }
+          }
+        }
+      ]
+    },
+    "ReportLanguageRulesSourceSetManifest": {
+      "allOf": [
+        { "$ref": "#/$defs/SourceSetManifestCore" },
+        {
+          "properties": {
+            "declared_roots": { "const": ["docs/spec/report-language-rules.md"] },
+            "entries": {
+              "items": { "properties": { "path": { "const": "docs/spec/report-language-rules.md" } }, "required": ["path"] },
+              "contains": { "properties": { "path": { "const": "docs/spec/report-language-rules.md" } }, "required": ["path"] },
+              "minContains": 1,
+              "maxContains": 1
+            }
+          }
+        }
+      ]
+    },
+    "EvaluatorSourceSetManifest": {
+      "allOf": [
+        { "$ref": "#/$defs/SourceSetManifestCore" },
+        {
+          "properties": {
+            "declared_roots": {
+              "const": [
+                "evaluator/scenario_derivation_registry.json",
+                "evaluator/scenario_predicate_registry.yaml",
+                "schemas/cli-lifecycle-registry.json",
+                "schemas/evaluator-receipts.schema.json",
+                "schemas/protocol-registry.json",
+                "schemas/scenario-derivation-registry.schema.json",
+                "schemas/scenario-evidence.schema.json",
+                "schemas/scenario-family-payload.schema.json",
+                "schemas/scenario-fixture-evidence.schema.json",
+                "schemas/scenario-fixture-contract.schema.json",
+                "schemas/scenario-fixture-predicate.schema.json",
+                "schemas/scenario-predicate.schema.json",
+                "schemas/scientific-invariant-counterexample.schema.json",
+                "schemas/scientific-invariant.schema.json",
+                "src/ebm_audit/evaluator"
+              ]
+            },
+            "entries": {
+              "items": {
+                "oneOf": [
+                  { "properties": { "path": { "const": "evaluator/scenario_derivation_registry.json" } }, "required": ["path"] },
+                  { "properties": { "path": { "const": "evaluator/scenario_predicate_registry.yaml" } }, "required": ["path"] },
+                  { "properties": { "path": { "const": "schemas/cli-lifecycle-registry.json" } }, "required": ["path"] },
+                  { "properties": { "path": { "const": "schemas/evaluator-receipts.schema.json" } }, "required": ["path"] },
+                  { "properties": { "path": { "const": "schemas/protocol-registry.json" } }, "required": ["path"] },
+                  { "properties": { "path": { "const": "schemas/scenario-derivation-registry.schema.json" } }, "required": ["path"] },
+                  { "properties": { "path": { "const": "schemas/scenario-evidence.schema.json" } }, "required": ["path"] },
+                  { "properties": { "path": { "const": "schemas/scenario-family-payload.schema.json" } }, "required": ["path"] },
+                  { "properties": { "path": { "const": "schemas/scenario-fixture-evidence.schema.json" } }, "required": ["path"] },
+                  { "properties": { "path": { "const": "schemas/scenario-fixture-contract.schema.json" } }, "required": ["path"] },
+                  { "properties": { "path": { "const": "schemas/scenario-fixture-predicate.schema.json" } }, "required": ["path"] },
+                  { "properties": { "path": { "const": "schemas/scenario-predicate.schema.json" } }, "required": ["path"] },
+                  { "properties": { "path": { "const": "schemas/scientific-invariant-counterexample.schema.json" } }, "required": ["path"] },
+                  { "properties": { "path": { "const": "schemas/scientific-invariant.schema.json" } }, "required": ["path"] },
+                  { "properties": { "path": { "pattern": "^src/ebm_audit/evaluator/" } }, "required": ["path"] }
+                ]
+              },
+              "allOf": [
+                { "contains": { "properties": { "path": { "const": "evaluator/scenario_derivation_registry.json" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 },
+                { "contains": { "properties": { "path": { "const": "evaluator/scenario_predicate_registry.yaml" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 },
+                { "contains": { "properties": { "path": { "const": "schemas/cli-lifecycle-registry.json" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 },
+                { "contains": { "properties": { "path": { "const": "schemas/evaluator-receipts.schema.json" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 },
+                { "contains": { "properties": { "path": { "const": "schemas/protocol-registry.json" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 },
+                { "contains": { "properties": { "path": { "const": "schemas/scenario-derivation-registry.schema.json" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 },
+                { "contains": { "properties": { "path": { "const": "schemas/scenario-evidence.schema.json" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 },
+                { "contains": { "properties": { "path": { "const": "schemas/scenario-family-payload.schema.json" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 },
+                { "contains": { "properties": { "path": { "const": "schemas/scenario-fixture-evidence.schema.json" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 },
+                { "contains": { "properties": { "path": { "const": "schemas/scenario-fixture-contract.schema.json" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 },
+                { "contains": { "properties": { "path": { "const": "schemas/scenario-fixture-predicate.schema.json" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 },
+                { "contains": { "properties": { "path": { "const": "schemas/scenario-predicate.schema.json" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 },
+                { "contains": { "properties": { "path": { "const": "schemas/scientific-invariant-counterexample.schema.json" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 },
+                { "contains": { "properties": { "path": { "const": "schemas/scientific-invariant.schema.json" } }, "required": ["path"] }, "minContains": 1, "maxContains": 1 },
+                { "contains": { "properties": { "path": { "pattern": "^src/ebm_audit/evaluator/" } }, "required": ["path"] }, "minContains": 1 }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "NormativeAuthoritySourceSetManifest": {
+      "allOf": [
+        { "$ref": "#/$defs/SourceSetManifestCore" },
+        {
+          "properties": {
+            "declared_roots": {
+              "const": ["docs/spec/ebm-integration-readiness-1.2.0-candidate.md"]
+            },
+            "entries": {
+              "items": { "properties": { "path": { "const": "docs/spec/ebm-integration-readiness-1.2.0-candidate.md" } }, "required": ["path"] },
+              "contains": { "properties": { "path": { "const": "docs/spec/ebm-integration-readiness-1.2.0-candidate.md" } }, "required": ["path"] },
+              "minContains": 1,
+              "maxContains": 1
+            }
+          }
+        }
+      ]
+    },
+    "SourceSetDigestPreimage": {
+      "oneOf": [
+        { "$ref": "#/$defs/GeneratorSourceSetDigestPreimage" },
+        { "$ref": "#/$defs/MetricsRulesSourceSetDigestPreimage" },
+        { "$ref": "#/$defs/ReportLanguageRulesSourceSetDigestPreimage" },
+        { "$ref": "#/$defs/EvaluatorSourceSetDigestPreimage" },
+        { "$ref": "#/$defs/NormativeAuthoritySourceSetDigestPreimage" }
+      ]
+    },
+    "GeneratorSourceSetDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component_kind", "destination_field", "manifest"],
+      "properties": {
+        "component_kind": { "const": "generator_sha256" },
+        "destination_field": { "const": "generator_sha256" },
+        "manifest": { "$ref": "#/$defs/GeneratorSourceSetManifest" }
+      }
+    },
+    "MetricsRulesSourceSetDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component_kind", "destination_field", "manifest"],
+      "properties": {
+        "component_kind": { "const": "metrics_rules_sha256" },
+        "destination_field": { "const": "metrics_rules_sha256" },
+        "manifest": { "$ref": "#/$defs/MetricsRulesSourceSetManifest" }
+      }
+    },
+    "ReportLanguageRulesSourceSetDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component_kind", "destination_field", "manifest"],
+      "properties": {
+        "component_kind": { "const": "report_language_rules_sha256" },
+        "destination_field": { "const": "report_language_rules_sha256" },
+        "manifest": { "$ref": "#/$defs/ReportLanguageRulesSourceSetManifest" }
+      }
+    },
+    "EvaluatorSourceSetDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component_kind", "destination_field", "manifest"],
+      "properties": {
+        "component_kind": { "const": "evaluator_source_sha256" },
+        "destination_field": { "const": "evaluator_source_sha256" },
+        "manifest": { "$ref": "#/$defs/EvaluatorSourceSetManifest" }
+      }
+    },
+    "NormativeAuthoritySourceSetDigestPreimage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component_kind", "destination_field", "manifest"],
+      "properties": {
+        "component_kind": { "const": "normative_authority" },
+        "destination_field": { "const": "normative_authority_sha256" },
+        "manifest": { "$ref": "#/$defs/NormativeAuthoritySourceSetManifest" }
+      }
+    },
+    "CandidateTreeManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "git_object_format",
+        "git_commit",
+        "entries"
+      ],
+      "properties": {
+        "schema_version": { "const": "ebm-audit-candidate-tree/1.0" },
+        "git_object_format": { "enum": ["sha1", "sha256"] },
+        "git_commit": {
+          "oneOf": [
+            { "$ref": "#/$defs/GitSha1Oid" },
+            { "$ref": "#/$defs/GitSha256Oid" }
+          ]
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/GitTreeEntry" }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "git_object_format": { "const": "sha1" } },
+            "required": ["git_object_format"]
+          },
+          "then": {
+            "properties": { "git_commit": { "$ref": "#/$defs/GitSha1Oid" } }
+          },
+          "else": {
+            "properties": { "git_commit": { "$ref": "#/$defs/GitSha256Oid" } }
+          }
+        }
+      ],
+      "x-ebm-invariants": [
+        "candidate-tree-paths-already-nfc/1",
+        "candidate-tree-order-and-uniqueness-exact/1",
+        "candidate-tree-entry-byte-identity-exact/1"
+      ]
+    }
+  }
+}

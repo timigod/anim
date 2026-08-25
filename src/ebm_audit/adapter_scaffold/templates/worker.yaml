@@ -1,0 +1,5 @@
+worker:
+  argv: [{{PYTHON_EXECUTABLE}}, {{WORKER_PATH}}]
+algorithm_id: fixture-strict-sequence
+settings: {}
+expected_identity: null

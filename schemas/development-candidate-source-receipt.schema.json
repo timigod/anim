@@ -1,0 +1,494 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ebm-audit.invalid/schemas/development-candidate-source-receipt.schema.json",
+  "title": "Development-only candidate source receipt",
+  "$defs": {
+    "Digest": {
+      "$ref": "canonical-records.schema.json#/$defs/Sha256Digest"
+    },
+    "DevelopmentCandidatePipelineSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "spec_schema_version",
+        "cohort_rule",
+        "event_set",
+        "event_directions",
+        "preprocessing",
+        "outlier_policy",
+        "missingness_policy",
+        "covariate_adjustment",
+        "backend",
+        "mcmc"
+      ],
+      "properties": {
+        "spec_schema_version": {
+          "const": "ebm-audit-analysis-spec/3.0"
+        },
+        "cohort_rule": {
+          "$ref": "analysis-universe.schema.json#/$defs/CohortIntent"
+        },
+        "event_set": {
+          "$ref": "analysis-universe.schema.json#/$defs/EventSet"
+        },
+        "event_directions": {
+          "$ref": "analysis-universe.schema.json#/$defs/EventDirections"
+        },
+        "preprocessing": {
+          "$ref": "analysis-universe.schema.json#/$defs/PreprocessingSpec"
+        },
+        "outlier_policy": {
+          "$ref": "analysis-universe.schema.json#/$defs/OutlierPolicy"
+        },
+        "missingness_policy": {
+          "$ref": "analysis-universe.schema.json#/$defs/MissingnessChoice"
+        },
+        "covariate_adjustment": {
+          "$ref": "analysis-universe.schema.json#/$defs/CovariateAdjustment"
+        },
+        "backend": {
+          "$ref": "analysis-universe.schema.json#/$defs/BackendSpec"
+        },
+        "mcmc": {
+          "$ref": "analysis-universe.schema.json#/$defs/McmcSpec"
+        }
+      },
+      "$comment": "The exact AnalysisSpec/3 projection after removing only dataset_variant_intent and operation_intent. It is development evidence, not a benchmark-subject or evaluator identity."
+    },
+    "ObservedSemanticSlot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot_kind",
+        "null_family_id",
+        "replicate_index"
+      ],
+      "properties": {
+        "slot_kind": {
+          "const": "OBSERVED"
+        },
+        "null_family_id": {
+          "type": "null"
+        },
+        "replicate_index": {
+          "type": "null"
+        }
+      }
+    },
+    "NullSemanticSlot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot_kind",
+        "null_family_id",
+        "replicate_index"
+      ],
+      "properties": {
+        "slot_kind": {
+          "const": "NULL"
+        },
+        "null_family_id": {
+          "enum": [
+            "pure_no_signal",
+            "label_permutation_null",
+            "within_group_feature_permutation_null"
+          ]
+        },
+        "replicate_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 58
+        }
+      }
+    },
+    "CandidateSemanticSlot": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ObservedSemanticSlot"
+        },
+        {
+          "$ref": "#/$defs/NullSemanticSlot"
+        }
+      ]
+    },
+    "DevelopmentCandidateFitSourceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_schema_version",
+        "canonical_candidate_ordinal",
+        "semantic_slot",
+        "child_owner_ordinal",
+        "source_candidate_ordinal",
+        "plan_digest",
+        "preparation_receipt_digest",
+        "terminal_index_digest",
+        "candidate_id",
+        "analysis_spec_id",
+        "universe_id",
+        "result_id",
+        "result_digest",
+        "scientific_candidate_record_digest",
+        "planned_chain_count",
+        "pipeline_spec_digest",
+        "refit_execution_digest",
+        "validation_evidence",
+        "fit_attempt_evidence",
+        "terminal_status",
+        "convergence_state",
+        "fit_state",
+        "hard_failure",
+        "position_concentration",
+        "pairwise_concentration",
+        "record_digest"
+      ],
+      "properties": {
+        "record_schema_version": {
+          "const": "ebm-audit-development-candidate-fit-source-record/1.0"
+        },
+        "canonical_candidate_ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 177
+        },
+        "semantic_slot": {
+          "$ref": "#/$defs/CandidateSemanticSlot"
+        },
+        "child_owner_ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 59
+        },
+        "source_candidate_ordinal": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "plan_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "preparation_receipt_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "terminal_index_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "candidate_id": {
+          "$ref": "#/$defs/Digest"
+        },
+        "analysis_spec_id": {
+          "$ref": "#/$defs/Digest"
+        },
+        "universe_id": {
+          "$ref": "#/$defs/Digest"
+        },
+        "result_id": {
+          "$ref": "#/$defs/Digest"
+        },
+        "result_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "scientific_candidate_record_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "planned_chain_count": {
+          "const": 3
+        },
+        "pipeline_spec_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "refit_execution_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "validation_evidence": {
+          "$ref": "canonical-records.schema.json#/$defs/WorkerExecutionEvidenceReference"
+        },
+        "fit_attempt_evidence": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 6,
+          "items": {
+            "$ref": "canonical-records.schema.json#/$defs/WorkerExecutionEvidenceReference"
+          }
+        },
+        "terminal_status": {
+          "enum": [
+            "SUCCESS",
+            "CONVERGENCE_WARN",
+            "INVALID_INPUT",
+            "UNSUPPORTED_CAPABILITY",
+            "INVALID_SPECIFICATION",
+            "BACKEND_ERROR",
+            "TIMEOUT",
+            "CONVERGENCE_FAILED",
+            "CONVERGENCE_NOT_ASSESSABLE",
+            "PRIVACY_VIOLATION",
+            "PROTOCOL_ERROR"
+          ]
+        },
+        "convergence_state": {
+          "enum": [
+            "CONVERGENCE_PASS",
+            "CONVERGENCE_WARN",
+            "CONVERGENCE_FAIL",
+            "CONVERGENCE_NOT_ASSESSABLE"
+          ]
+        },
+        "fit_state": {
+          "enum": [
+            "SUCCESS",
+            "FAILURE"
+          ]
+        },
+        "hard_failure": {
+          "type": "boolean"
+        },
+        "position_concentration": {
+          "oneOf": [
+            {
+              "type": "number",
+              "format": "finite-number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pairwise_concentration": {
+          "oneOf": [
+            {
+              "type": "number",
+              "format": "finite-number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "record_digest": {
+          "$ref": "#/$defs/Digest"
+        }
+      },
+      "$comment": "All attempt references are descriptive projections of retained live finalized-result capabilities. This record contains no raw biomarker values, participant identifiers, benchmark-subject authority, evaluator response, or held-out score."
+    },
+    "DevelopmentCandidateChildOwnerBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_schema_version",
+        "owner_kind",
+        "child_owner_ordinal",
+        "pure_replicate_index",
+        "plan_digest",
+        "preparation_receipt_digest",
+        "terminal_index_digest",
+        "scientific_evidence_digest",
+        "pure_source_receipt_digest",
+        "ordered_candidate_record_digests",
+        "candidate_count",
+        "planned_chain_count",
+        "binding_digest"
+      ],
+      "properties": {
+        "binding_schema_version": {
+          "const": "ebm-audit-development-candidate-child-owner-binding/1.0"
+        },
+        "owner_kind": {
+          "enum": [
+            "OBSERVED_SOURCE",
+            "PURE_NO_SIGNAL_SOURCE"
+          ]
+        },
+        "child_owner_ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 59
+        },
+        "pure_replicate_index": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 58
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "plan_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "preparation_receipt_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "terminal_index_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "scientific_evidence_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "pure_source_receipt_digest": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ordered_candidate_record_digests": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 119,
+          "items": {
+            "$ref": "#/$defs/Digest"
+          }
+        },
+        "candidate_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 119
+        },
+        "planned_chain_count": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 357
+        },
+        "binding_digest": {
+          "$ref": "#/$defs/Digest"
+        }
+      }
+    },
+    "DevelopmentCandidateGraphSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "child_owner_count",
+        "observed_owner_count",
+        "pure_owner_count",
+        "candidate_record_count",
+        "observed_candidate_count",
+        "null_candidate_count",
+        "planned_chain_count",
+        "validation_attempt_count",
+        "fit_attempt_count"
+      ],
+      "properties": {
+        "child_owner_count": {
+          "const": 60
+        },
+        "observed_owner_count": {
+          "const": 1
+        },
+        "pure_owner_count": {
+          "const": 59
+        },
+        "candidate_record_count": {
+          "const": 178
+        },
+        "observed_candidate_count": {
+          "const": 1
+        },
+        "null_candidate_count": {
+          "const": 177
+        },
+        "planned_chain_count": {
+          "const": 534
+        },
+        "validation_attempt_count": {
+          "const": 178
+        },
+        "fit_attempt_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1068
+        }
+      }
+    },
+    "DevelopmentCandidateSourceReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "development_candidate_source_receipt_schema_version",
+        "evidence_scope",
+        "scientific_acceptance_eligible",
+        "heldout_score_eligible",
+        "report_language_authorizing",
+        "benchmark_subject_state",
+        "candidate_decision_state",
+        "canonical_candidate_order_rule",
+        "pipeline_spec",
+        "pipeline_spec_digest",
+        "graph_summary",
+        "observed_child",
+        "pure_children",
+        "observed_candidate",
+        "ordered_null_candidates",
+        "receipt_digest"
+      ],
+      "properties": {
+        "development_candidate_source_receipt_schema_version": {
+          "const": "ebm-audit-development-candidate-source-receipt/1.0"
+        },
+        "evidence_scope": {
+          "const": "DEVELOPMENT_ONLY"
+        },
+        "scientific_acceptance_eligible": {
+          "const": false
+        },
+        "heldout_score_eligible": {
+          "const": false
+        },
+        "report_language_authorizing": {
+          "const": false
+        },
+        "benchmark_subject_state": {
+          "const": "NOT_BOUND_BY_SOURCE_RECEIPT"
+        },
+        "candidate_decision_state": {
+          "const": "NOT_DERIVED"
+        },
+        "canonical_candidate_order_rule": {
+          "const": "observed/1,pure_no_signal/0..58,label_permutation_null/0..58,within_group_feature_permutation_null/0..58"
+        },
+        "pipeline_spec": {
+          "$ref": "#/$defs/DevelopmentCandidatePipelineSpec"
+        },
+        "pipeline_spec_digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "graph_summary": {
+          "$ref": "#/$defs/DevelopmentCandidateGraphSummary"
+        },
+        "observed_child": {
+          "$ref": "#/$defs/DevelopmentCandidateChildOwnerBinding"
+        },
+        "pure_children": {
+          "type": "array",
+          "minItems": 59,
+          "maxItems": 59,
+          "items": {
+            "$ref": "#/$defs/DevelopmentCandidateChildOwnerBinding"
+          }
+        },
+        "observed_candidate": {
+          "$ref": "#/$defs/DevelopmentCandidateFitSourceRecord"
+        },
+        "ordered_null_candidates": {
+          "type": "array",
+          "minItems": 177,
+          "maxItems": 177,
+          "items": {
+            "$ref": "#/$defs/DevelopmentCandidateFitSourceRecord"
+          },
+          "$comment": "Exact code-enforced order is pure 0..58, label permutation 0..58, then featurewise-within-group participant permutation 0..58."
+        },
+        "receipt_digest": {
+          "$ref": "#/$defs/Digest"
+        }
+      },
+      "$comment": "DEVELOPMENT_ONLY source evidence. It cannot authorize scientific acceptance, held-out scoring, report language, candidate decisions, benchmark-subject identity, evaluator responses, canonical scientific payloads, results indexes, or acceptance authority."
+    }
+  }
+}

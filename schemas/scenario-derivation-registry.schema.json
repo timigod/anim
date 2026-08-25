@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Closed substantive scenario derivation registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "digest_state", "substantive_evidence_schema_path", "payload_schema_path", "derivation_semantics", "family_order", "applicability_states", "owner_classes", "common_derivations", "families", "semantic_validation", "scenario_derivation_registry_sha256"],
+  "properties": {
+    "schema_version": {"const": "ebm-audit-scenario-derivation-registry/2.3"},
+    "digest_state": {"enum": ["PERSISTED", "DIGEST_PREIMAGE"]},
+    "substantive_evidence_schema_path": {"const": "schemas/scenario-evidence.schema.json"},
+    "payload_schema_path": {"const": "schemas/scenario-family-payload.schema.json"},
+    "derivation_semantics": {"$ref": "#/$defs/DerivationSemantics"},
+    "family_order": {"$ref": "#/$defs/FamilyOrder"},
+    "applicability_states": {"const": ["AVAILABLE", "UNAVAILABLE", "NOT_APPLICABLE", "INVALID", "FAILED"]},
+    "owner_classes": {
+      "type": "array", "minItems": 32, "maxItems": 32,
+      "items": {"$ref": "#/$defs/OwnerClassDefinition"}
+    },
+    "common_derivations": {
+      "type": "array", "minItems": 2, "items": {"$ref": "#/$defs/CommonDerivation"}
+    },
+    "families": {
+      "type": "array", "minItems": 23, "maxItems": 23,
+      "items": {"$ref": "#/$defs/FamilyDefinition"}
+    },
+    "semantic_validation": {"$ref": "#/$defs/SemanticValidationRegistry"},
+    "scenario_derivation_registry_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Sha256Hex"}]}
+  },
+  "allOf": [
+    {"if": {"properties": {"digest_state": {"const": "PERSISTED"}}, "required": ["digest_state"]}, "then": {"properties": {"scenario_derivation_registry_sha256": {"$ref": "#/$defs/Sha256Hex"}}}},
+    {"if": {"properties": {"digest_state": {"const": "DIGEST_PREIMAGE"}}, "required": ["digest_state"]}, "then": {"properties": {"scenario_derivation_registry_sha256": {"type": "null"}}}}
+  ],
+  "$defs": {
+    "Sha256Hex": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "FamilyId": {"$ref": "synthetic-resolved-configuration.schema.json#/$defs/ScenarioFamilyId"},
+    "FamilyOrder": {
+      "const": [
+        "easy_known_truth", "moderate_mina_shape", "small_sample", "noise_ladder", "weak_pre_post_separation",
+        "incomplete_time_coverage", "tightly_spaced_events", "slow_overlapping_transitions", "outlier_sabotage",
+        "mcar_missingness", "mar_missingness", "correlated_duplicate_events", "minority_alternate_sequence",
+        "opposing_sequences_50_50", "near_simultaneous_events", "covariate_confounding", "group_boundary_sensitivity",
+        "control_contamination", "heavy_tailed_skewed", "wrong_event_direction", "pure_no_signal",
+        "label_permutation_null", "within_group_feature_permutation_null"
+      ]
+    },
+    "DerivationSemantics": {
+      "type": "object", "additionalProperties": false,
+      "required": ["semantics_version", "normative_document", "vector_order", "bindings"],
+      "properties": {
+        "semantics_version": {"const": "scenario-derivation-semantics/5"},
+        "normative_document": {"const": "docs/spec/scenario-derivation-semantics.md"},
+        "vector_order": {
+          "const": {
+            "case_vectors": "PUBLIC_BATCH_CASE_PLAN_CASE_ORDINAL_ORDER",
+            "comparator_vectors": "COMPARATOR_PLAN_MEMBER_THEN_REPLICATE_ORDER",
+            "subtype_vectors": "PROPORTIONAL_OPERATION_PLAN_CASE_ORDINAL_ORDER",
+            "boundary_rule_vectors": ["boundary_q50", "boundary_q35", "boundary_q65"],
+            "pair_vectors": "DERIVATION_SPECIFIC_ORDER",
+            "order_rule_states": ["KNOWN_TRUTH_ORDER_FAMILY_STATE"],
+            "stage_rule_states": ["KNOWN_TRUTH_STAGE_FAMILY_STATE"],
+            "moderate_rule_states": ["reference_alignment", "paired_randomization", "signal_stage_mae", "convergence"],
+            "noise_ladder_rule_states": ["SPEARMAN_FAMILY_STATE"],
+            "influence_rule_states": ["INJECTED_PARTICIPANT_STRICT_MAJORITY_FAMILY_STATE"]
+          }
+        },
+        "bindings": {"type": "array", "minItems": 53, "maxItems": 53, "items": {"$ref": "#/$defs/DerivationSemanticBinding"}}
+      }
+    },
+    "DerivationSemanticBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["derivation_id", "normative_anchor", "semantic_status"],
+      "properties": {
+        "derivation_id": {"type": "string", "pattern": "^[a-z][a-z0-9-]*/[1-9][0-9]*$"},
+        "normative_anchor": {"type": "string", "pattern": "^#[a-z][a-z0-9-]*-[1-9][0-9]*$"},
+        "semantic_status": {"enum": ["FROZEN", "UNDECIDED"]}
+      }
+    },
+    "OwnerClassDefinition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["owner_class", "schema_ref", "natural_identity_fields"],
+      "properties": {
+        "owner_class": {"$ref": "scenario-evidence.schema.json#/$defs/OwnerClass"},
+        "schema_ref": {"type": "string", "pattern": "^schemas/[a-z0-9-]+\\.schema\\.json(#/.*)?$"},
+        "natural_identity_fields": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}}
+      }
+    },
+    "OwnerSlot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["owner_class", "cardinality", "selector"],
+      "properties": {
+        "owner_class": {"$ref": "scenario-evidence.schema.json#/$defs/OwnerClass"},
+        "cardinality": {"enum": ["EXACTLY_ONE", "ONE_PER_CASE", "ONE_PER_PLANNED_CASE", "ONE_PER_SUBTYPE_CASE", "ONE_PER_COMPARATOR_MEMBER", "ONE_PER_DECLARED_RULE", "ONE_PER_OPPORTUNITY", "EXACT_MATCHED_SET", "ALL_CASE_ARRAYS", "ALL_CASE_WARNINGS", "ALL_PLANNED_OPERATIONS"]},
+        "selector": {"type": "string", "pattern": "^[a-z][a-z0-9-]*/[1-9][0-9]*$"}
+      }
+    },
+    "OutputDefinition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["output_path", "output_schema_ref", "derivation_id", "owner_slots", "failure_behavior"],
+      "properties": {
+        "output_path": {"type": "string", "pattern": "^/payload/[a-z][a-z0-9_]*(/[a-z][a-z0-9_]*)?$"},
+        "output_schema_ref": {"type": "string", "pattern": "^schemas/[a-z0-9-]+\\.schema\\.json#/\\$defs/.*$"},
+        "derivation_id": {"type": "string", "pattern": "^[a-z][a-z0-9-]*/[1-9][0-9]*$"},
+        "owner_slots": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/OwnerSlot"}},
+        "failure_behavior": {"const": "NOT_ASSESSABLE_AND_RULE_FAIL"}
+      }
+    },
+    "FamilyDefinition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["family_id", "predicate_id", "subtype_partition", "payload_definition", "outputs"],
+      "properties": {
+        "family_id": {"$ref": "#/$defs/FamilyId"},
+        "predicate_id": {"type": "string", "pattern": "^[a-z][a-z0-9-]*/v[1-9][0-9]*$"},
+        "subtype_partition": {"enum": ["NONE", "CORRELATED_THEN_EXACT_DUPLICATE_POST_NOISE"]},
+        "payload_definition": {"type": "string", "pattern": "^[A-Z][A-Za-z0-9]+Evidence$"},
+        "outputs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/OutputDefinition"}}
+      }
+    },
+    "CommonDerivation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["output_path", "owner_slots", "selector", "failure_behavior"],
+      "properties": {
+        "output_path": {"enum": ["/planned_case_ids", "/valid_case_ids"]},
+        "owner_slots": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/OwnerSlot"}},
+        "selector": {"type": "string", "pattern": "^[a-z][a-z0-9-]*/[1-9][0-9]*$"},
+        "failure_behavior": {"const": "NOT_ASSESSABLE_AND_RULE_FAIL"}
+      }
+    },
+    "SemanticValidationRegistry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["registry_schema_version", "coverage", "identity_fields", "covered_common_derivation_count", "covered_family_output_count", "default_validator_id", "default_validator_implementation_status", "scientific_pass_eligible", "reason_code", "implemented_output_validators", "closed_rule"],
+      "properties": {
+        "registry_schema_version": {"const": "ebm-audit-scenario-derivation-semantic-validation/1.0"},
+        "coverage": {"const": "ALL_COMMON_DERIVATIONS_AND_FAMILY_OUTPUTS"},
+        "identity_fields": {"const": ["family_id", "output_path", "derivation_id", "ordered_owner_slots"]},
+        "covered_common_derivation_count": {"const": 2},
+        "covered_family_output_count": {"const": 102},
+        "default_validator_id": {"const": "scenario-derived-output-semantic-validator-unimplemented/1"},
+        "default_validator_implementation_status": {"const": "UNIMPLEMENTED"},
+        "scientific_pass_eligible": {"const": false},
+        "reason_code": {"const": "SCENARIO.DERIVATION_VALIDATOR_UNIMPLEMENTED"},
+        "implemented_output_validators": {"type": "array", "maxItems": 104},
+        "closed_rule": {"const": "Every common derivation and every family output, including its selector, cardinality, and ordered owner classes, is covered automatically and is UNIMPLEMENTED unless its exact identity appears once in implemented_output_validators and once in the runtime handler map. Until all covered identities are implemented, no substantive scenario PASS is eligible."}
+      }
+    }
+  }
+}

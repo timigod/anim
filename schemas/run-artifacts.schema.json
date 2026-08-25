@@ -1,0 +1,590 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "run-artifacts.schema.json",
+  "title": "EBM Audit append-only run artifact state v0.2",
+  "$ref": "#/$defs/RunArtifactState",
+  "$defs": {
+    "ProfileResultGroupManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile_result_group_manifest_schema_version",
+        "manifest_kind",
+        "run_root_id",
+        "profile_execution_identity_sha256",
+        "coordinate_ordinal",
+        "ordered_analysis_spec_ids",
+        "ordered_results"
+      ],
+      "properties": {
+        "profile_result_group_manifest_schema_version": { "const": "ebm-audit-profile-result-group-manifest/1.0" },
+        "manifest_kind": { "const": "PROFILE_RESULT_GROUP" },
+        "run_root_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "profile_execution_identity_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "coordinate_ordinal": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "ordered_analysis_spec_ids": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+        },
+        "ordered_results": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "prefixItems": [
+            { "$ref": "#/$defs/ProfileResultGroupManifest/$defs/CandidateZero" },
+            { "$ref": "#/$defs/ProfileResultGroupManifest/$defs/CandidateOne" },
+            { "$ref": "#/$defs/ProfileResultGroupManifest/$defs/CandidateTwo" }
+          ],
+          "items": false
+        }
+      },
+      "$defs": {
+        "ResultArtifact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["candidate_ordinal", "result_id", "relative_path", "byte_length", "sha256"],
+          "properties": {
+            "candidate_ordinal": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+            "result_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            "relative_path": { "$ref": "canonical-records.schema.json#/$defs/RelativePosixPath" },
+            "byte_length": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+            "sha256": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+          }
+        },
+        "CandidateZero": { "allOf": [{ "$ref": "#/$defs/ProfileResultGroupManifest/$defs/ResultArtifact" }, { "properties": { "candidate_ordinal": { "const": 0 } } }] },
+        "CandidateOne": { "allOf": [{ "$ref": "#/$defs/ProfileResultGroupManifest/$defs/ResultArtifact" }, { "properties": { "candidate_ordinal": { "const": 1 } } }] },
+        "CandidateTwo": { "allOf": [{ "$ref": "#/$defs/ProfileResultGroupManifest/$defs/ResultArtifact" }, { "properties": { "candidate_ordinal": { "const": 2 } } }] }
+      }
+    },
+    "RunState": {
+      "enum": [
+        "RUN_CREATED",
+        "INPUT_VALIDATED",
+        "PLAN_SEALED",
+        "EXECUTING",
+        "ALL_UNIVERSES_TERMINAL",
+        "BASELINE_SEALED",
+        "EVIDENCE_SEALED",
+        "REPORT_SEALED",
+        "MANIFEST_SEALED"
+      ]
+    },
+    "StateTransition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ordinal", "state", "transition_digest"],
+      "properties": {
+        "ordinal": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "state": { "$ref": "#/$defs/RunState" },
+        "transition_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      }
+    },
+    "RunIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resolved_config_digest",
+        "input_byte_digest",
+        "core_code_digest",
+        "worker_identity_digest",
+        "plan_digest"
+      ],
+      "properties": {
+        "resolved_config_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "input_byte_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "core_code_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "worker_identity_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "plan_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "$comment": "Identity is digest-only and cannot contain a local path, participant identifier, or raw value."
+    },
+    "PlannedCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_ordinal", "candidate_id", "analysis_spec_id"],
+      "properties": {
+        "candidate_ordinal": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "candidate_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "analysis_spec_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      },
+      "$comment": "One exact AnalysisPlan/3 candidate key. Runtime verification requires candidate_id equal analysis_spec_id and the complete array to equal plan.candidates in ordinal order."
+    },
+    "CandidateTerminal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["terminal_schema_version", "candidate_ordinal", "candidate_id", "analysis_spec_id", "universe_id", "final_status", "result_id", "result_digest", "error_evidence_digest"],
+      "properties": {
+        "terminal_schema_version": { "const": "ebm-audit-candidate-terminal/1.0" },
+        "candidate_ordinal": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "candidate_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "analysis_spec_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "universe_id": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "final_status": {
+          "enum": [
+            "SUCCESS",
+            "CONVERGENCE_WARN",
+            "INVALID_INPUT",
+            "UNSUPPORTED_CAPABILITY",
+            "INVALID_SPECIFICATION",
+            "BACKEND_ERROR",
+            "TIMEOUT",
+            "CONVERGENCE_FAILED",
+            "CONVERGENCE_NOT_ASSESSABLE",
+            "PRIVACY_VIOLATION",
+            "PROTOCOL_ERROR"
+          ]
+        },
+        "result_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "result_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "error_evidence_digest": {
+          "oneOf": [
+            { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "universe_id": { "type": "null" } }, "required": ["universe_id"] },
+          "then": { "properties": { "final_status": { "enum": ["UNSUPPORTED_CAPABILITY", "INVALID_SPECIFICATION"] } } }
+        }
+      ],
+      "$comment": "Result-derived terminal key. Nullable universe_id is legal only for an unprepared candidate. Runtime verification binds every field to the exact ResultRecord/2 and requires candidate-terminal order to be the exact AnalysisPlan/3 prefix."
+    },
+    "FailureLedgerRecordV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "failure_ledger_schema_version",
+        "candidate_ordinal",
+        "candidate_id",
+        "analysis_spec_id",
+        "universe_id",
+        "result_id",
+        "result_digest",
+        "final_status",
+        "code",
+        "category",
+        "phase",
+        "retryable_identical_request",
+        "error_evidence_digest"
+      ],
+      "properties": {
+        "failure_ledger_schema_version": { "const": "ebm-audit-failure-ledger/2.0" },
+        "candidate_ordinal": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "candidate_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "analysis_spec_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "universe_id": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "result_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "result_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "final_status": {
+          "enum": [
+            "INVALID_INPUT",
+            "UNSUPPORTED_CAPABILITY",
+            "INVALID_SPECIFICATION",
+            "BACKEND_ERROR",
+            "TIMEOUT",
+            "CONVERGENCE_FAILED",
+            "CONVERGENCE_NOT_ASSESSABLE",
+            "PRIVACY_VIOLATION",
+            "PROTOCOL_ERROR"
+          ]
+        },
+        "code": { "$ref": "canonical-records.schema.json#/$defs/StableCode" },
+        "category": {
+          "enum": [
+            "INVALID_INPUT",
+            "UNSUPPORTED_CAPABILITY",
+            "INVALID_SPECIFICATION",
+            "BACKEND_ERROR",
+            "TIMEOUT",
+            "CONVERGENCE_FAILED",
+            "CONVERGENCE_NOT_ASSESSABLE",
+            "PRIVACY_VIOLATION",
+            "PROTOCOL_ERROR"
+          ]
+        },
+        "phase": { "$ref": "canonical-records.schema.json#/$defs/MachineId" },
+        "retryable_identical_request": { "type": "boolean" },
+        "error_evidence_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+      },
+      "$comment": "Runtime validation additionally requires category equal final_status and every field to equal the same exact finalized ResultRecord and CandidateTerminal."
+    },
+    "ResultWarningLedgerRecordV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "warning_ledger_schema_version",
+        "scope",
+        "warning_source",
+        "warning_source_ordinal",
+        "candidate_ordinal",
+        "candidate_id",
+        "analysis_spec_id",
+        "universe_id",
+        "result_id",
+        "result_digest",
+        "final_status",
+        "code",
+        "severity",
+        "safe_message",
+        "details"
+      ],
+      "properties": {
+        "warning_ledger_schema_version": { "const": "ebm-audit-warning-ledger/2.0" },
+        "scope": { "const": "CANDIDATE" },
+        "warning_source": { "const": "RESULT_WARNING" },
+        "warning_source_ordinal": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "candidate_ordinal": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "candidate_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "analysis_spec_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "universe_id": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "result_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "result_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "final_status": {
+          "enum": [
+            "SUCCESS",
+            "CONVERGENCE_WARN",
+            "INVALID_INPUT",
+            "UNSUPPORTED_CAPABILITY",
+            "INVALID_SPECIFICATION",
+            "BACKEND_ERROR",
+            "TIMEOUT",
+            "CONVERGENCE_FAILED",
+            "CONVERGENCE_NOT_ASSESSABLE",
+            "PRIVACY_VIOLATION",
+            "PROTOCOL_ERROR"
+          ]
+        },
+        "code": { "$ref": "canonical-records.schema.json#/$defs/StableCode" },
+        "severity": { "enum": ["INFO", "WARNING", "SEVERE"] },
+        "safe_message": { "const": "The worker reported a structured warning." },
+        "details": { "$ref": "canonical-records.schema.json#/$defs/SafeDetails" }
+      },
+      "$comment": "warning_source_ordinal is the exact zero-based position in ResultRecord.body.warnings. Repeated identical warnings are deliberately multiplicity-preserving."
+    },
+    "ConvergenceWarningLedgerRecordV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "warning_ledger_schema_version",
+        "scope",
+        "warning_source",
+        "warning_source_ordinal",
+        "candidate_ordinal",
+        "candidate_id",
+        "analysis_spec_id",
+        "universe_id",
+        "result_id",
+        "result_digest",
+        "final_status",
+        "code",
+        "severity",
+        "safe_message",
+        "details"
+      ],
+      "properties": {
+        "warning_ledger_schema_version": { "const": "ebm-audit-warning-ledger/2.0" },
+        "scope": { "const": "CANDIDATE" },
+        "warning_source": { "const": "CONVERGENCE" },
+        "warning_source_ordinal": { "const": 0 },
+        "candidate_ordinal": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "candidate_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "analysis_spec_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "universe_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "result_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "result_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "final_status": { "const": "CONVERGENCE_WARN" },
+        "code": { "const": "CONVERGENCE.PASS_THRESHOLDS_NOT_MET" },
+        "severity": { "const": "WARNING" },
+        "safe_message": { "const": "The candidate completed with a convergence warning." },
+        "details": {
+          "const": {
+            "counts": {},
+            "internal_indexes": [],
+            "approved_event_ids": [],
+            "digests": {}
+          }
+        }
+      },
+      "$comment": "Exactly one row is projected from an exact CONVERGENCE_WARN terminal whose finalized convergence record carries the fixed governing reason."
+    },
+    "ScienceGateWarningLedgerRecordV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "warning_ledger_schema_version",
+        "scope",
+        "plan_digest",
+        "terminal_index_digest",
+        "scientific_evidence_digest",
+        "code",
+        "severity",
+        "safe_message",
+        "details"
+      ],
+      "properties": {
+        "warning_ledger_schema_version": { "const": "ebm-audit-warning-ledger/2.0" },
+        "scope": { "const": "SCIENCE_COMPLETION_GATE" },
+        "plan_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "terminal_index_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "scientific_evidence_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "code": { "$ref": "canonical-records.schema.json#/$defs/StableCode" },
+        "severity": { "const": "WARNING" },
+        "safe_message": { "const": "The science completion gate is not satisfied." },
+        "details": {
+          "const": {
+            "counts": {},
+            "internal_indexes": [],
+            "approved_event_ids": [],
+            "digests": {}
+          }
+        }
+      },
+      "$comment": "Projected only from a genuine live SealedScientificEvidence bound to the exact same plan, terminal index, and ordered candidate identities."
+    },
+    "WarningLedgerRecordV2": {
+      "oneOf": [
+        { "$ref": "#/$defs/ResultWarningLedgerRecordV2" },
+        { "$ref": "#/$defs/ConvergenceWarningLedgerRecordV2" },
+        { "$ref": "#/$defs/ScienceGateWarningLedgerRecordV2" }
+      ]
+    },
+    "CandidateTerminalIndex": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_terminal_index_schema_version",
+        "plan_digest",
+        "candidate_terminals"
+      ],
+      "properties": {
+        "candidate_terminal_index_schema_version": {
+          "const": "ebm-audit-candidate-terminal-index/1.0"
+        },
+        "plan_digest": {
+          "$ref": "canonical-records.schema.json#/$defs/Sha256Digest"
+        },
+        "candidate_terminals": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CandidateTerminal" }
+        }
+      },
+      "$comment": "Persisted only after runtime proves exact complete AnalysisPlan/3 candidate coverage. Its exact-file digest is RunArtifactState.artifact_digests.candidate_terminal_index_digest."
+    },
+    "TerminalStatusCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "CONVERGENCE_WARN",
+        "INVALID_INPUT",
+        "UNSUPPORTED_CAPABILITY",
+        "INVALID_SPECIFICATION",
+        "BACKEND_ERROR",
+        "TIMEOUT",
+        "CONVERGENCE_FAILED",
+        "CONVERGENCE_NOT_ASSESSABLE",
+        "PRIVACY_VIOLATION",
+        "PROTOCOL_ERROR"
+      ],
+      "properties": {
+        "CONVERGENCE_WARN": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "INVALID_INPUT": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "UNSUPPORTED_CAPABILITY": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "INVALID_SPECIFICATION": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "BACKEND_ERROR": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "TIMEOUT": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "CONVERGENCE_FAILED": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "CONVERGENCE_NOT_ASSESSABLE": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "PRIVACY_VIOLATION": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "PROTOCOL_ERROR": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" }
+      }
+    },
+    "LifecycleInputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requested_candidate_count",
+        "terminal_record_count",
+        "success_count",
+        "non_success_terminal_count",
+        "privacy_failure_count",
+        "terminal_status_counts"
+      ],
+      "properties": {
+        "requested_candidate_count": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "terminal_record_count": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "success_count": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "non_success_terminal_count": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "privacy_failure_count": { "$ref": "canonical-records.schema.json#/$defs/SafeInteger" },
+        "terminal_status_counts": { "$ref": "#/$defs/TerminalStatusCounts" }
+      },
+      "$comment": "Candidate-execution facts serialized only after exact equality with one current SealedCandidateExecutionDisposition. Baseline, benchmark, mandatory-gate, unexpected-core, and caller status fields are prohibited."
+    },
+    "TerminalOutcome": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "exit_code", "primary_failure_class"],
+          "properties": {
+            "state": { "const": "COMPLETE" },
+            "exit_code": { "const": 0 },
+            "primary_failure_class": { "type": "null" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "exit_code", "primary_failure_class"],
+          "properties": {
+            "state": { "const": "PARTIAL" },
+            "exit_code": { "const": 12 },
+            "primary_failure_class": { "type": "null" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "exit_code", "primary_failure_class"],
+          "properties": {
+            "state": { "const": "PRIVACY_FAILED" },
+            "exit_code": { "const": 14 },
+            "primary_failure_class": { "type": "null" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "exit_code", "primary_failure_class"],
+          "properties": {
+            "state": { "const": "FAILED" },
+            "exit_code": { "enum": [10, 11, 13, 15, 16] },
+            "primary_failure_class": {
+              "enum": [
+                "INVALID_INPUT_OR_SPECIFICATION",
+                "WORKER_OR_CAPABILITY_UNAVAILABLE",
+                "BENCHMARK_FAILED",
+                "BACKEND_OR_PROTOCOL_FAILURE",
+                "UNEXPECTED_CORE_ERROR"
+              ]
+            }
+          }
+        }
+      ],
+      "$comment": "Reserved final run outcome vocabulary. Candidate execution currently owns only terminal-derived 0, 10, 11, 12, 14, and 15 decisions. Exit 13 and 16 require future exact non-candidate gate or abort authorities; no current MANIFEST_SEALED producer exists."
+    },
+    "ArtifactDigests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_created_digest",
+        "input_validation_digest",
+        "plan_digest",
+        "execution_start_digest",
+        "candidate_terminal_index_digest",
+        "baseline_digest",
+        "evidence_digest",
+        "report_digest",
+        "manifest_digest"
+      ],
+      "properties": {
+        "run_created_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "input_validation_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "plan_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "execution_start_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "candidate_terminal_index_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "baseline_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "evidence_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "report_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] },
+        "manifest_digest": { "oneOf": [{ "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }, { "type": "null" }] }
+      }
+    },
+    "RunArtifactState": {
+      "$comment": "JSON fields are readback only. Runtime validation requires the exact current SealedResultEvidenceSet and its identical live SealedCandidateExecutionDisposition at EVIDENCE_SEALED and later. At MANIFEST_SEALED, serialized candidate-execution facts must exactly equal that disposition and the VerifiedBaselineAssessment must retain the identical set. The state still fails closed because no exact SealedRunGateDisposition exists; matching IDs, digests, zero gate counts, report presence, or a sibling genuine run cannot substitute.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_artifact_schema_version",
+        "run_id",
+        "cli_lifecycle_registry_version",
+        "cli_lifecycle_registry_digest",
+        "current_state",
+        "state_history",
+        "identity",
+        "planned_candidates",
+        "candidate_terminals",
+        "artifact_digests",
+        "lifecycle_inputs",
+        "terminal_outcome"
+      ],
+      "properties": {
+        "run_artifact_schema_version": { "const": "ebm-audit-run-artifacts/0.2" },
+        "run_id": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "cli_lifecycle_registry_version": { "const": "ebm-audit-cli-lifecycle/4.0" },
+        "cli_lifecycle_registry_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+        "current_state": { "$ref": "#/$defs/RunState" },
+        "state_history": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 9,
+          "items": { "$ref": "#/$defs/StateTransition" }
+        },
+        "identity": { "$ref": "#/$defs/RunIdentity" },
+        "planned_candidates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PlannedCandidate" }
+        },
+        "candidate_terminals": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CandidateTerminal" }
+        },
+        "artifact_digests": { "$ref": "#/$defs/ArtifactDigests" },
+        "lifecycle_inputs": {
+          "oneOf": [{ "$ref": "#/$defs/LifecycleInputs" }, { "type": "null" }]
+        },
+        "terminal_outcome": {
+          "oneOf": [{ "$ref": "#/$defs/TerminalOutcome" }, { "type": "null" }]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "current_state": { "const": "MANIFEST_SEALED" } }, "required": ["current_state"] },
+          "then": {
+            "properties": {
+              "lifecycle_inputs": { "$ref": "#/$defs/LifecycleInputs" },
+              "terminal_outcome": { "$ref": "#/$defs/TerminalOutcome" },
+              "artifact_digests": {
+                "properties": {
+                  "input_validation_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+                  "plan_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+                  "execution_start_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+                  "candidate_terminal_index_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+                  "baseline_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+                  "evidence_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+                  "report_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" },
+                  "manifest_digest": { "$ref": "canonical-records.schema.json#/$defs/Sha256Digest" }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "lifecycle_inputs": { "type": "null" },
+              "terminal_outcome": { "type": "null" },
+              "artifact_digests": { "properties": { "manifest_digest": { "type": "null" } } }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

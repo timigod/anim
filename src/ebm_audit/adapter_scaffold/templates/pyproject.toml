@@ -1,0 +1,9 @@
+[project]
+name = "local-ebm-audit-adapter"
+version = "0.0.0"
+description = "Local EBM adapter scaffold"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
