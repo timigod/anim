@@ -267,6 +267,7 @@ jobs:
         run: |
           proof_root="$RUNNER_TEMP/anim-release-smoke"
           mkdir -p "$proof_root"
+          chmod 700 "$proof_root"
           uv venv "$proof_root/venv" --python 3.12
           uv pip install \
             --python "$proof_root/venv/bin/python" \
@@ -280,6 +281,28 @@ jobs:
           assert ebm_audit.__version__ == "0.1.0"
           PY
           "$proof_root/venv/bin/ebm-audit" doctor
+          if [ "$RUNNER_OS" = "Linux" ] && [ ! -x /usr/bin/bwrap ]; then
+            set +e
+            "$proof_root/venv/bin/ebm-audit" demo --conformance-ebm \
+              > "$proof_root/demo-status.json" \
+              2> "$proof_root/demo-error.json"
+            demo_exit=$?
+            set -e
+            if [ "$demo_exit" -ne 14 ]; then
+              echo "unexpected Linux fail-closed exit code: $demo_exit" >&2
+              exit 1
+            fi
+            "$proof_root/venv/bin/python" - "$proof_root" <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+
+          root = Path(sys.argv[1])
+          error = json.loads((root / "demo-error.json").read_bytes())
+          assert error["error"]["code"] == "PRIVACY.CONTAINMENT_UNAVAILABLE"
+          PY
+            exit 0
+          fi
           set +e
           "$proof_root/venv/bin/ebm-audit" demo --conformance-ebm > "$proof_root/demo-status.json"
           demo_exit=$?

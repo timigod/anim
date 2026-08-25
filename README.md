@@ -18,6 +18,12 @@ python3.12 -m pip install anim
 ebm-audit doctor
 ```
 
+Anim 0.1.0 installs and runs `doctor` on macOS and Linux. Worker execution uses
+the reviewed Seatbelt path on macOS. On Linux, it uses `/usr/bin/bwrap` when
+Bubblewrap is installed and otherwise fails closed with
+`PRIVACY.CONTAINMENT_UNAVAILABLE`. The 0.1.0 release does not claim full Linux
+worker-execution support.
+
 For development from a source checkout:
 
 ```sh
