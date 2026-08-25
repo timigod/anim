@@ -51,7 +51,11 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          actual = sorted(path.name for path in Path("dist").iterdir() if path.is_file())
+          actual = sorted(
+              path.name
+              for path in Path("dist").iterdir()
+              if path.is_file() and not path.name.startswith(".")
+          )
           expected = ["anim-0.1.0-py3-none-any.whl", "anim-0.1.0.tar.gz"]
           if actual != expected:
               raise SystemExit(f"unexpected distributions: {actual!r}")
