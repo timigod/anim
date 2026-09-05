@@ -958,7 +958,7 @@ def _core_rejection_subcase(
     expected_code: str,
     *,
     timeout_seconds: float = 30.0,
-) -> bool:
+) -> tuple[bool, str | None]:
     try:
         WorkerInvoker(
             _adversary_command(mode),
@@ -969,24 +969,34 @@ def _core_rejection_subcase(
             payload={"expected_identity": None},
         )
     except (PrivacyViolationError, WorkerProtocolError) as error:
-        return error.code == expected_code
-    except Exception:
-        return False
-    return False
+        return error.code == expected_code, error.code
+    except AuditError as error:
+        return False, error.code
+    except Exception as error:
+        return False, type(error).__name__
+    return False, None
 
 
 def _core_boundary_case(
     case_id: str,
     subcases: Sequence[tuple[str, str, float | None]],
 ) -> dict[str, Any]:
-    passed = sum(
+    outcomes = [
         _core_rejection_subcase(
             mode,
             expected_code,
             timeout_seconds=30.0 if timeout is None else timeout,
         )
         for mode, expected_code, timeout in subcases
-    )
+    ]
+    passed = sum(result for result, _observed in outcomes)
+    failed_subcases = [
+        {"mode": mode, "observed": observed}
+        for (mode, _expected, _timeout), (result, observed) in zip(
+            subcases, outcomes, strict=True
+        )
+        if not result
+    ]
     return _case(
         case_id,
         "PASS" if passed == len(subcases) else "FAIL",
@@ -996,7 +1006,11 @@ def _core_boundary_case(
             else "The auditor core did not reject every project-owned adversarial transport case."
         ),
         evidence_subject=_CORE_EVIDENCE_SUBJECT,
-        evidence={"subcase_count": len(subcases), "passed_subcase_count": passed},
+        evidence={
+            "subcase_count": len(subcases),
+            "passed_subcase_count": passed,
+            "failed_subcases": failed_subcases,
+        },
     )
 
 
