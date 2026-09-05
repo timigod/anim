@@ -23,6 +23,9 @@ All notable public changes to Anim are recorded here.
   integrity, and public-inventory validation.
 - Adds fresh installed-wheel offline synthetic smoke and macOS/Linux CPython
   3.12 CI, including Linux containment-unavailable failure.
+- Fixes contained adversary startup by launching the packaged worker entry point
+  directly; tests verify exact rejection codes, intentional crash exits, and
+  Linux cancellation on Python builds without `os.pidfd_open`.
 - Preserves the immutable 0.1.1 release hashes and scientific claim boundaries.
   This development version has not been published.
 

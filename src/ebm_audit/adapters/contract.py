@@ -330,7 +330,7 @@ def _synthetic_fixture(algorithm: Mapping[str, Any]) -> _SyntheticFixture | None
         )
     row_grid = np.arange(participant_count, dtype=np.float64)[:, None]
     column_grid = np.arange(event_count, dtype=np.float64)[None, :]
-    arrays: dict[str, Any] = {
+    arrays = {
         "train_values": np.asarray(((row_grid + column_grid) % 3.0) - 1.0, dtype=np.float64),
         "training_row_indexes": np.arange(participant_count, dtype=np.int64),
         "train_group_codes": np.asarray(
