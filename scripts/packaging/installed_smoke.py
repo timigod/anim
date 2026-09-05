@@ -47,14 +47,23 @@ def environment() -> dict[str, str]:
     return values
 
 
+def isolated_linux_routes() -> bool:
+    if platform.system() != "Linux":
+        return False
+    try:
+        routes = Path("/proc/net/route").read_text().splitlines()[1:]
+    except OSError:
+        return False
+    return not any(row.split()[0] != "lo" for row in routes if row.strip())
+
+
 def network_wrapper() -> list[str]:
     if platform.system() == "Darwin":
         return ["/usr/bin/sandbox-exec", "-p", "(version 1) (allow default) (deny network*)"]
     require(platform.system() == "Linux", "unsupported OS: smoke supports macOS and Linux")
     # Requiring an empty non-loopback route table makes isolation an explicit precondition.
-    routes = Path("/proc/net/route").read_text().splitlines()[1:]
     require(
-        not any(row.split()[0] != "lo" for row in routes if row.strip()),
+        isolated_linux_routes(),
         "Linux smoke requires a fresh network namespace; see the packaging runbook",
     )
     return []
@@ -81,6 +90,13 @@ def prove_network_denied() -> None:
                 stream.settimeout(1)
                 stream.connect(endpoint)
         except OSError as error:
+            # Linux IPv6 may have no source address in a fresh network namespace.
+            # Recheck the same route precondition; errno alone cannot prove isolation.
+            isolated_missing_source = (
+                error.errno == errno.EADDRNOTAVAIL
+                and family == socket.AF_INET6
+                and isolated_linux_routes()
+            )
             require(
                 error.errno
                 in {
@@ -89,7 +105,8 @@ def prove_network_denied() -> None:
                     errno.ENETUNREACH,
                     errno.EAFNOSUPPORT,
                     errno.EPROTONOSUPPORT,
-                },
+                }
+                or isolated_missing_source,
                 "network denial probe was inconclusive",
             )
         else:
