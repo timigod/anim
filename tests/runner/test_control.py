@@ -106,10 +106,34 @@ def test_precancelled_invocation_does_not_start_a_process(monkeypatch):
     assert caught.value.__context__ is None
 
 
+def _read_linux_proc_file(directory_fd, name):
+    with os.fdopen(os.open(name, os.O_RDONLY | os.O_CLOEXEC, dir_fd=directory_fd), "rb") as stream:
+        return stream.read()
+
+
+def _linux_process_exited(directory_fd):
+    try:
+        stat = _read_linux_proc_file(directory_fd, "stat")
+    except (FileNotFoundError, ProcessLookupError):
+        return True
+    # comm is parenthesized and may itself contain spaces or parentheses.
+    return stat.rsplit(b")", 1)[1].split()[0] in {b"Z", b"X"}
+
+
 @pytest.mark.skipif(os.name != "posix", reason="POSIX worker process groups required")
-def test_cancellation_kills_and_reaps_worker_ignoring_sigterm(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    "without_pidfd_open",
+    [False, True] if sys.platform == "linux" else [False],
+    ids=lambda missing: "without-pidfd-open" if missing else "default",
+)
+def test_cancellation_kills_and_reaps_worker_ignoring_sigterm(
+    tmp_path, monkeypatch, without_pidfd_open
+):
     if sys.platform == "linux" and not Path("/usr/bin/bwrap").is_file():
         pytest.skip("Linux worker execution requires bubblewrap containment.")
+    if without_pidfd_open:
+        monkeypatch.delattr(os, "pidfd_open", raising=False)
+        assert not hasattr(os, "pidfd_open")
     worker_file = tmp_path / "slow_worker.py"
     worker_file.write_text(
         "import os, signal, sys, time\n"
@@ -143,6 +167,7 @@ def test_cancellation_kills_and_reaps_worker_ignoring_sigterm(tmp_path, monkeypa
         execution_control=control,
     )
     worker_pidfd = None
+    worker_proc_fd = None
     with ThreadPoolExecutor(max_workers=1) as pool:
         future = pool.submit(
             invoker.invoke,
@@ -163,16 +188,24 @@ def test_cancellation_kills_and_reaps_worker_ignoring_sigterm(tmp_path, monkeypa
             if sys.platform == "linux":
                 # Track the actual worker, not the Bubblewrap supervisor's
                 # return code or process group (the worker has a new session).
-                worker_pidfd = os.pidfd_open(worker_pid)
                 proc = Path("/proc") / str(worker_pid)
-                assert os.fsencode(worker_file) in (proc / "cmdline").read_bytes().split(b"\0")
-                status = (proc / "status").read_text().splitlines()
+                # Pin this process's procfs directory: a reused PID cannot make
+                # later reads observe a different process. This also works on
+                # Python builds without the optional os.pidfd_open wrapper.
+                worker_proc_fd = os.open(proc, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+                assert os.fsencode(worker_file) in _read_linux_proc_file(
+                    worker_proc_fd, "cmdline"
+                ).split(b"\0")
+                status = _read_linux_proc_file(worker_proc_fd, "status").decode().splitlines()
                 ignored = next(line.split()[1] for line in status if line.startswith("SigIgn:"))
                 assert int(ignored, 16) & (1 << (signal.SIGTERM - 1))
                 assert worker_pid != processes[0].pid
-                worker_exit = select.poll()
-                worker_exit.register(worker_pidfd, select.POLLIN)
-                assert not worker_exit.poll(0)
+                assert not _linux_process_exited(worker_proc_fd)
+                if hasattr(os, "pidfd_open"):
+                    worker_pidfd = os.pidfd_open(worker_pid)
+                    worker_exit = select.poll()
+                    worker_exit.register(worker_pidfd, select.POLLIN)
+                    assert not worker_exit.poll(0)
             else:
                 assert worker_pid == processes[0].pid
             cancellation_time = time.monotonic()
@@ -187,6 +220,11 @@ def test_cancellation_kills_and_reaps_worker_ignoring_sigterm(tmp_path, monkeypa
                 events = worker_exit.poll(1000)
                 assert len(events) == 1 and events[0][0] == worker_pidfd
                 assert events[0][1] & select.POLLIN
+            if worker_proc_fd is not None:
+                deadline = time.monotonic() + 1
+                while not _linux_process_exited(worker_proc_fd) and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                assert _linux_process_exited(worker_proc_fd)
                 assert processes[0].returncode in {-signal.SIGTERM, -signal.SIGKILL}
             else:
                 assert processes[0].returncode == -signal.SIGKILL
@@ -195,6 +233,8 @@ def test_cancellation_kills_and_reaps_worker_ignoring_sigterm(tmp_path, monkeypa
             control.request_cancel()
             if worker_pidfd is not None:
                 os.close(worker_pidfd)
+            if worker_proc_fd is not None:
+                os.close(worker_proc_fd)
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX worker process groups required")
