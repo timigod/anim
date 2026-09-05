@@ -4,7 +4,8 @@ The current version is **0.2.0**. The public **0.1.1** wheel and source archive
 remain immutable. Their exact identities
 are recorded in `release/anim-0.1.1-sha256.txt`; never regenerate that manifest
 from changed source. New builds produce their own versioned filenames
-and validation output. None of the commands below publishes a release.
+and validation output. The build and check commands below do not publish a
+release; publication is the explicit tagged workflow described at the end.
 
 ## Supported surfaces
 
