@@ -254,6 +254,25 @@ algorithm/settings, preprocessing/inclusion, stage semantics, dataset binding,
 and adequate richer order/stage outputs. Central order and counts alone can
 produce at most `BASELINE_PARTIALLY_REPRODUCED`.
 
+## Saved summaries and operational replay
+
+`summary` and `diff` read bounded, schema/hash-bound artifacts without loading
+participant result arrays or invoking a worker. They retain typed absence and
+failure and expose numeric aggregates, closed tokens and hashed identities.
+Identity hashes are unsalted and are not anonymisation; keep report bundles
+and their source directories private. They are local integrity checks, not
+proof against a party rewriting the entire bundle and its hashes.
+
+Ordinary runs store `replay.json` and `attempt-status.json` in a private sibling
+`<run-name>.operations/` directory. Recipes contain hashes and a profile, not
+participant rows, original paths or runnable configuration. A `rerun` still
+requires the original private inputs and worker, verifies their bindings, and
+creates a fresh complete attempt. Previous results are never rehydrated as
+live scientific authority. Progress and cancellation diagnostics contain only
+closed phases and candidate counts; cancellation leaves unfinished work unsealed.
+See [report comparison](docs/report-comparison.md) and
+[reproducibility](docs/reproducibility.md) for exact command and limit details.
+
 ## Required privacy gates
 
 Real-data readiness is blocked until automated tests prove at least:

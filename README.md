@@ -9,12 +9,15 @@ It is **not** a diagnostic, prognostic, treatment, causal, regulatory, or
 medical-device tool. An emitted event order is not evidence that a recoverable
 disease-order signal exists.
 
+Development version: **0.2.0.dev0** (unreleased). The immutable public release
+is **0.1.1**; installing from PyPI does not install this development checkout.
+
 ## Installation
 
-Anim 0.1.1 requires CPython 3.12:
+The published Anim 0.1.1 requires CPython 3.12:
 
 ```sh
-python3.12 -m pip install anim
+python3.12 -m pip install 'anim==0.1.1'
 ebm-audit doctor
 ```
 
@@ -24,13 +27,22 @@ Bubblewrap is installed and otherwise fails closed with
 `PRIVACY.CONTAINMENT_UNAVAILABLE`. The 0.1.1 release does not claim full Linux
 worker-execution support.
 
-For development from a source checkout:
+For development version 0.2.0.dev0 from this source checkout (CPython 3.12):
 
 ```sh
 python3.12 --version
 uv sync --frozen
 uv run ebm-audit doctor
 ```
+
+The development compatibility matrix covers CPython 3.12 on macOS and Linux.
+macOS worker execution requires Seatbelt; Linux requires a working Bubblewrap
+installation at `/usr/bin/bwrap` with namespaces enabled. Without a provider,
+worker execution fails closed. Windows execution and other Python minors are
+unsupported; no compatibility widening is claimed.
+
+See the [packaging validation runbook](docs/handoff/packaging-validation.md) for
+fresh wheel installation, enforced offline synthetic smoke, and the CI matrix.
 
 ## Smallest Runnable Example
 
@@ -58,7 +70,7 @@ cd "$PROOF_ROOT" || exit 1
 1. Open `ebm-audit-demo/report/report.html` locally and inspect the matching
     `ebm-audit-demo/report/report.json`,
     `ebm-audit-demo/report/universes.csv`, and
-    `ebm-audit-demo/report/warnings.jsonl` files. Inspect `warnings.jsonl` for
+    `ebm-audit-demo/warnings.jsonl` files. Inspect `warnings.jsonl` for
     visible cautions and diagnostics.
 2. Read [How the synthetic route works](https://github.com/timigod/anim/blob/main/docs/how-it-works.md) before changing a
     worker. It follows a deliberately tiny two-event synthetic example from a
@@ -70,6 +82,32 @@ cd "$PROOF_ROOT" || exit 1
 4. If the model lives in a private Jupyter notebook, follow the
    [frozen notebook handoff](https://github.com/timigod/anim/blob/main/docs/handoff/frozen-notebook-handoff.md). The
    notebook and data remain private and local.
+
+## Development workflow
+
+Version 0.2.0.dev0 adds local worker pinning and capability checks, saved-run
+summaries and comparisons, and fresh-attempt replay with progress and memory
+admission. Start with the synthetic demo above; inspect its saved evidence with:
+
+```sh
+ebm-audit summary --run-dir ebm-audit-demo
+```
+
+Use the [adapter runbook](docs/handoff/adapter-runbook.md) for `adapter pin`,
+`adapter check`, and the separately provisioned synthetic-only open-source EBM
+example. Software dependencies and public source code are prepared explicitly;
+audit runtime remains offline, with no telemetry or LLM interpretation.
+
+For ordinary configured runs, [reproduction and recovery](docs/reproducibility.md)
+explains `rerun` and its refusal of identity drift. Replay recipes live beside
+sealed results in `<run-name>.operations/`; the ephemeral demo has no recipe.
+[Execution controls](docs/execution.md) describes cancellation, JSON progress on
+stderr, and memory reservations that limit concurrency without dropping planned
+candidates. Reservations are not measured RSS or an OS memory cap.
+
+[Report comparison](docs/report-comparison.md) explains `summary` and `diff`.
+Missing, invalid, failed and incomparable evidence remains explicit. A successful
+software operation does not make its scientific result complete or valid.
 
 ## What The Audit Checks
 

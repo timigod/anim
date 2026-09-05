@@ -1,13 +1,14 @@
-# Third-party notices for Anim 0.1.1
+# Third-party notices for Anim
 
-Status: **RELEASE-CANDIDATE CORE INVENTORY VERIFIED**
+Status: **HISTORICAL CORE INVENTORY RETAINED; OPTIONAL EXAMPLE PROVENANCE DOCUMENTED**
 
-Date: 2026-08-25
+Updated: 2026-09-05. The core wheel/license inventory below was verified for
+the 0.1.1 release on 2026-08-25 and is retained with its original platform scope.
 
 This file records technical licence and artifact evidence. It is not legal
 advice and does not replace the licence text shipped by each dependency.
 
-Anim 0.1.1 is licensed under Apache-2.0. The project licence is in `LICENSE`.
+Anim is licensed under Apache-2.0. The project licence is in `LICENSE`.
 
 ## Distribution boundary
 
@@ -16,8 +17,8 @@ copy the source of NumPy, jsonschema, PyYAML, rfc8785, another runtime
 dependency, or an event-based model backend. Package installers obtain runtime
 dependencies as separate distributions.
 
-The public core has four direct runtime dependencies and five transitive runtime
-dependencies. The exact CPython 3.12 graph is:
+The public core explicitly pins nine runtime distributions, including the
+transitive dependencies of its primary libraries. The CPython 3.12 graph is:
 
 - `jsonschema==4.26.0`;
 - `numpy==2.3.1`;
@@ -31,6 +32,18 @@ dependencies. The exact CPython 3.12 graph is:
 
 No named EBM backend is part of this core graph. Optional historical backend
 research and its environments are not part of the Anim 0.1.1 PyPI distribution.
+
+Development version 0.2.0.dev0 includes Anim's own optional adapter and provisioner
+under `workers/pysaebm_example`; it does not bundle the upstream backend source
+or its optional dependencies. The example selects public pysaebm 7.7.9 commit
+`54521a9adfedf58facd7bafd741a14d9ed110d2a`, licensed under MIT. Its
+[source manifest](workers/pysaebm_example/source-manifest.json) pins the exact
+source files and the upstream `LICENSE` bytes, which the provisioner retains.
+Optional software requirements are separate from the core graph and retain
+their own distribution licences and notices. See the
+[adapter runbook](docs/handoff/adapter-runbook.md) for software-only provisioning
+and the synthetic evidence boundary. No upstream participant datasets are bundled
+or needed by that route.
 
 ## Exact public artifact inventory
 

@@ -11,13 +11,14 @@ import subprocess
 import tempfile
 import threading
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
+from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path, PurePosixPath
 from types import MappingProxyType
-from typing import IO, Any, NamedTuple, Never, SupportsIndex, cast, final
+from typing import IO, TYPE_CHECKING, Any, NamedTuple, Never, SupportsIndex, cast, final
 
 import numpy as np
 
@@ -98,6 +99,9 @@ from .requests import (
     build_wire_scientific_payload,
 )
 from .semantics import validate_success_response_semantics
+
+if TYPE_CHECKING:
+    from ebm_audit.runner.control import ExecutionControl
 
 _STREAM_RETAINED_LIMIT = 64 * 1024
 _DIAGNOSTIC_STREAM_HARD_LIMIT_BYTES = 1024 * 1024
@@ -1934,11 +1938,14 @@ def _wait_for_worker_exit(
     *,
     timeout_seconds: float,
     diagnostic_overflow: threading.Event,
+    execution_control: ExecutionControl | None = None,
 ) -> tuple[int, bool]:
-    """Wait with a short poll so diagnostic overflow triggers prompt termination."""
+    """Poll overflow and cancellation; the caller owns process-group cleanup."""
 
     deadline = time.monotonic() + timeout_seconds
     while True:
+        if execution_control is not None:
+            execution_control.raise_if_cancelled()
         if diagnostic_overflow.is_set():
             return _terminate_and_reap_process(process), False
         remaining = deadline - time.monotonic()
@@ -4090,7 +4097,12 @@ class WorkerInvoker:
         *,
         timeout_seconds: float = 30.0,
         expected_identity: Mapping[str, Any] | None = None,
+        execution_control: ExecutionControl | None = None,
     ) -> None:
+        from ebm_audit.runner.control import ExecutionControl
+
+        if execution_control is not None and type(execution_control) is not ExecutionControl:
+            raise TypeError("Worker execution control must be an ExecutionControl.")
         normalized_timeout = normalize_worker_timeout_seconds(timeout_seconds)
         self._worker = _validated_worker_command_snapshot(worker)
         self._timeout_seconds = normalized_timeout
@@ -4098,6 +4110,28 @@ class WorkerInvoker:
         self._expected_identity = (
             None if expected_identity is None else validate_expected_identity_pin(expected_identity)
         )
+        self._execution_control = execution_control
+
+    @property
+    def execution_control(self) -> ExecutionControl | None:
+        return self._execution_control
+
+    @contextmanager
+    def _use_execution_control(self, control: ExecutionControl) -> Iterator[None]:
+        """Bind the coordinator's flag for all worker threads in one execution."""
+
+        from ebm_audit.runner.control import ExecutionControl
+
+        if type(control) is not ExecutionControl:
+            raise TypeError("Worker execution control must be an ExecutionControl.")
+        previous = self._execution_control
+        if previous is not None and previous is not control:
+            raise TypeError("Worker and coordinator execution controls must be identical.")
+        self._execution_control = control
+        try:
+            yield
+        finally:
+            self._execution_control = previous
 
     def describe_authenticated(self) -> AuthenticatedWorkerDescription:
         """Return opaque evidence only after the full authenticated Describe gate."""
@@ -4784,9 +4818,13 @@ class WorkerInvoker:
         profile_fit_receipt_row: object | None = None,
         contract_description_capability: object | None = None,
     ) -> WorkerExecution:
+        from ebm_audit.runner.control import ExecutionCancelled
+
         attempt = _InvocationAttemptState()
-        pending: WorkerProtocolError | PrivacyViolationError | UnexpectedCoreError | None = None
+        pending: AuditError | None = None
         try:
+            if self._execution_control is not None:
+                self._execution_control.raise_if_cancelled()
             return self._invoke(
                 command=command,
                 payload_schema_version=payload_schema_version,
@@ -4800,6 +4838,10 @@ class WorkerInvoker:
                 profile_fit_receipt_row=profile_fit_receipt_row,
                 contract_description_capability=contract_description_capability,
             )
+        except ExecutionCancelled:
+            # Cancellation is an operational outcome, without invented worker
+            # observation evidence, scientific failure classification or retry.
+            pending = ExecutionCancelled()
         except (WorkerProtocolError, PrivacyViolationError, UnexpectedCoreError) as caught:
             observation = caught.invocation_observation
             if observation is None:
@@ -5207,6 +5249,8 @@ class WorkerInvoker:
             outside_attempt_path = work_dir / ".outside-write-attempt"
             guard_active_path = work_dir / ".offline-guard-active"
             started = time.monotonic()
+            if self._execution_control is not None:
+                self._execution_control.raise_if_cancelled()
             try:
                 process = subprocess.Popen(
                     containment.argv,
@@ -5269,6 +5313,7 @@ class WorkerInvoker:
                     process,
                     timeout_seconds=self._timeout_seconds,
                     diagnostic_overflow=diagnostic_overflow,
+                    execution_control=self._execution_control,
                 )
                 residual_process_group = _terminate_residual_process_group(process)
                 process_boundary_clean = True

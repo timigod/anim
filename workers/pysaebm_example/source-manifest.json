@@ -1,0 +1,30 @@
+{
+  "schema_version": "anim-pysaebm-source/1",
+  "repository": "https://github.com/jpcca/pysaebm",
+  "commit": "54521a9adfedf58facd7bafd741a14d9ed110d2a",
+  "version": "7.7.9",
+  "license": "MIT",
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "5235f7c6fcb607bf674cde7b14438784c9e11426350933bfba61f6f303693970",
+      "byte_length": 1088
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "18165b53225e7cb7f60158096c6f2789eafe38850144008194a4af21b9ef7352",
+      "byte_length": 833
+    },
+    {
+      "path": "pysaebm/mh.py",
+      "sha256": "d1899c2aeeb4daee3a5c31030648e54e78541d33947d8a2cef4d0f030cc63cd5",
+      "byte_length": 6045
+    },
+    {
+      "path": "pysaebm/utils.py",
+      "sha256": "f003d25f2e12b0b7f1514370d7cd45adc40029355b34d7924addcf398622de55",
+      "byte_length": 27642
+    }
+  ],
+  "excluded": "No package archives, data modules, datasets, examples, tests, notebooks, or participant records."
+}

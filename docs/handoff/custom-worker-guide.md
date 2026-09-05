@@ -7,11 +7,18 @@ route first. This guide begins only after the auditor is installed and the
 six-file worker scaffold has been created with `ebm-audit adapter init`; it does
 not replace the offline installation and initialization prerequisites.
 
+For the current onboarding commands, use the [adapter runbook](adapter-runbook.md):
+`adapter pin` records the exact worker identity, `adapter check` negotiates
+requested capabilities and runs synthetic conformance, and the generated tests
+exercise the worker through real subprocesses. The runbook also includes a
+separately provisioned public pysaebm example with exact source/license hashes.
+This guide remains the detailed worker protocol and implementation reference.
+
 ## Status and purpose
 
 This guide defines the runnable researcher-facing route for connecting a private
 or different EBM implementation without changing the auditor core. The worker
-SDK, `adapter describe`, and `adapter conformance` commands are implemented and
+SDK, `adapter pin`, `adapter check`, `adapter describe`, and `adapter conformance` commands are implemented and
 tested with the project-owned fixture and custom-worker example. Adapter
 conformance runs Describe plus the synthetic contract cases and produces
 researcher-facing protocol and capability evidence; it is not scientific backend

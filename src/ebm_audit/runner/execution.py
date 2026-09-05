@@ -22,7 +22,7 @@ from ebm_audit.adapters.invocation import (
     _read_prepared_candidate_execution_context,
     _readback_worker_invocation_observation,
 )
-from ebm_audit.errors import AuditError
+from ebm_audit.errors import AuditError, PrivacyViolationError
 from ebm_audit.lifecycle import (
     _candidate_terminal_rows,
     _plan_candidate_rows,
@@ -63,6 +63,14 @@ from ebm_audit.universe.preparation import (
     _resolve_unprepared_result_authorization,
 )
 
+from .control import (
+    ExecutionCancelled,
+    ExecutionControl,
+    ExecutionPhase,
+    ExecutionProgress,
+    MemoryAdmissionError,
+)
+
 _ELIGIBLE_RETRY_CODES = frozenset({"BACKEND.WORKER_START_FAILED", "BACKEND.WORKER_PROCESS_FAILED"})
 
 
@@ -86,12 +94,16 @@ class _ProductionExecutor:
     __slots__ = (
         "_candidate_authorization_states",
         "_candidate_authorizations",
+        "_control",
+        "_effective_parallel_workers",
         "_invoker",
         "_journal",
         "_journal_state",
         "_max_parallel_workers",
+        "_persisted_candidates",
         "_prepared_execution_contexts",
         "_retry_process_failures",
+        "_submitted_candidates",
         "_transaction",
         "_transaction_state",
         "_unprepared_execution_states",
@@ -105,14 +117,21 @@ class _ProductionExecutor:
         journal: ResultPersistenceJournal,
         *,
         retry_process_failures: bool = True,
+        control: ExecutionControl | None = None,
     ) -> None:
         if type(retry_process_failures) is not bool:
             raise TypeError("Production retry policy must be a closed boolean.")
+        if control is not None and type(control) is not ExecutionControl:
+            raise TypeError("Production execution control must be an ExecutionControl.")
         self._transaction = transaction
         self._invoker = invoker
         self._journal = journal
         self._journal_state: _ResultPersistenceJournalState | None = None
         self._max_parallel_workers = 0
+        self._effective_parallel_workers = 0
+        self._submitted_candidates = 0
+        self._persisted_candidates = 0
+        self._control = control
         self._transaction_state: _PreparationTransactionState | None = None
         self._candidate_authorization_states: tuple[_CandidateAuthorizationState, ...] = ()
         self._candidate_authorizations: tuple[object, ...] = ()
@@ -121,6 +140,8 @@ class _ProductionExecutor:
         self._unprepared_execution_states: dict[UnpreparedResultAuthorization, object] = {}
         self._used = False
         self._preflight()
+        if self._control is None:
+            self._control = self._invoker.execution_control or ExecutionControl()
 
     def __init_subclass__(cls, **_kwargs: object) -> None:
         raise TypeError("Production executors cannot be subclassed.")
@@ -423,6 +444,8 @@ class _ProductionExecutor:
         )
 
     def _execute_candidate(self, authorization: object) -> _CandidateExecutionProduct:
+        assert self._control is not None
+        self._control.raise_if_cancelled()
         if type(authorization) is PreparedExecutionAuthorization:
             return self._execute_prepared(authorization)
         if type(authorization) is not UnpreparedResultAuthorization:
@@ -466,13 +489,19 @@ class _ProductionExecutor:
     def _execute_and_persist_candidates(self) -> None:
         """Run a bounded whole-candidate window and consume it in Plan/3 order."""
 
-        if self._max_parallel_workers == 1:
+        assert self._control is not None
+        if self._effective_parallel_workers == 1:
             for authorization in self._candidate_authorizations:
+                self._control.raise_if_cancelled()
+                self._submitted_candidates += 1
+                self._progress(ExecutionPhase.RUNNING)
                 product = self._execute_candidate(authorization)
                 self._persist_candidate(product)
+                self._persisted_candidates += 1
+                self._progress(ExecutionPhase.RUNNING)
             return
         executor = ThreadPoolExecutor(
-            max_workers=self._max_parallel_workers,
+            max_workers=self._effective_parallel_workers,
             thread_name_prefix="ebm-audit-candidate",
         )
         futures: dict[int, Future[_CandidateExecutionProduct]] = {}
@@ -480,50 +509,107 @@ class _ProductionExecutor:
         try:
             while (
                 next_to_submit < len(self._candidate_authorizations)
-                and len(futures) < self._max_parallel_workers
+                and len(futures) < self._effective_parallel_workers
             ):
+                self._control.raise_if_cancelled()
                 futures[next_to_submit] = executor.submit(
                     self._execute_candidate,
                     self._candidate_authorizations[next_to_submit],
                 )
                 next_to_submit += 1
+                self._submitted_candidates += 1
+                self._progress(ExecutionPhase.RUNNING)
             for ordinal in range(len(self._candidate_authorizations)):
                 future = futures.pop(ordinal)
                 product = future.result()
                 self._assert_execution_authorities_current()
                 self._persist_candidate(product)
+                self._persisted_candidates += 1
+                self._progress(ExecutionPhase.RUNNING)
                 if next_to_submit < len(self._candidate_authorizations):
+                    self._control.raise_if_cancelled()
                     futures[next_to_submit] = executor.submit(
                         self._execute_candidate,
                         self._candidate_authorizations[next_to_submit],
                     )
                     next_to_submit += 1
+                    self._submitted_candidates += 1
+                    self._progress(ExecutionPhase.RUNNING)
         except BaseException:
+            # Running siblings share this flag. Their invocation finally blocks
+            # stop and reap process groups before the pool shutdown can return.
+            self._control.request_cancel()
+            self._progress(ExecutionPhase.CANCELLING)
             for future in futures.values():
                 future.cancel()
             executor.shutdown(wait=True, cancel_futures=True)
+            # A cleanup failure must not disappear behind a cancellation from
+            # an earlier candidate in plan order.
+            for future in futures.values():
+                if not future.cancelled():
+                    sibling_error = future.exception()
+                    if isinstance(sibling_error, PrivacyViolationError):
+                        raise sibling_error from None
             raise
         executor.shutdown(wait=True, cancel_futures=False)
+
+    def _progress(self, phase: ExecutionPhase) -> ExecutionProgress:
+        progress = ExecutionProgress(
+            phase=phase,
+            planned_candidates=len(self._candidate_authorizations),
+            submitted_candidates=self._submitted_candidates,
+            persisted_candidates=self._persisted_candidates,
+            effective_parallel_workers=self._effective_parallel_workers,
+        )
+        assert self._control is not None
+        self._control._emit(progress)
+        return progress
 
     def execute(self) -> SealedCandidateTerminalIndex:
         if self._used:
             raise TypeError("A production executor is one-use.")
         self._used = True
         self._assert_execution_authorities_current()
-        self._execute_and_persist_candidates()
-        self._assert_execution_authorities_current()
-        if self._journal_state is None:
-            raise TypeError("Production execution has no exact journal state.")
-        return _seal_candidate_terminal_index_with_state(
-            self._journal,
-            self._journal_state,
-        )
+        assert self._control is not None
+        cancelled = False
+        try:
+            self._control.raise_if_cancelled()
+            self._effective_parallel_workers = self._control.effective_parallel_workers(
+                self._max_parallel_workers
+            )
+            self._progress(ExecutionPhase.READY)
+            with self._invoker._use_execution_control(self._control):
+                self._execute_and_persist_candidates()
+            self._control.raise_if_cancelled()
+            self._assert_execution_authorities_current()
+            if self._journal_state is None:
+                raise TypeError("Production execution has no exact journal state.")
+            sealed = _seal_candidate_terminal_index_with_state(
+                self._journal,
+                self._journal_state,
+            )
+        except ExecutionCancelled:
+            cancelled = True
+        except MemoryAdmissionError:
+            self._progress(ExecutionPhase.ADMISSION_REJECTED)
+            raise
+        except BaseException:
+            self._progress(ExecutionPhase.FAILED)
+            raise
+        if cancelled:
+            # Raise outside the handler so no worker-local exception context is
+            # retained in the safe attempt outcome.
+            raise ExecutionCancelled(self._progress(ExecutionPhase.CANCELLED))
+        self._progress(ExecutionPhase.COMPLETED)
+        return sealed
 
 
 def execute_preparation_transaction(
     transaction: object,
     invoker: object,
     journal: object,
+    *,
+    control: ExecutionControl | None = None,
 ) -> SealedCandidateTerminalIndex:
     """Execute and persist one exact transaction in Plan/3 order, then seal it."""
 
@@ -535,13 +621,15 @@ def execute_preparation_transaction(
         raise TypeError(
             "Production execution requires exact transaction, invoker, and journal authorities."
         )
-    return _ProductionExecutor(transaction, invoker, journal).execute()
+    return _ProductionExecutor(transaction, invoker, journal, control=control).execute()
 
 
 def execute_preparation_transaction_no_retry(
     transaction: object,
     invoker: object,
     journal: object,
+    *,
+    control: ExecutionControl | None = None,
 ) -> SealedCandidateTerminalIndex:
     """Execute one exact transaction while retaining every first terminal as final."""
 
@@ -559,4 +647,5 @@ def execute_preparation_transaction_no_retry(
         invoker,
         journal,
         retry_process_failures=False,
+        control=control,
     ).execute()

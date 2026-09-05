@@ -1,0 +1,141 @@
+name: Validate development distributions
+
+on:
+  push:
+    branches: [main, 'codex/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Version, public inventory, wheel and sdist
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: '0.9.15'
+          enable-cache: false
+      - name: Install locked build and focused test tools
+        run: uv sync --locked --group build --no-install-project --python 3.12
+      - name: Check source identities and packaging regressions
+        run: |
+          .venv/bin/python scripts/packaging/check_release.py
+          .venv/bin/python -m pytest tests/packaging -q
+      - name: Build distributions
+        run: |
+          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          uv build --no-build-isolation
+      - name: Validate metadata, contents, resource bytes and wheel integrity
+        run: .venv/bin/python scripts/packaging/check_release.py --dist dist
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: development-distributions
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+
+  public-regressions:
+    name: Public regressions / ${{ matrix.os }} / Python 3.12
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, ubuntu-22.04]
+    env:
+      # Upstream source tests are explicit opt-in; this job uses project synthetic fixtures.
+      ANIM_PYSAEBM_SOURCE_DIR: ''
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: '0.9.15'
+          enable-cache: false
+      - name: Install locked source and public test tools
+        run: uv sync --locked --group build --python 3.12
+      - name: Enable and check Linux worker containment
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes bubblewrap
+          /usr/bin/bwrap --unshare-net --ro-bind / / -- true
+      - name: Run only the maintained public regression directories
+        run: |
+          .venv/bin/python -m pytest tests/packaging tests/runner tests/replay tests/reporting tests/adapters \
+            -q -rs --basetemp="$RUNNER_TEMP/anim-public-regressions"
+
+  installed-smoke:
+    name: Python ${{ matrix.python }} / ${{ matrix.os }} / containment ${{ matrix.containment }}
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            python: '3.12'
+            containment: available
+          - os: ubuntu-22.04
+            python: '3.12'
+            containment: available
+          - os: ubuntu-22.04
+            python: '3.12'
+            containment: unavailable
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: '0.9.15'
+          enable-cache: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: development-distributions
+          path: dist
+      - name: Prepare only locked binary runtime dependencies (network permitted here)
+        shell: bash
+        run: |
+          uv venv --seed .package-tools --python '${{ matrix.python }}'
+          uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file runtime-requirements.txt
+          .package-tools/bin/python -m pip download --only-binary=:all: --require-hashes --dest wheelhouse -r runtime-requirements.txt
+      - name: Configure supported Linux containment case
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          if [ '${{ matrix.containment }}' = available ]; then
+            sudo apt-get update
+            sudo apt-get install --yes bubblewrap
+            /usr/bin/bwrap --unshare-net --ro-bind / / -- true
+          else
+            sudo apt-get remove --yes bubblewrap
+            test ! -e /usr/bin/bwrap
+          fi
+      - name: Install fresh wheel and run offline CLI/worker smoke
+        shell: bash
+        run: |
+          version=$(.package-tools/bin/python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
+          smoke_args=(--wheel "$GITHUB_WORKSPACE/dist/anim-$version-py3-none-any.whl" --wheelhouse "$GITHUB_WORKSPACE/wheelhouse" --proof-root "$RUNNER_TEMP/anim-installed-proof" --version "$version" --containment '${{ matrix.containment }}')
+          if [ "$RUNNER_OS" = Linux ]; then
+            sudo unshare --net -- setpriv --reuid="$(id -u)" --regid="$(id -g)" --init-groups -- \
+              "$GITHUB_WORKSPACE/.package-tools/bin/python" -I "$GITHUB_WORKSPACE/scripts/packaging/installed_smoke.py" "${smoke_args[@]}"
+          else
+            .package-tools/bin/python -I scripts/packaging/installed_smoke.py "${smoke_args[@]}"
+          fi
+      - name: Retain synthetic smoke receipt and diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: smoke-${{ matrix.os }}-${{ matrix.containment }}
+          path: |
+            ${{ runner.temp }}/anim-installed-proof/*receipt.json
+            ${{ runner.temp }}/anim-installed-proof/*.stdout
+            ${{ runner.temp }}/anim-installed-proof/*.stderr
+            ${{ runner.temp }}/anim-installed-proof/full/*.stdout
+            ${{ runner.temp }}/anim-installed-proof/full/*.stderr
+            ${{ runner.temp }}/anim-installed-proof/partial/*.stdout
+            ${{ runner.temp }}/anim-installed-proof/partial/*.stderr
+          if-no-files-found: warn
+          retention-days: 14

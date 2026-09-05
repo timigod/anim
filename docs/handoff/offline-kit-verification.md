@@ -1,5 +1,9 @@
 # Offline Kit Verification
 
+This runbook describes an explicitly prepared **unreleased 0.2.0.dev0** kit.
+For build and installed-worker proof, see [packaging validation](packaging-validation.md).
+The public 0.1.1 artifacts and recorded hashes remain unchanged.
+
 This route is for a researcher with local CPython 3.12 and an immutable,
 platform-compatible kit transferred outside this repository. It is not needed
 for the source-checkout quick start in the repository README.
@@ -11,12 +15,12 @@ README.md
 KIT-IDENTITY.txt
 SHA256SUMS
 wheels/
-  anim-0.1.1-py3-none-any.whl
+  anim-0.2.0.dev0-py3-none-any.whl
   <all locked CPython 3.12 destination-platform runtime dependency wheels>
 ```
 
 `wheels/` contains the candidate wheel plus exactly one compatible wheel for
-must match CPython 3.12 and the destination platform. The directory contains no
+each locked runtime dependency. Each wheel must match CPython 3.12 and the destination platform. The directory contains no
 source distribution or build, development, or test dependency.
 
 `KIT-IDENTITY.txt` records these five fields and the exact values used to
@@ -31,8 +35,8 @@ preparation_command=<literal local kit preparation and verification command>
 ```
 
 Authenticate the transferred kit and its provenance through the approved local
-process. `SHA256SUMS` lists, with two spaces between digest and relative path,
-under `wheels/`; it does not list itself. A checksum verifies integrity and
+process. `SHA256SUMS` lists `README.md`, `KIT-IDENTITY.txt`, and every wheel under
+`wheels/`, with two spaces between digest and relative path. It does not list itself. A checksum verifies integrity and
 transfer corruption, not provenance, authenticity, or trust on its own.
 
 Set absolute paths to the read-only transferred kit and a new neutral directory
@@ -95,7 +99,7 @@ VENV_ROOT=$PROOF_ROOT/auditor-venv
     --only-binary :all: \
     --find-links . \
     --quiet \
-    'anim==0.1.1'
+    'anim==0.2.0.dev0'
 )
 ```
 
@@ -111,7 +115,7 @@ import sys
 distribution = metadata.distribution("anim")
 environment = Path(sys.argv[1]).resolve()
 origin = Path(distribution.locate_file("")).resolve()
-assert distribution.version == "0.1.1"
+assert distribution.version == "0.2.0.dev0"
 assert origin.is_relative_to(environment)
 print("distribution=anim")
 print(f"version={distribution.version}")

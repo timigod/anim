@@ -7,6 +7,7 @@ from .claims import (
     claim_is_allowed,
     prohibited_claim_codes,
 )
+from .inspection import ReportInspectionError, compare_reports, inspect_report
 from .render import (
     CURRENT_REPORT_STATUS,
     REPORT_SCHEMA_VERSION,
@@ -23,8 +24,11 @@ __all__ = [
     "NULL_SAFE_FALLBACK",
     "REPORT_SCHEMA_VERSION",
     "REPORT_V1_UNAVAILABLE_REASON",
+    "ReportInspectionError",
     "ReportUnavailableError",
     "claim_is_allowed",
+    "compare_reports",
+    "inspect_report",
     "prohibited_claim_codes",
     "render_report_from_run_dir",
     "write_report_from_live_evidence",

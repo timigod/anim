@@ -118,6 +118,7 @@ from ebm_audit.universe.preparation import (
 )
 
 if TYPE_CHECKING:
+    from ebm_audit.runner import ExecutionControl
     from ebm_audit.synthetic.audit_input import SealedPublicSyntheticAuditInput
     from ebm_audit.synthetic.development_null import (
         SealedDevelopmentNullScienceReceipt,
@@ -354,6 +355,7 @@ def authorized_description(
     resolved: ResolvedAuditConfig,
     *,
     timeout_seconds: float,
+    execution_control: ExecutionControl | None = None,
 ) -> Iterator[
     tuple[
         RunEligibleAuditConfig,
@@ -370,6 +372,7 @@ def authorized_description(
         worker_config, description = _describe_authorized_worker(
             authorized,
             timeout_seconds=timeout_seconds,
+            execution_control=execution_control,
         )
         yield authorized, verified, worker_config, description
     finally:
@@ -425,6 +428,7 @@ def _describe_authorized_worker(
     authorized: RunEligibleAuditConfig,
     *,
     timeout_seconds: float,
+    execution_control: ExecutionControl | None = None,
 ) -> tuple[WorkerConfig, AuthenticatedWorkerDescription]:
     """Consume one exact verified worker config and authenticate Describe."""
 
@@ -435,6 +439,7 @@ def _describe_authorized_worker(
         worker_config.worker,
         timeout_seconds=timeout_seconds,
         expected_identity=worker_config.expected_identity,
+        execution_control=execution_control,
     ).describe_authenticated()
     return worker_config, description
 
@@ -1332,6 +1337,9 @@ def _run_audit_transaction(
     _execution_only: bool = False,
     _disable_process_failure_retry: bool = False,
     _public_synthetic_input_owner: SealedPublicSyntheticAuditInput | None = None,
+    execution_control: ExecutionControl | None = None,
+    _record_replay: bool = False,
+    _expected_replay: Mapping[str, Any] | None = None,
 ) -> _OrdinaryAuditTransactionResult | _ExecutionAuditTransactionResult:
     """Execute one exact local candidate set, optionally stopping before reports."""
 
@@ -1360,6 +1368,7 @@ def _run_audit_transaction(
             worker_config, description = _describe_authorized_worker(
                 authorized,
                 timeout_seconds=timeout_seconds,
+                execution_control=execution_control,
             )
             store = public_staged_output.store
         else:
@@ -1367,6 +1376,12 @@ def _run_audit_transaction(
             from ebm_audit.synthetic.development_null import is_development_null_run
 
         if _public_synthetic_input_owner is None and is_development_null_run(resolved):
+            if _expected_replay is not None:
+                raise InvalidInputError(
+                    "REPLAY.UNSUPPORTED_SOURCE",
+                    "Generator-owned runs require their existing synthetic replay path.",
+                )
+            _record_replay = False
             from ebm_audit.synthetic.development_null import (
                 open_development_null_transaction,
             )
@@ -1386,6 +1401,7 @@ def _run_audit_transaction(
             worker_config, description = _describe_authorized_worker(
                 authorized,
                 timeout_seconds=timeout_seconds,
+                execution_control=execution_control,
             )
             prepared = development_transaction.prepared_dataset
             store = staged_output.store
@@ -1399,6 +1415,7 @@ def _run_audit_transaction(
                 authorized_description(
                     resolved,
                     timeout_seconds=timeout_seconds,
+                    execution_control=execution_control,
                 )
             )
             prepared = prepare_audit_dataset(authorized)
@@ -1427,6 +1444,15 @@ def _run_audit_transaction(
             if not callable(_validated_plan_callback):
                 raise TypeError("The ordinary plan callback must be callable.")
             _validated_plan_callback(authority, transaction, verified, authorizations)
+        attempt = None
+        if _record_replay:
+            from ebm_audit.replay import AttemptRecord, write_replay_manifest
+
+            manifest = write_replay_manifest(
+                store, verified, profile_id=profile_id, plan_digest=plan["plan_digest"],
+                expected=_expected_replay,
+            )
+            attempt = stack.enter_context(AttemptRecord(store, manifest))
         resolved_public_config = authorized.resolved_public_config
         dataset_summary_record = prepared.summary.record
         assert_no_direct_identifier_fields(resolved_public_config)
@@ -1448,11 +1474,16 @@ def _run_audit_transaction(
             worker_config.worker,
             timeout_seconds=timeout_seconds,
             expected_identity=worker_config.expected_identity,
+            execution_control=execution_control,
         )
         if _disable_process_failure_retry:
-            execute_preparation_transaction_no_retry(transaction, invoker, journal)
+            execute_preparation_transaction_no_retry(
+                transaction, invoker, journal, control=execution_control,
+            )
         else:
-            execute_preparation_transaction(transaction, invoker, journal)
+            execute_preparation_transaction(
+                transaction, invoker, journal, control=execution_control,
+            )
         terminals = persisted_candidate_terminals(journal)
         evidence = seal_result_evidence_set(journal)
         baseline_outcome = derive_verified_baseline_outcome(
@@ -1717,7 +1748,7 @@ def _run_audit_transaction(
                     "DEVELOPMENT.NULL_PUBLICATION_READBACK",
                     "The published development-null science receipt failed exact readback.",
                 )
-        return _complete_ordinary_audit_transaction(
+        completed_transaction = _complete_ordinary_audit_transaction(
             authenticated_report_transaction,
             (run_status, process_exit_code),
             authority,
@@ -1726,6 +1757,9 @@ def _run_audit_transaction(
             sealed_scientific_evidence,
             meaning_evidence_extension,
         )
+        if attempt is not None:
+            attempt.finish("FINISHED")
+        return completed_transaction
 
 
 def _run_audit_execution_transaction(
@@ -1764,6 +1798,8 @@ def run_audit(
     profile_id: str,
     timeout_seconds: float,
     _conformance_demo_provenance: _ConformanceDemoProvenance | None = None,
+    execution_control: ExecutionControl | None = None,
+    _expected_replay: Mapping[str, Any] | None = None,
 ) -> tuple[Mapping[str, Any], ExitCode]:
     """Execute one audit and preserve the established public result shape."""
 
@@ -1772,6 +1808,11 @@ def run_audit(
         profile_id=profile_id,
         timeout_seconds=timeout_seconds,
         _conformance_demo_provenance=_conformance_demo_provenance,
+        execution_control=execution_control,
+        # Demo provenance is an ephemeral in-process owner, not a runnable
+        # original config. Do not advertise replay for that special surface.
+        _record_replay=_conformance_demo_provenance is None,
+        _expected_replay=_expected_replay,
     )
     if type(result) is not _OrdinaryAuditTransactionResult:
         raise UnexpectedCoreError(
@@ -1926,7 +1967,9 @@ def doctor(
     """Run deterministic local-only readiness checks without model fitting."""
 
     checks = [
-        _doctor_check("python-runtime", "PASS" if sys.version_info >= (3, 12) else "FAIL"),
+        _doctor_check(
+            "python-runtime", "PASS" if (3, 12) <= sys.version_info < (3, 13) else "FAIL",
+        ),
         _doctor_check("auditor-package", "PASS" if __version__ else "FAIL"),
         _doctor_check("offline-no-network-posture", "PASS"),
         _schema_doctor_check(),

@@ -1,9 +1,10 @@
-name: Release Anim
+# Frozen 0.1.1 publication recipe; development validation lives in checks.yml.
+name: Release Anim 0.1.1 (frozen)
 
 on:
   push:
     tags:
-      - "v*"
+      - "v0.1.1"
 
 jobs:
   build:

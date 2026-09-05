@@ -30,6 +30,7 @@ from ebm_audit.reporting import (
     ReportUnavailableError,
     render_report_from_run_dir,
 )
+from ebm_audit.reporting.inspection import ReportInspectionError
 from ebm_audit.universe.identities import UniverseIdentityError
 
 
@@ -63,6 +64,30 @@ def _worker_timeout(value: str) -> float:
         return normalize_worker_timeout_seconds(timeout)
     except (OverflowError, ValueError):
         raise argparse.ArgumentTypeError("timeout must be a positive number") from None
+
+
+def _memory_megabytes(value: str) -> int:
+    try:
+        parsed = int(value)
+        if not 1 <= parsed <= 1048576:
+            raise ValueError
+        return parsed * 1024 * 1024
+    except ValueError:
+        raise argparse.ArgumentTypeError("memory must be a positive integer in MiB") from None
+
+
+def _execution_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--progress", action="store_true", help="Write progress JSON to stderr.")
+    parser.add_argument(
+        "--memory-budget-mb",
+        type=_memory_megabytes,
+        help="Worker admission budget in MiB; requires --worker-memory-mb.",
+    )
+    parser.add_argument(
+        "--worker-memory-mb",
+        type=_memory_megabytes,
+        help="Declared per-worker reservation in MiB; this is not an RSS limit.",
+    )
 
 
 def _parser() -> _SafeArgumentParser:
@@ -135,6 +160,32 @@ def _parser() -> _SafeArgumentParser:
     )
     run_parser.add_argument("--profile", choices=("quick", "full", "release"), default="quick")
     run_parser.add_argument("--timeout", type=_worker_timeout, default=30.0)
+    _execution_options(run_parser)
+
+    rerun_parser = command.add_parser(
+        "rerun",
+        help="Verify a replay recipe and create a fresh attempt with unchanged inputs.",
+    )
+    rerun_parser.add_argument("--manifest", type=Path, required=True)
+    rerun_parser.add_argument("--config", type=Path, required=True)
+    rerun_parser.add_argument(
+        "--run-root",
+        required=True,
+        help="Fresh output path relative to the original config directory.",
+    )
+    rerun_parser.add_argument("--offline", action="store_true", required=True)
+    rerun_parser.add_argument("--timeout", type=_worker_timeout, default=30.0)
+    _execution_options(rerun_parser)
+
+    summary_parser = command.add_parser("summary", help="Inspect saved report evidence and limits.")
+    summary_parser.add_argument("--run-dir", type=Path, required=True)
+    summary_parser.add_argument("--output", type=Path)
+    diff_parser = command.add_parser(
+        "diff", help="Compare saved scientific evidence and provenance."
+    )
+    diff_parser.add_argument("--left", type=Path, required=True)
+    diff_parser.add_argument("--right", type=Path, required=True)
+    diff_parser.add_argument("--output", type=Path)
 
     demo_parser = command.add_parser(
         "demo",
@@ -190,6 +241,16 @@ def _parser() -> _SafeArgumentParser:
         "init", help="Create a deterministic offline local worker project."
     )
     adapter_init.add_argument("path", type=Path)
+    pin = adapter_command.add_parser("pin", help="Pin the exact local worker identity.")
+    pin.add_argument("--worker-config", type=Path, required=True)
+    pin.add_argument("--output", type=Path)
+    pin.add_argument("--timeout", type=_worker_timeout, default=30.0)
+    check = adapter_command.add_parser("check", help="Qualify a worker and negotiate capabilities.")
+    check.add_argument("--worker-config", type=Path, required=True)
+    check.add_argument("--require-output", action="append", default=[])
+    check.add_argument("--require-capability", action="append", default=[])
+    check.add_argument("--output", type=Path)
+    check.add_argument("--timeout", type=_worker_timeout, default=30.0)
     describe = adapter_command.add_parser("describe", help="Read worker identity and capabilities.")
     describe.add_argument("--offline", action="store_true", default=True)
     describe.add_argument("--timeout", type=_worker_timeout, default=30.0)
@@ -325,16 +386,73 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             _emit_result(result, arguments.output)
             return int(ExitCode.SUCCESS)
-        if arguments.command == "run":
+        if arguments.command in {"run", "rerun"}:
             from ebm_audit.cli_workflows import run_audit
+            from ebm_audit.runner import ExecutionControl, ExecutionProgress
 
-            result, exit_code = run_audit(
-                arguments.config,
-                profile_id=arguments.profile,
-                timeout_seconds=arguments.timeout,
+            def progress(event: ExecutionProgress) -> None:
+                print(
+                    json.dumps(
+                        {"progress": {"phase": str(event.phase), **event.counts()}}, sort_keys=True
+                    ),
+                    file=sys.stderr,
+                    flush=True,
+                )
+
+            control = ExecutionControl(
+                progress_callback=progress if arguments.progress else None,
+                memory_budget_bytes=arguments.memory_budget_mb,
+                per_worker_memory_bytes=arguments.worker_memory_mb,
             )
+            with control.signal_handlers():
+                if arguments.command == "rerun":
+                    from ebm_audit.replay import rerun_audit
+
+                    result, exit_code = rerun_audit(
+                        arguments.manifest,
+                        arguments.config,
+                        run_root=arguments.run_root,
+                        timeout_seconds=arguments.timeout,
+                        control=control,
+                    )
+                else:
+                    result, exit_code = run_audit(
+                        arguments.config,
+                        profile_id=arguments.profile,
+                        timeout_seconds=arguments.timeout,
+                        execution_control=control,
+                    )
             _emit_result(result, None)
             return int(exit_code)
+        if arguments.command in {"summary", "diff"}:
+            from ebm_audit.reporting.inspection import compare_reports, inspect_report
+
+            result = (
+                inspect_report(arguments.run_dir)
+                if arguments.command == "summary"
+                else compare_reports(arguments.left, arguments.right)
+            )
+            _emit_result(result, arguments.output)
+            return int(ExitCode.SUCCESS)
+        if arguments.command == "adapter" and arguments.adapter_command == "pin":
+            from ebm_audit.adapter_tools import pin_adapter
+
+            result = pin_adapter(
+                arguments.worker_config, output=arguments.output, timeout_seconds=arguments.timeout
+            )
+            _emit_result(result, None)
+            return int(ExitCode.SUCCESS)
+        if arguments.command == "adapter" and arguments.adapter_command == "check":
+            from ebm_audit.adapter_tools import check_adapter
+
+            result = check_adapter(
+                arguments.worker_config,
+                requested_outputs=arguments.require_output,
+                required_capabilities=arguments.require_capability,
+                timeout_seconds=arguments.timeout,
+            )
+            _emit_result(result, arguments.output)
+            return int(result["exit_code"])
         if arguments.command == "demo":
             from ebm_audit.cli_workflows import run_conformance_demo
 
@@ -477,6 +595,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         return int(ExitCode.INVALID_INPUT_OR_SPECIFICATION)
     except ReportUnavailableError as error:
         _emit_error(InvalidInputError(error.code, error.safe_message))
+        return int(ExitCode.INVALID_INPUT_OR_SPECIFICATION)
+    except ReportInspectionError as error:
+        _emit_error(InvalidInputError(error.code, str(error)))
         return int(ExitCode.INVALID_INPUT_OR_SPECIFICATION)
     except Exception:
         body = {

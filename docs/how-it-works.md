@@ -5,8 +5,9 @@ machine event IDs: `synthetic_event_a` and `synthetic_event_b`. It explains the
 public worker boundary without showing participant rows, private names, raw
 values, or a real EBM.
 
-The example is illustrative. JSON blocks labelled **complete** validate against
-required object and deliberately omit fields; they are not directly runnable.
+The example is illustrative. JSON blocks labelled **complete** are complete
+values for their named schema definition, not complete worker messages. Python
+examples use placeholder values and are not directly runnable model integrations.
 The executable schemas remain authoritative:
 
 - [`worker-protocol.schema.json`](../schemas/worker-protocol.schema.json)
@@ -46,7 +47,7 @@ synthetic check repeatable, `profile` fixes the small test profile, and
 
 For a fit, the complete outer `WorkerRequest` also includes its command,
 versioned schema identifiers, UUID, timestamps, offline flag, digests, payload,
-schema fields are defined by `WorkerRequest` and `FitRequestPayload` in the
+and input file references. Its fields are defined by `WorkerRequest` and `FitRequestPayload` in the
 worker protocol; do not hand-assemble digests from this guide.
 
 ## 2. Describe The Two-Event Data Without Exposing Values
@@ -326,11 +327,11 @@ and is not an active worker command.
 
 ```text
 ebm-audit-demo/
+  warnings.jsonl
   report/
     report.html
     report.json
     universes.csv
-    warnings.jsonl
 ```
 
 `report.html` is the readable local view. `report.json` carries the structured
@@ -342,3 +343,15 @@ protocol, and capability evidence in those files.
 For a researcher-owned EBM, begin with the [custom worker guide](handoff/custom-worker-guide.md).
 A passing conformance receipt demonstrates protocol and declared-capability
 behavior only. It does not make the EBM scientifically valid or accepted.
+
+The [adapter runbook](handoff/adapter-runbook.md) provides `adapter pin`,
+`adapter check`, generated tests, and a separately provisioned pysaebm example
+that runs actual upstream model code on generated synthetic rows. This walkthrough's
+transport snippets remain illustrative.
+
+Use `ebm-audit summary --run-dir ebm-audit-demo` to inspect the saved report.
+[Report comparison](report-comparison.md) explains `diff`, native-order distances,
+and the separate unavailable uncertainty states. For ordinary saved configurations,
+[reproducibility](reproducibility.md) covers fresh-attempt `rerun`, and
+[execution controls](execution.md) cover progress, cancellation, and memory
+admission. Ephemeral demo configurations do not produce a replay recipe.

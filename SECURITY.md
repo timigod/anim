@@ -2,8 +2,9 @@
 
 ## Current status
 
-Anim 0.1.1 is local research software. Its backend-neutral integration and
-local audit path have completed the project's synthetic readiness review. This
+Anim is local research software. The published 0.1.1 backend-neutral integration and
+local audit path completed the project's synthetic readiness review. The current
+source is the unpublished 0.2.0.dev0 development version. This
 is not a penetration-test certification, institutional approval, or scientific
 approval of an EBM or dataset. A control remains `UNVERIFIED` unless a retained
 test or review receipt proves it on the exact candidate and supported host.
@@ -15,7 +16,7 @@ does not certify a named backend or a future researcher-specific integration.
 
 ## Supported security posture
 
-Version 0.1 is designed for one researcher running trusted, pinned code on an
+The supported design is one researcher running trusted, pinned code on an
 approved local workstation. The supported path is:
 
 - local CPU execution;
@@ -32,6 +33,17 @@ The product is not a multi-user service, access-control system, secure research
 environment, malware sandbox, secrets manager, anonymisation tool, secure eraser,
 or data-loss-prevention product. It does not make a worker safe merely by running
 it as a subprocess.
+
+Saved-report inspection and operational replay preserve this boundary.
+`summary` and `diff` validate bounded regular artifact files and publish only
+closed tokens, numeric values and hashed identities. Those local hashes detect
+inconsistency; they cannot authenticate a whole directory rewritten by an adversary.
+`rerun` verifies configuration, inputs, worker and runtime again and performs a
+fresh complete attempt. It never promotes saved results into live scientific
+authority. Cancellation retains an unsealed completed prefix; memory admission
+reserves concurrency rather than enforcing an operating-system RSS cap. See
+[reproducibility](docs/reproducibility.md), [report comparison](docs/report-comparison.md),
+and the exact [supported-host verification scope](docs/handoff/packaging-validation.md).
 
 The shipped top-level `sitecustomize.py` worker-containment sentinel is inert unless
 `EBM_AUDIT_OFFLINE=1` and Anim supplies valid `EBM_AUDIT_WORK_DIR`,

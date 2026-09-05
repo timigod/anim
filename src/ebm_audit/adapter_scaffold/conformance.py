@@ -30,12 +30,45 @@ def _selected_algorithm(description_receipt: Mapping[str, Any]) -> Mapping[str, 
 
 
 def _remediation(check_id: str) -> list[str]:
-    if check_id == "expected-immutable-identity":
-        return [
-            "Copy selected_expected_identity from adapter describe into the worker "
-            "configuration, then rerun adapter conformance."
-        ]
-    return ["Correct this worker or configuration check, then rerun adapter conformance."]
+    actions = {
+        "expected-immutable-identity": "Run adapter pin on an unpinned configuration. "
+        "For drift restore pinned source/environment, or create a new configuration.",
+        "describe-schema-and-algorithm": "Check the executable, installed worker dependencies, "
+        "configured algorithm ID, closed describe schema, and declaration digests.",
+        "worker-self-test": "Run generated tests and repair the synthetic self-test callbacks.",
+        "finite-synthetic-validate": "Check settings, group roles, finite array shapes, "
+        "and the selected algorithm's minimum participant and event counts.",
+        "fit-same-seed-repeatability": "Bind every random generator to the full request seed and "
+        "use deterministic ordering before reductions or model fitting.",
+        "fit-different-seed-no-cache": "Bind seed and scientific request identity to every fit; "
+        "do not reuse a cached result under another request.",
+        "full-range-canonical-seeds": "Accept the entire UInt64 seed, including both boundaries; "
+        "avoid truncation to a 32-bit legacy random seed.",
+        "unknown-setting-rejected": "Reject undeclared settings using the closed settings schema.",
+        "unavailable-output-rejected": "Reject unsupported outputs with UNSUPPORTED_CAPABILITY; "
+        "preserve the protocol's explicit fixed-evaluation absence exception.",
+        "declared-fit-output-surface": "Return every declared requested output with its canonical "
+        "array metadata, or withdraw the unsupported capability from the declaration.",
+        "row-permutation-and-index-roundtrip": "Keep internal row indexes aligned and canonicalize "
+        "model fitting order so input row permutation cannot change scientific results.",
+        "feature-column-permutation-and-label-remap": "Map backend positions to event IDs and "
+        "canonicalize event ordering before any seeded operation or floating-point reduction.",
+        "sampler-off-by-one-and-convergence-finalisation": "Return postproposal states and "
+        "aligned likelihoods; compute burn/thin counts from the canonical indexing equations.",
+        "private-identifier-and-raw-value-canary-scan": "Remove identifiers and raw input values "
+        "from metadata, returned arrays, logs, and retained diagnostics.",
+        "explicit-network-attempt-case": "Use a supported offline sandbox. Runtime workers must "
+        "not attempt network access; provision dependencies before running checks.",
+        "complete-result-invariant-matrix": "Build results using FitContext.fit_success and retain "
+        "request identities, provenance, typed absence, canonical arrays, and field origins.",
+        "participant-event-cell-accounting": "Preserve all requested rows, event IDs, and cells; "
+        "bind returned row indexes and counts to the unchanged execution projection.",
+    }
+    return [
+        actions.get(
+            check_id, "Repair the named synthetic contract boundary and rerun adapter check."
+        )
+    ]
 
 
 def _failure(check: Mapping[str, Any], *, unavailable: bool) -> dict[str, Any]:

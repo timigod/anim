@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "anim"
-version = "0.1.1"
+version = "0.2.0.dev0"
 description = "Local, backend-neutral robustness auditing for event-based models"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -67,6 +67,9 @@ include = [
   "/THIRD_PARTY_NOTICES.md",
   "/docs/handoff",
   "/docs/how-it-works.md",
+  "/docs/report-comparison.md",
+  "/docs/execution.md",
+  "/docs/reproducibility.md",
   "/docs/security",
   "/docs/spec",
   "/evaluator/proportional_benchmark_contract-0.3.0-candidate.yaml",
@@ -78,10 +81,18 @@ include = [
   "/examples/development",
   "/examples/idris_2025_public",
   "/pyproject.toml",
+  "/release/anim-0.1.1-sha256.txt",
+  "/scripts/packaging",
+  "/tests/packaging",
+  "/tests/runner",
+  "/tests/replay",
+  "/tests/reporting",
+  "/tests/adapters",
   "/schemas",
   "/src/sitecustomize.py",
   "/src/ebm_audit",
   "/uv.lock",
+  "/workers/pysaebm_example",
   "/workers/conformance_ebm/model.py",
   "/workers/conformance_ebm/worker.py",
   "/workers/conformance_ebm_partial/partial_model.py",
@@ -99,6 +110,9 @@ packages = ["src/ebm_audit"]
 "examples/idris_2025_public" = "ebm_audit/examples/idris_2025_public"
 "docs/handoff" = "ebm_audit/docs/handoff"
 "docs/how-it-works.md" = "ebm_audit/docs/how-it-works.md"
+"docs/report-comparison.md" = "ebm_audit/docs/report-comparison.md"
+"docs/execution.md" = "ebm_audit/docs/execution.md"
+"docs/reproducibility.md" = "ebm_audit/docs/reproducibility.md"
 "docs/security" = "ebm_audit/docs/security"
 "docs/spec" = "ebm_audit/docs/spec"
 "evaluator/proportional_benchmark_contract-0.3.0-candidate.yaml" = "ebm_audit/evaluator_contracts/readiness_contract.yaml"
@@ -113,6 +127,7 @@ packages = ["src/ebm_audit"]
 "LICENSE" = "ebm_audit/LICENSE"
 "src/sitecustomize.py" = "sitecustomize.py"
 "uv.lock" = "ebm_audit/uv.lock"
+"workers/pysaebm_example" = "ebm_audit/workers/pysaebm_example"
 "workers/conformance_ebm/model.py" = "ebm_audit/workers/conformance_ebm/model.py"
 "workers/conformance_ebm/worker.py" = "ebm_audit/workers/conformance_ebm/worker.py"
 "workers/conformance_ebm_partial/partial_model.py" = "ebm_audit/workers/conformance_ebm_partial/partial_model.py"

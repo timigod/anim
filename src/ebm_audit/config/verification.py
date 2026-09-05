@@ -571,6 +571,22 @@ class VerifiedAuditConfigFiles:
         return str(self._worker_config_digest)
 
     @property
+    def replay_file_bindings_digest(self) -> str:
+        """Bind every verified dependency, excluding only the replayed config file.
+
+        The replay layer separately binds parsed configuration with only the
+        output destination removed. File roles are fixed internal identifiers;
+        no paths or participant values leave this owner.
+        """
+
+        self.assert_unchanged()
+        return structured_sha256(
+            "anim/replay-file-bindings/1",
+            dict(sorted((role, digest) for role, digest in self._file_digests
+                        if role != "source-config")),
+        )
+
+    @property
     def verified_file_role_count(self) -> int:
         """Revalidate and count sealed file roles without materializing their bytes."""
 

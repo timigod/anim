@@ -457,12 +457,21 @@ def _derive_origin_numeric_comparison(
     )
     reason_code: str | None
     rank_shifts: dict[str, object]
-    if eligibility == "UNAVAILABLE":
-        numeric_status = "TERMINAL_UNAVAILABLE"
-        reason_code = "ANALYST_DECISION.TERMINAL_UNAVAILABLE"
+    if eligibility == "UNAVAILABLE" or subject_derived is None or comparator_derived is None:
+        # Successful central-order-only workers need not advertise retained
+        # samples. Preserve that absence instead of treating it as corruption
+        # or inventing a sampled modal order from the objective-best order.
+        numeric_status = (
+            "TERMINAL_UNAVAILABLE" if eligibility == "UNAVAILABLE" else "NOT_ASSESSABLE"
+        )
+        reason_code = (
+            "ANALYST_DECISION.TERMINAL_UNAVAILABLE"
+            if eligibility == "UNAVAILABLE"
+            else "ANALYST_DECISION.REFERENCE_CHAIN_UNAVAILABLE"
+        )
         subject_modal: tuple[str, ...] = ()
         comparator_modal: tuple[str, ...] = ()
-        absent_reason = "ANALYST_DECISION.TERMINAL_UNAVAILABLE"
+        absent_reason = reason_code
         kendall = _numeric_absence_scalar(
             "central-order-kendall-distance/1",
             absent_reason,
@@ -1772,10 +1781,20 @@ def _validate_numeric_semantics(record: dict[str, object]) -> tuple[str, str, st
     terminal_with_reference_chain = {"SUCCESS", "CONVERGENCE_WARN"}
     subject_reference_source = record.get("subject_reference_chain_source")
     comparator_reference_source = record.get("comparator_reference_chain_source")
-    if (type(subject_reference_source) is dict) != (
-        subject_status in terminal_with_reference_chain
-    ) or (type(comparator_reference_source) is dict) != (
-        comparator_status in terminal_with_reference_chain
+    if (
+        (subject_reference_source is not None and type(subject_reference_source) is not dict)
+        or (
+            comparator_reference_source is not None
+            and type(comparator_reference_source) is not dict
+        )
+        or (
+            type(subject_reference_source) is dict
+            and subject_status not in terminal_with_reference_chain
+        )
+        or (
+            type(comparator_reference_source) is dict
+            and comparator_status not in terminal_with_reference_chain
+        )
     ):
         raise _integrity("SCIENCE.ANALYST_DECISION_REFERENCE_CHAIN_STATUS")
     common_event_ids = _string_sequence(
@@ -1870,8 +1889,19 @@ def _validate_numeric_semantics(record: dict[str, object]) -> tuple[str, str, st
         flips.get("flip_fraction"),
         metric_id="strict-pairwise-majority-flip-fraction/1",
     )
-    if eligibility == "UNAVAILABLE":
-        absent_reason = "ANALYST_DECISION.TERMINAL_UNAVAILABLE"
+    if (
+        eligibility == "UNAVAILABLE"
+        or subject_reference_source is None
+        or comparator_reference_source is None
+    ):
+        absent_reason = (
+            "ANALYST_DECISION.TERMINAL_UNAVAILABLE"
+            if eligibility == "UNAVAILABLE"
+            else "ANALYST_DECISION.REFERENCE_CHAIN_UNAVAILABLE"
+        )
+        expected_status = (
+            "TERMINAL_UNAVAILABLE" if eligibility == "UNAVAILABLE" else "NOT_ASSESSABLE"
+        )
         expected_rank: dict[str, object] = {
             "rule_id": "common-event-rank-shift/1",
             "absolute_rank_shift_metric_id": "absolute-event-rank-shift/1",
@@ -1906,7 +1936,7 @@ def _validate_numeric_semantics(record: dict[str, object]) -> tuple[str, str, st
             != _numeric_absence_scalar("pairwise-matrix-distance/1", absent_reason)
             or rank_shifts != expected_rank
             or flips != expected_flips
-            or record.get("numeric_status") != "TERMINAL_UNAVAILABLE"
+            or record.get("numeric_status") != expected_status
             or record.get("reason_code") != absent_reason
         ):
             raise _integrity("SCIENCE.ANALYST_DECISION_TERMINAL_NUMERIC")

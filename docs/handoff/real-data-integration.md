@@ -29,6 +29,13 @@ process may write a local HTML/JSON/CSV report only from its exact live evidence
 that report says `INCOMPLETE`, emits no final manifest, and is not product
 readiness evidence.
 
+Development version 0.2.0.dev0 adds `summary` and `diff` for bounded inspection
+of saved report artifacts and `rerun` for a fresh complete attempt from an
+ordinary configuration. These commands do not rehydrate scientific authority.
+The sibling `<run-name>.operations/replay.json` is an operational recipe, separate
+from the unavailable final scientific manifest. See [report comparison](../report-comparison.md),
+[reproducibility](../reproducibility.md), and [execution controls](../execution.md).
+
 The tool audits declared sensitivity. It does not establish a true disease
 sequence, diagnosis, prognosis, treatment effect, causal mechanism, clinical
 validation, regulatory status, or medical-device status.
@@ -44,10 +51,13 @@ it does not define product readiness or authorize participant-data use.
 | `doctor` | Current | Produces a scoped local pre-execution receipt. It is not a product-readiness decision. |
 | `init --template synthetic`, `init --template idris-2025-public` | Current | Create the selected `AuditConfig/0.3` starter from the four required path options. The Idris route is a structural public mapping aid only: it contains no real rows, published event order, reproduced model, or product-readiness claim. |
 | `adapter describe`, `adapter conformance` | Current | Inspect a local worker and run the implemented public synthetic protocol cases. They are the generic integration route, but a passing receipt does not establish scientific suitability for an optional real-data use. |
+| `adapter pin`, `adapter check` | Current | Pin an exact worker identity and negotiate required outputs/capabilities with synthetic conformance. Drift and unavailable requirements remain explicit failures. |
 | `validate` | Current | Validates the configured local input and authenticated worker without fitting. A valid receipt does not authorize optional real-data use. |
 | `plan` | Current | Compiles a safe plan summary without fitting. It does not decide the local scientific, privacy, offline, or governance checks for optional real-data use. |
 | `run` | Current but incomplete | Executes the configured candidate set. Its live report remains `INCOMPLETE`, it emits no final manifest, and a candidate-complete run exits `12` while the science gate is `BLOCKED`. |
 | `report` | Current typed refusal | Parses, then returns `REPORT.V1_DISABLED` before reading the run directory or touching the output directory. |
+| `summary`, `diff` | Current | Inspect schema/hash-bound saved report artifacts and compare values, identities and typed states. No fitting or scientific rehydration. |
+| `rerun` | Current | Validate an ordinary run's recipe against its original configuration, input, worker and runtime, then refit its whole plan into a fresh root. Existing results are preserved. |
 | `baseline-reference init`, `baseline-reference validate` | Current | Creates a deliberately non-importable private draft/notebook example, or validates an exported three-file reference bundle offline. Neither command fits a model or changes product readiness. |
 | `benchmark --profile ...` | Unavailable | Historical unavailable parser spelling retained as package-journey context. It is not the generic conformance route or a product-readiness condition. |
 
@@ -832,6 +842,12 @@ There is no `manifest.json` until the exact final run-gate authority exists.
 Report presence or candidate exit `0` cannot substitute for it. A current
 candidate-complete run therefore exits `12` while its report is `INCOMPLETE` and
 its science completion gate remains `BLOCKED`.
+
+For ordinary runs, operational records live beside this closed scientific
+publication in `<run-name>.operations/`: `replay.json` binds reproducibility
+inputs, and `attempt-status.json` records `FINISHED`, `CANCELLED`, or `FAILED`.
+`FINISHED` is an execution disposition, not scientific acceptance. Missing
+attempt status means interruption or an unknown disposition.
 
 The run root and every private subdirectory must be mode `0700` (or stricter).
 The namespace key, optional mapping, resolved sensitive configuration, private

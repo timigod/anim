@@ -1,0 +1,8 @@
+# Optional worker environment only; never a dependency of Anim's core.
+numpy==2.3.1
+scipy==1.16.2
+scikit-learn==1.7.2
+numba==0.62.1
+llvmlite==0.45.1
+joblib==1.5.2
+threadpoolctl==3.6.0

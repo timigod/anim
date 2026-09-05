@@ -92,6 +92,7 @@ from .claims import (
     REPORT_LANGUAGE_RULE_ID,
     assert_claims_allowed,
 )
+from .summary import decision_summary_html
 
 if TYPE_CHECKING:
     from ebm_audit.synthetic.authority import ScenarioAuthority
@@ -2336,7 +2337,10 @@ def _table(headers: Sequence[str], rows: Sequence[Sequence[object]]) -> str:
         "<tr>" + "".join(f"<td>{html.escape(str(cell))}</td>" for cell in row) + "</tr>"
         for row in rows
     )
-    return f"<table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>"
+    return (
+        '<div class="table-scroll">'
+        f"<table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>"
+    )
 
 
 def _axis_vector_cell(value: object) -> str:
@@ -2431,7 +2435,7 @@ def _analyst_combination_table(
     )
 
 
-def _html_bytes(model: Mapping[str, Any]) -> bytes:
+def _html_bytes(model: Mapping[str, Any], *, native_objective_html: str = "") -> bytes:
     input_declaration = _require_string(model.get("input_declaration"))
     input_label = (
         '<p class="input-declaration">INPUT CLASSIFICATION: SYNTHETIC-ONLY</p>'
@@ -3577,7 +3581,8 @@ def _html_bytes(model: Mapping[str, Any]) -> bytes:
 <title>Incomplete EBM Robustness Audit Report</title>
 <style>
 :root {{ color-scheme: light; font-family: system-ui, sans-serif; }}
-body {{ margin: 2rem auto; max-width: 76rem; padding: 0 1rem; line-height: 1.5; }}
+body {{ margin: 2rem auto; max-width: 76rem; padding: 0 1rem; line-height: 1.5;
+        overflow-wrap: anywhere; }}
 h1, h2 {{ color: #17324d; }}
 table {{ border-collapse: collapse; width: 100%; margin: 1rem 0; }}
 th, td {{ border: 1px solid #b8c2cc; padding: .45rem; text-align: left; }}
@@ -3586,6 +3591,11 @@ th {{ background: #eef3f7; }}
 .report-status {{ border: .2rem solid #9b2c2c; padding: .8rem; font-weight: 800; }}
 .section-status {{ font-weight: 700; }}
 code {{ overflow-wrap: anywhere; }}
+.summary-scroll {{ overflow-x: auto; }}
+.table-scroll {{ overflow-x: auto; max-width: 100%; }}
+#native-objective-summary table {{ min-width: 40rem; }}
+pre {{ overflow-x: auto; max-width: 100%; }}
+#decision-summary {{ border: 1px solid #b8c2cc; padding: 1rem; margin: 1rem 0; }}
 </style>
 </head>
 <body>
@@ -3599,6 +3609,8 @@ code {{ overflow-wrap: anywhere; }}
 <p>{html.escape(MANDATORY_OPENING)}</p>
 <p class="gate">{html.escape(baseline_language)}</p>
 <p class="gate">{html.escape(NULL_SAFE_FALLBACK)}</p>
+{decision_summary_html(model)}
+{native_objective_html}
 <h2>2. Dataset and specification summary</h2>
 {status("dataset-and-specification")}
 {
@@ -4260,7 +4272,27 @@ def _write_report_from_live_evidence_transaction(
         _require_mapping(model.get("provenance"))
     ) != report_provenance_csv_bytes:
         raise _report_contract_error()
-    report_html_bytes = _html_bytes(model)
+    from .objective_orders import (
+        objective_choice_html,
+        objective_choice_summary,
+        objective_order_projection,
+    )
+
+    live_run = _sealed_result_evidence_run(evidence)
+    native_orders = [
+        objective_order_projection(
+            strict_json_loads(_read_persisted_result(persisted).canonical_bytes),
+            candidate,
+            model["provenance"]["plan_digest"],
+            scientific_candidate["event_semantics"],
+        )
+        for persisted, candidate, scientific_candidate in zip(
+            live_run.persisted_results, model["candidate_records"],
+            cast(Sequence[dict[str, Any]], projection["candidate_records"]), strict=True
+        )
+    ]
+    native_objective_html = objective_choice_html(objective_choice_summary(model, native_orders))
+    report_html_bytes = _html_bytes(model, native_objective_html=native_objective_html)
     _validate_claim_directive_output(model, report_html_bytes)
     report_model_artifact_binding = _issue_report_model_artifact_binding(
         model,
