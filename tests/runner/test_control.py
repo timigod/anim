@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import select
 import signal
 import subprocess
 import sys
@@ -111,10 +112,15 @@ def test_cancellation_kills_and_reaps_worker_ignoring_sigterm(tmp_path, monkeypa
         pytest.skip("Linux worker execution requires bubblewrap containment.")
     worker_file = tmp_path / "slow_worker.py"
     worker_file.write_text(
-        "import signal, time\n"
+        "import os, signal, sys, time\n"
         "from pathlib import Path\n"
         "signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
-        "Path('.cancel-test-ready').write_text('ready')\n"
+        # Bubblewrap preserves the host /proc mount in the containment plan.
+        # /proc/self therefore identifies this worker to the observing parent,
+        # while os.getpid() alone would identify it only inside the PID namespace.
+        "pid = os.readlink('/proc/self') if sys.platform == 'linux' else str(os.getpid())\n"
+        "Path('.cancel-test-ready.tmp').write_text(pid)\n"
+        "Path('.cancel-test-ready.tmp').replace('.cancel-test-ready')\n"
         "while True: time.sleep(0.05)\n"
     )
     real_popen = subprocess.Popen
@@ -136,6 +142,7 @@ def test_cancellation_kills_and_reaps_worker_ignoring_sigterm(tmp_path, monkeypa
         timeout_seconds=60,
         execution_control=control,
     )
+    worker_pidfd = None
     with ThreadPoolExecutor(max_workers=1) as pool:
         future = pool.submit(
             invoker.invoke,
@@ -151,6 +158,23 @@ def test_cancellation_kills_and_reaps_worker_ignoring_sigterm(tmp_path, monkeypa
                     future.result()
                 time.sleep(0.01)
             assert ready_paths[0].exists()
+            worker_pid = int(ready_paths[0].read_text())
+            worker_exit = None
+            if sys.platform == "linux":
+                # Track the actual worker, not the Bubblewrap supervisor's
+                # return code or process group (the worker has a new session).
+                worker_pidfd = os.pidfd_open(worker_pid)
+                proc = Path("/proc") / str(worker_pid)
+                assert os.fsencode(worker_file) in (proc / "cmdline").read_bytes().split(b"\0")
+                status = (proc / "status").read_text().splitlines()
+                ignored = next(line.split()[1] for line in status if line.startswith("SigIgn:"))
+                assert int(ignored, 16) & (1 << (signal.SIGTERM - 1))
+                assert worker_pid != processes[0].pid
+                worker_exit = select.poll()
+                worker_exit.register(worker_pidfd, select.POLLIN)
+                assert not worker_exit.poll(0)
+            else:
+                assert worker_pid == processes[0].pid
             cancellation_time = time.monotonic()
             control.request_cancel()
             with pytest.raises(ExecutionCancelled) as caught:
@@ -159,10 +183,18 @@ def test_cancellation_kills_and_reaps_worker_ignoring_sigterm(tmp_path, monkeypa
             assert caught.value.exit_code is ExitCode.PARTIAL
             assert caught.value.invocation_observation is None
             assert caught.value.__context__ is None
-            assert processes[0].returncode == -signal.SIGKILL
+            if worker_exit is not None:
+                events = worker_exit.poll(1000)
+                assert len(events) == 1 and events[0][0] == worker_pidfd
+                assert events[0][1] & select.POLLIN
+                assert processes[0].returncode in {-signal.SIGTERM, -signal.SIGKILL}
+            else:
+                assert processes[0].returncode == -signal.SIGKILL
             assert not invocation._process_group_exists(processes[0])
         finally:
             control.request_cancel()
+            if worker_pidfd is not None:
+                os.close(worker_pidfd)
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX worker process groups required")

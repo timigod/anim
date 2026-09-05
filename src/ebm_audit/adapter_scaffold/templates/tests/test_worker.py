@@ -68,7 +68,7 @@ def test_pin_is_idempotent_and_real_synthetic_fits_conform(worker_config: Path) 
     assert code == 0 and receipt["disposition"] == "ALREADY_PINNED"
     assert worker_config.read_bytes() == pinned
     code, checked = cli("check", "--worker-config", str(worker_config))
-    assert code == 0 and checked["status"] == "PASS"
+    assert code == 0 and checked["status"] == "PASS", json.dumps(checked, indent=2, sort_keys=True)
     checks = {row["check_id"]: row for row in checked["conformance"]["checks"]}
     for name in (
         "fit-same-seed-repeatability",
