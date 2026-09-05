@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
@@ -946,8 +947,10 @@ def _adversary_command(mode: str) -> WorkerCommand:
     return WorkerCommand.from_tokens(
         [
             sys.executable,
-            "-m",
-            "ebm_audit.adapters.contract_adversary",
+            # Execute the worker file without importing the auditor-side
+            # adapters package in the contained worker. Its eager configuration
+            # imports are not part of the adversary's SDK dependency surface.
+            str(Path(__file__).resolve().with_name("contract_adversary.py")),
             mode,
         ]
     )

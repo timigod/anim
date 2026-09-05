@@ -74,6 +74,12 @@ existing versioned receipt. Restore the pinned source/environment after drift;
 do not erase old pins to make a check green. Use the named remediation for fit
 mapping, seed, row/event alignment, sampler indexing, or offline containment.
 
+Checks labeled `AUDITOR_CORE_BOUNDARY` exercise Anim's packaged synthetic
+adversaries in contained subprocesses. They test the auditor's rejection rules;
+a failure in these checks does not by itself identify a defect in your backend.
+The maintained `tests/adapters/test_core_boundaries.py` suite checks each exact
+rejection code and distinguishes intentional crashes from worker startup failure.
+
 ## Optional real EBM: pysaebm
 
 The maintained example is in `workers/pysaebm_example` in the source distribution
