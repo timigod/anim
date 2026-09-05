@@ -14,6 +14,7 @@ import re
 import tarfile
 import tomllib
 import zipfile
+from datetime import date
 from email.parser import BytesParser
 from pathlib import Path, PurePosixPath
 
@@ -91,11 +92,19 @@ def check_source(root: Path, tag: str | None = None) -> dict:
         SpecifierSet(lock["requires-python"]) == SpecifierSet("==3.12.*"), "lock Python range drift"
     )
     readme = (root / "README.md").read_text()
-    require(f"Development version: **{version}**" in readme, "README development version drift")
+    version_label = "Development version" if Version(version).is_devrelease else "Version"
+    require(f"{version_label}: **{version}**" in readme, "README version drift")
     headings = re.findall(r"^## (\d[^\n]*)", (root / "CHANGELOG.md").read_text(), re.M)
     require(bool(headings) and headings[0].split(" - ")[0] == version, "changelog version drift")
     if Version(version).is_devrelease:
         require(headings[0].endswith(" - Unreleased"), "development changelog claims a release")
+    else:
+        release_date = headings[0].split(" - ", 1)[-1]
+        require(
+            re.fullmatch(r"\d{4}-\d{2}-\d{2}", release_date) is not None,
+            "release changelog requires an ISO date",
+        )
+        date.fromisoformat(release_date)
     require(
         project["urls"]
         == {

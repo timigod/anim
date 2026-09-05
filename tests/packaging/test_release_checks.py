@@ -6,6 +6,7 @@ import base64
 import csv
 import importlib.util
 import io
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,7 @@ spec.loader.exec_module(check)
 @pytest.fixture
 def source(tmp_path):
     root = SCRIPT.parents[2]
+    current_version = tomllib.loads((root / "pyproject.toml").read_text())["project"]["version"]
     for relative in (
         "pyproject.toml",
         "uv.lock",
@@ -29,7 +31,15 @@ def source(tmp_path):
     ):
         path = tmp_path / relative
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes((root / relative).read_bytes())
+        content = (root / relative).read_text()
+        if relative != "release/anim-0.1.1-sha256.txt":
+            content = content.replace(current_version, "0.2.0.dev0")
+        if relative == "CHANGELOG.md":
+            lines = content.splitlines()
+            index = next(i for i, line in enumerate(lines) if line.startswith("## "))
+            lines[index] = "## 0.2.0.dev0 - Unreleased"
+            content = "\n".join(lines) + "\n"
+        path.write_text(content)
     (tmp_path / "README.md").write_text("Development version: **0.2.0.dev0** (unreleased).\n")
     return tmp_path
 
@@ -71,6 +81,26 @@ def test_development_version_cannot_claim_release(source):
     path.write_text(path.read_text().replace("Unreleased", "2026-09-05"))
     with pytest.raises(ValueError, match="claims a release"):
         check.check_source(source)
+
+
+@pytest.mark.parametrize("changelog_date", ["2026-09-05", "Unreleased", "2026-02-30"])
+def test_stable_release_requires_matching_version_tag_and_valid_date(source, changelog_date):
+    for relative in (
+        "pyproject.toml", "uv.lock", "src/ebm_audit/__init__.py", "CHANGELOG.md", "README.md"
+    ):
+        path = source / relative
+        content = path.read_text().replace("0.2.0.dev0", "0.2.0")
+        content = content.replace("Development version:", "Version:")
+        if relative == "CHANGELOG.md":
+            content = content.replace("Unreleased", changelog_date)
+        path.write_text(content)
+    if changelog_date == "2026-09-05":
+        assert check.check_source(source, "v0.2.0")["version"] == "0.2.0"
+        with pytest.raises(ValueError, match="tag/project"):
+            check.check_source(source, "v0.2.1")
+    else:
+        with pytest.raises(ValueError):
+            check.check_source(source, "v0.2.0")
 
 
 def test_immutable_public_hashes_cannot_be_rewritten(source):

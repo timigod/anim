@@ -1,6 +1,6 @@
 # Adapter onboarding and the real pysaebm example
 
-Anim 0.2.0.dev0 provides a generated worker project, identity pinning, explicit
+Anim 0.2.0 provides a generated worker project, identity pinning, explicit
 capability checks, and an optional integration with real open-source EBM code.
 All commands run locally. Provision dependencies before disconnecting; fitting,
 checking, and reporting do not access the network, send telemetry, or use an LLM.

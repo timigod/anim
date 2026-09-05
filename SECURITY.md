@@ -2,10 +2,10 @@
 
 ## Current status
 
-Anim is local research software. The published 0.1.1 backend-neutral integration and
-local audit path completed the project's synthetic readiness review. The current
-source is the unpublished 0.2.0.dev0 development version. This
-is not a penetration-test certification, institutional approval, or scientific
+Anim 0.2.0 is local research software. The backend-neutral integration and
+local audit path completed the project's synthetic readiness review, with
+macOS/Linux integration and containment checks. This is not a penetration-test
+certification, institutional approval, or scientific
 approval of an EBM or dataset. A control remains `UNVERIFIED` unless a retained
 test or review receipt proves it on the exact candidate and supported host.
 

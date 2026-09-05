@@ -9,37 +9,31 @@ It is **not** a diagnostic, prognostic, treatment, causal, regulatory, or
 medical-device tool. An emitted event order is not evidence that a recoverable
 disease-order signal exists.
 
-Development version: **0.2.0.dev0** (unreleased). The immutable public release
-is **0.1.1**; installing from PyPI does not install this development checkout.
+Version: **0.2.0**. See the [changelog](CHANGELOG.md) for this release.
+The 0.1.1 release artifacts and their recorded hashes remain immutable.
 
 ## Installation
 
-The published Anim 0.1.1 requires CPython 3.12:
+Anim requires CPython 3.12:
 
 ```sh
-python3.12 -m pip install 'anim==0.1.1'
+python3.12 -m pip install 'anim==0.2.0'
 ebm-audit doctor
 ```
 
-Anim 0.1.1 installs and runs `doctor` on macOS and Linux. Worker execution uses
-the reviewed Seatbelt path on macOS. On Linux, it uses `/usr/bin/bwrap` when
-Bubblewrap is installed and otherwise fails closed with
-`PRIVACY.CONTAINMENT_UNAVAILABLE`. The 0.1.1 release does not claim full Linux
-worker-execution support.
+The compatibility matrix covers CPython 3.12 on macOS and Linux.
+macOS worker execution requires Seatbelt; Linux requires a working Bubblewrap
+installation at `/usr/bin/bwrap` with namespaces enabled. Without a provider,
+worker execution fails closed with `PRIVACY.CONTAINMENT_UNAVAILABLE`.
+Windows execution and other Python minors are unsupported.
 
-For development version 0.2.0.dev0 from this source checkout (CPython 3.12):
+To work from this source checkout instead:
 
 ```sh
 python3.12 --version
 uv sync --frozen
 uv run ebm-audit doctor
 ```
-
-The development compatibility matrix covers CPython 3.12 on macOS and Linux.
-macOS worker execution requires Seatbelt; Linux requires a working Bubblewrap
-installation at `/usr/bin/bwrap` with namespaces enabled. Without a provider,
-worker execution fails closed. Windows execution and other Python minors are
-unsupported; no compatibility widening is claimed.
 
 See the [packaging validation runbook](docs/handoff/packaging-validation.md) for
 fresh wheel installation, enforced offline synthetic smoke, and the CI matrix.
@@ -83,9 +77,9 @@ cd "$PROOF_ROOT" || exit 1
    [frozen notebook handoff](https://github.com/timigod/anim/blob/main/docs/handoff/frozen-notebook-handoff.md). The
    notebook and data remain private and local.
 
-## Development workflow
+## Worker integration and audit workflow
 
-Version 0.2.0.dev0 adds local worker pinning and capability checks, saved-run
+Version 0.2.0 adds local worker pinning and capability checks, saved-run
 summaries and comparisons, and fresh-attempt replay with progress and memory
 admission. Start with the synthetic demo above; inspect its saved evidence with:
 
@@ -195,6 +189,6 @@ untested integration, establish a disease-order signal, or authorize
 participant-data use. The exact claim boundary is the normative
 [EBM integration readiness contract](https://github.com/timigod/anim/blob/main/docs/spec/ebm-integration-readiness.md).
 
-See the [0.1.1 changelog](https://github.com/timigod/anim/blob/main/CHANGELOG.md) for the public release scope.
+See the [changelog](https://github.com/timigod/anim/blob/main/CHANGELOG.md) for the public release scope.
 
 Anim is licensed under the [Apache License 2.0](https://github.com/timigod/anim/blob/main/LICENSE).

@@ -1,6 +1,6 @@
 # Offline Kit Verification
 
-This runbook describes an explicitly prepared **unreleased 0.2.0.dev0** kit.
+This runbook describes an explicitly prepared **Anim 0.2.0** kit.
 For build and installed-worker proof, see [packaging validation](packaging-validation.md).
 The public 0.1.1 artifacts and recorded hashes remain unchanged.
 
@@ -15,7 +15,7 @@ README.md
 KIT-IDENTITY.txt
 SHA256SUMS
 wheels/
-  anim-0.2.0.dev0-py3-none-any.whl
+  anim-0.2.0-py3-none-any.whl
   <all locked CPython 3.12 destination-platform runtime dependency wheels>
 ```
 
@@ -99,7 +99,7 @@ VENV_ROOT=$PROOF_ROOT/auditor-venv
     --only-binary :all: \
     --find-links . \
     --quiet \
-    'anim==0.2.0.dev0'
+    'anim==0.2.0'
 )
 ```
 
@@ -115,7 +115,7 @@ import sys
 distribution = metadata.distribution("anim")
 environment = Path(sys.argv[1]).resolve()
 origin = Path(distribution.locate_file("")).resolve()
-assert distribution.version == "0.2.0.dev0"
+assert distribution.version == "0.2.0"
 assert origin.is_relative_to(environment)
 print("distribution=anim")
 print(f"version={distribution.version}")

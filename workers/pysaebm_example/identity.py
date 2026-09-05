@@ -103,7 +103,7 @@ def build_identity(manifest: dict) -> WorkerIdentity:
     )
     return WorkerIdentity(
         adapter_id="anim-pysaebm-example",
-        adapter_version="0.2.0.dev0",
+        adapter_version="0.2.0",
         worker_executable_digest=executable_digest,
         worker_code_digest=code_digest,
         backend_name="pysaebm",

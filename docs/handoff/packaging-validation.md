@@ -1,9 +1,9 @@
 # Packaging and compatibility validation
 
-The current source is **0.2.0.dev0**, an unpublished development version. The
-public **0.1.1** wheel and source archive remain immutable. Their exact identities
+The current version is **0.2.0**. The public **0.1.1** wheel and source archive
+remain immutable. Their exact identities
 are recorded in `release/anim-0.1.1-sha256.txt`; never regenerate that manifest
-from changed source. Development builds produce their own versioned filenames
+from changed source. New builds produce their own versioned filenames
 and validation output. None of the commands below publishes a release.
 
 ## Supported surfaces
@@ -34,7 +34,7 @@ uv sync --locked --group build --no-install-project --python 3.12
 "$UV_PROJECT_ENVIRONMENT/bin/python" scripts/packaging/check_release.py
 "$UV_PROJECT_ENVIRONMENT/bin/python" -m pytest tests/packaging -q
 export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
-uv build --no-build-isolation --out-dir tmp/packaging-dist
+uv build --python "$UV_PROJECT_ENVIRONMENT/bin/python" --no-build-isolation --out-dir tmp/packaging-dist
 "$UV_PROJECT_ENVIRONMENT/bin/python" scripts/packaging/check_release.py --dist tmp/packaging-dist
 ```
 
@@ -72,9 +72,9 @@ On macOS:
 
 ```sh
 python3.12 -I scripts/packaging/installed_smoke.py \
-  --wheel tmp/packaging-dist/anim-0.2.0.dev0-py3-none-any.whl \
+  --wheel tmp/packaging-dist/anim-0.2.0-py3-none-any.whl \
   --wheelhouse tmp/runtime-wheels --proof-root tmp/installed-proof-macos \
-  --version 0.2.0.dev0 --containment available
+  --version 0.2.0 --containment available
 ```
 
 The proof root must not exist. The harness creates a fresh virtual environment,
@@ -101,9 +101,9 @@ ordinary user before invoking the same harness:
 ```sh
 sudo unshare --net -- setpriv --reuid="$(id -u)" --regid="$(id -g)" --init-groups -- \
   "$(command -v python3.12)" -I scripts/packaging/installed_smoke.py \
-  --wheel tmp/packaging-dist/anim-0.2.0.dev0-py3-none-any.whl \
+  --wheel tmp/packaging-dist/anim-0.2.0-py3-none-any.whl \
   --wheelhouse tmp/runtime-wheels --proof-root tmp/installed-proof-linux \
-  --version 0.2.0.dev0 --containment available
+  --version 0.2.0 --containment available
 ```
 
 Linux checks require an isolated route table and kernel network-denial probes;
@@ -122,9 +122,30 @@ dependencies were provisioned and `ANIM_PYSAEBM_SOURCE_DIR` is set; the default 
 job does not fetch those sources or any dataset. See the adapter runbook for
 explicit software-only provisioning and opt-in tests.
 It has read-only repository permissions and retains distributions and synthetic
-receipts as CI artifacts. The historical release workflow only matches
-`v0.1.1`; it is not a development publication path. Any later publication needs
-its own explicitly authorized, reviewed release procedure and artifact hashes.
+receipts as CI artifacts. The same workflow is callable by the release workflow,
+so publication runs the same build, public regression and installed-wheel checks.
+
+## Publish a release
+
+Update the package, import, lock, README, changelog and versioned examples together.
+Use a dated changelog entry and a stable version, then run the checks above and
+land the release preparation on `main`. Before creating the public tag, confirm
+that the intended version is absent from PyPI and GitHub and the exact commit
+has passed CI. Existing versions and artifact hashes must never be replaced.
+
+After release authorization, create and push the matching annotated tag (for
+this release, `v0.2.0`). `.github/workflows/release.yml` rejects mismatched tags
+and development versions, then calls the complete validation workflow. Only
+successful validation permits the `pypi` environment job to publish the exact
+validated distributions through GitHub OIDC; no API token is needed locally.
+A following job creates the matching GitHub Release with those same files,
+SHA-256 checksums and the version's changelog entry.
+
+Wait for the workflow to finish. Verify the public PyPI version and both file
+hashes against the validated distributions, and check the GitHub tag, notes and
+assets. Record publication separately from a successful source push. If PyPI
+publishes but GitHub Release creation fails, retain the published files and
+retry only the failed job; never alter or republish the version's artifacts.
 
 ## Optional local Linux-container proof
 

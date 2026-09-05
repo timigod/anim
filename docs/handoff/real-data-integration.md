@@ -29,7 +29,7 @@ process may write a local HTML/JSON/CSV report only from its exact live evidence
 that report says `INCOMPLETE`, emits no final manifest, and is not product
 readiness evidence.
 
-Development version 0.2.0.dev0 adds `summary` and `diff` for bounded inspection
+Anim 0.2.0 adds `summary` and `diff` for bounded inspection
 of saved report artifacts and `rerun` for a fresh complete attempt from an
 ordinary configuration. These commands do not rehydrate scientific authority.
 The sibling `<run-name>.operations/replay.json` is an operational recipe, separate

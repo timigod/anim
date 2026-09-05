@@ -33,7 +33,7 @@ transitive dependencies of its primary libraries. The CPython 3.12 graph is:
 No named EBM backend is part of this core graph. Optional historical backend
 research and its environments are not part of the Anim 0.1.1 PyPI distribution.
 
-Development version 0.2.0.dev0 includes Anim's own optional adapter and provisioner
+Anim 0.2.0 includes Anim's own optional adapter and provisioner
 under `workers/pysaebm_example`; it does not bundle the upstream backend source
 or its optional dependencies. The example selects public pysaebm 7.7.9 commit
 `54521a9adfedf58facd7bafd741a14d9ed110d2a`, licensed under MIT. Its
