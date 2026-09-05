@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+import ebm_audit.adapters.invocation as invocation
 from ebm_audit.adapters.contract import _adversary_command
 from ebm_audit.adapters.invocation import WorkerInvoker
 from ebm_audit.errors import AuditError
@@ -25,7 +26,34 @@ from ebm_audit.errors import AuditError
         ("tamper-warnings", "PROTOCOL.RESPONSE_SCHEMA", 30.0),
     ],
 )
-def test_core_adversary_rejection_code(mode, expected_code, timeout):
+def test_core_adversary_rejection_code(mode, expected_code, timeout, monkeypatch):
+    # Only fixed startup classifications may escape this synthetic probe;
+    # diagnostic bytes remain inside the normal bounded stream collector.
+    markers = (
+        b"ModuleNotFoundError", b"ImportError", b"PermissionError",
+        b"FileNotFoundError", b"AttributeError", b"RuntimeError", b"ValueError",
+        b"TypeError", b"SyntaxError", b"NameError", b"numpy", b"yaml",
+        b"jsonschema", b"ebm_audit", b"libpython", b"bwrap:",
+    )
+    observed = set()
+    initialize = invocation._StreamDigestCollector.__init__
+
+    class Probe:
+        def __init__(self, stream):
+            self.stream = stream
+
+        def read(self, size):
+            block = self.stream.read(size)
+            observed.update(marker.decode("ascii") for marker in markers if marker in block)
+            return block
+
+        def close(self):
+            self.stream.close()
+
+    def initialize_probe(collector, stream, **kwargs):
+        initialize(collector, Probe(stream), **kwargs)
+
+    monkeypatch.setattr(invocation._StreamDigestCollector, "__init__", initialize_probe)
     with pytest.raises(AuditError) as caught:
         WorkerInvoker(
             _adversary_command(mode), timeout_seconds=timeout
@@ -34,4 +62,4 @@ def test_core_adversary_rejection_code(mode, expected_code, timeout):
             payload_schema_version=None,
             payload={"expected_identity": None},
         )
-    assert caught.value.code == expected_code
+    assert caught.value.code == expected_code, (sorted(observed), caught.value.details)
