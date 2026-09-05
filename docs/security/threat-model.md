@@ -1,20 +1,22 @@
 # Threat model
 
-## 1. Purpose and assurance state
+## 1. Purpose and limits
 
-This threat model defines the minimum security boundary for local EBM Robustness
-Auditor 0.1 execution. It is normative for implementation and release review. It
-does not claim that an unfinished build already implements the controls. Each
-control remains `UNVERIFIED` until exercised on the exact release candidate.
+This document describes what could go wrong when Anim processes research data,
+the protections required, how they must be tested, and the risks that remain.
+It is a technical reference for developers and security reviewers. Researchers
+can start with the [privacy requirements](../../PRIVACY.md) and
+[security policy](../../SECURITY.md).
 
-The safety objective is narrow: process authorised participant data locally,
-without network dependence, while preventing direct identifiers and raw
-measurements from entering default retained artifacts or worker metadata, and
-while making backend failures and side effects visible.
+Anim must process authorised data locally and offline, keep direct identifiers
+and raw measurements out of default saved outputs and worker metadata, and make
+model failures and unexpected file or network activity visible. A protection is
+`UNVERIFIED` until tested on the exact release being assessed. Listing it here
+does not establish that a particular installation meets it.
 
-The model does not establish institutional compliance, anonymity, scientific
-validity, or containment of hostile native code running with the researcher's OS
-permissions.
+These protections do not establish institutional compliance, anonymity, scientific
+validity, or safety against deliberately hostile code that has the same
+operating-system access as the researcher.
 
 ## 2. Assets
 
@@ -26,8 +28,8 @@ permissions.
 | Row-level derived stages/influence | Sensitive | Internal index or alias only; private machine-readable result; not treated as anonymous |
 | Reference-result bundle | Sensitive | Local and separately controlled; no direct IDs; not copied into report bundle |
 | Event names, units, directions, group rules | Scientific metadata; may still be private | Sanitise configurable source column names and private paths; retain only declared display metadata |
-| Configuration, seeds, hashes, software identity | Provenance; hashes can be linkable | Integrity protected, local by default, no external transmission |
-| Failure/warning ledger | Operational | Complete and tamper-evident by digest; privacy-safe contents |
+| Configuration, seeds, hashes, software versions | Processing history; hashes may link records to a dataset | Check for changes, retain locally by default, do not transmit externally |
+| Failure and warning log | Operational | Retain all entries, record hashes to detect changes, exclude private values |
 | Benchmark and claim-language rules | Scientific safety | Versioned and integrity-bound; unavailable checks never become passes |
 
 ## 3. Actors and trust levels
@@ -98,14 +100,13 @@ The subprocess boundary isolates Python environments, ordinary crashes, logging
 configuration, and expected file side effects. Without OS sandboxing it is not a
 confidentiality boundary against a malicious worker.
 
-Profile-characterization authority and one-shot publication assume the
-auditor's own process is trusted. Their supported public APIs prevent ordinary
-stale, duplicate, or conflicting use; weak canonical-authority reclamation is a
-lifecycle rule, not a security boundary. Arbitrary same-process reflection,
-debugger access, mutation of private in-memory registries, and compromise of the
-Python interpreter or process memory are outside this control's threat model.
-An attacker with those capabilities can bypass process-local invariants and
-requires a separate OS or process-isolation boundary.
+The internal objects used to validate profiles and write reports assume that
+Anim's own process is trusted. Their APIs reject expired, repeated, or conflicting
+requests. Automatically releasing unused internal references manages object
+lifetimes; it does not protect against an attacker in the same process.
+Someone who can use a debugger, inspect or modify private Python objects, change
+internal registries, or compromise the interpreter can bypass these checks.
+Protection against that attacker requires operating-system or process isolation.
 
 ## 5. Threats, controls, and verification
 
@@ -123,7 +124,7 @@ operation as `PRIVACY_VIOLATION`.
 
 **Verification.** Run no-socket/no-DNS tests against core and reference/fixture
 workers, scan HTML/CSS/JS for external URLs and requests, and run the synthetic
-end-to-end path with network denied. Retain exact command and terminal receipt.
+end-to-end path with network denied. Retain the command and its final test result.
 
 **Residual risk.** Python monkeypatches and application hooks do not stop hostile
 native code or a subprocess deliberately bypassing them. A non-reviewed worker
@@ -164,7 +165,7 @@ combined with outside knowledge. They remain sensitive.
 tracebacks, plots, captured worker streams, config snapshots, or copied inputs.
 
 **Controls.** Errors use field role/type/count/shape rather than values or rows;
-worker streams are bounded and sanitised; default provenance contains digests and
+worker streams are bounded and sanitised; the saved processing history contains hashes and
 counts; raw input is not copied to the run/cache; reports show aggregates and
 pseudonyms only.
 
@@ -182,7 +183,7 @@ values in a predictable/shared path.
 
 **Controls.** Exclusive random directory mode `0700`; files mode `0600`; no repo
 temp roots; bounded process termination; cleanup on all terminal paths; visible
-stale-workspace receipt on incomplete cleanup.
+a record of files left behind when cleanup is incomplete.
 
 The run root/private directories are also mode `0700`; namespace key, optional
 mapping, private alignment metadata, and other sensitive durable files are mode
@@ -291,7 +292,7 @@ rows/events, invalid probability arrays, and settings mismatch.
 metadata. Trust requires code/environment review or external attestation supplied
 by the approved institution.
 
-### T10 — stdout/stderr or failure-ledger denial/disclosure
+### T10 — excessive output or private data in logs
 
 **Threat.** Worker emits unbounded output, terminal escape sequences, identifiers,
 values, or binary data; the runner deadlocks or retains sensitive streams.
@@ -323,11 +324,10 @@ bytes and no request attempts.
 **Residual risk.** Browser vulnerabilities and user-added post-processing are
 outside the product boundary. Static figures are preferred where practical.
 
-### T12 — cache/provenance poisoning or partial writes
+### T12 — substituted results or incomplete saved files
 
 **Threat.** Result from different data, seed, code, worker, or settings is reused;
-an interrupted write is accepted; a digest is mistaken for proof of source
-authenticity.
+an interrupted write is accepted; a file hash is mistaken for proof of where a result came from.
 
 **Controls.** Complete cache identity, content hashes, write-to-exclusive-temp then
 atomic finalisation, terminal manifest written last, no upstream caches, and
@@ -437,9 +437,10 @@ Any of the following blocks real-data readiness:
 - backend or environment identity mismatch;
 - a privacy/protocol failure omitted from the run summary;
 - an unrun hard privacy test reported as passed; or
-- an unresolved P0/P1 privacy/security review finding.
+- an unresolved critical or high-priority (P0/P1) privacy/security review finding.
 
-An unavailable capability or check is retained as `UNVERIFIED` or
-`UNSUPPORTED_CAPABILITY`; it is never converted to `SUCCESS`. See
+When an operation is unsupported or a check has not been verified, retain the
+applicable `UNSUPPORTED_CAPABILITY` or `UNVERIFIED` status. Never report it as
+`SUCCESS`. See
 [`PRIVACY.md`](../../PRIVACY.md) for researcher-facing handling rules and
 [`SECURITY.md`](../../SECURITY.md) for the release and incident policy.

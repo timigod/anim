@@ -1,5 +1,13 @@
 # Canonical data and result schema
 
+Use this reference for exact input and result fields. For data preparation,
+start with the [input data guide](../handoff/input-data-dictionary.md); for model
+code, start with the [worker guide](../handoff/custom-worker-guide.md).
+“Canonical” means Anim's agreed representation. “Closed” objects reject unknown
+fields, and validation checks types without silently converting or repairing
+values. The [technical reference guide](../handoff/technical-reference-guide.md)
+explains historical sections and scope differences.
+
 Status: FROZEN SCIENTIFIC CONTRACT
 Dataset schema: `ebm-audit-dataset/1.0`
 Event schema: `ebm-audit-event/1.0`
@@ -655,7 +663,7 @@ counts and approved aliases only.
 The four outlier effects are distinct: flagging does not change values, masking
 creates explicit NaN cells, participant removal removes whole declared rows, and
 transformation changes declared cells. No action implies another. A worker-side
-row/event/cell change is forbidden in protocol v1.
+row/event/cell change is forbidden in the current `ebm-audit-worker/v2` protocol.
 
 The built-in missingness policies mean:
 
@@ -666,8 +674,8 @@ The built-in missingness policies mean:
   rejects its declaration or selection because no complete physical owner is
   implemented; no variant is fabricated.
 
-There is no built-in MICE, median, KNN, or other imputation in config version
-0.2.
+There is no built-in MICE, median, KNN, or other imputation in the current
+`AuditConfig/0.3` configuration.
 
 ## 8. Canonical serialization and identity
 
@@ -747,7 +755,7 @@ direction, value, missingness bit, group/covariate value, transformation, or
 accounting fact changes the digest. `config_digest` separately binds the exact
 per-analysis resolved core configuration. In a synthetic benchmark,
 `case_configuration_sha256` additionally binds the complete ordered canonical
-audit-case configuration under `ebm-audit/audit-case-configuration/1`. Neither
+audit-case configuration under `ebm-audit/audit-case-configuration/3`. Neither
 is the generator's full raw resolved configuration or its distinct
 `resolved_generator_configuration_sha256`. A non-null `input_digest` is the
 canonical auditor-input digest computed under `ebm-audit/scientific-data/1`
@@ -1244,7 +1252,7 @@ visible.
 
 `CentralOrderMethod` is closed and records `method_id`, `candidate_source`,
 nullable `objective_id`, and the mandatory tie rule
-`lexicographically-smallest-event-id-sequence/1`. Protocol v1 permits only:
+`lexicographically-smallest-event-id-sequence/1`. `ebm-audit-worker/v2` permits only:
 
 - `retained-state-mode/1`: choose the most frequent retained canonical order;
   on equal frequency choose the lexicographically smallest event-ID sequence;
@@ -1395,8 +1403,9 @@ request plus accounting manifest; they are not worker exclusions.
 
 ### 9.5 `StageResult` is not a fit result
 
-The optional separate `stage` command returns
-`ebm-audit-stage-result/1.0`. It is a distinct closed object containing:
+The separate `stage` command is reserved and unavailable in the current
+protocol. Its future response schema is `ebm-audit-stage-result/1.0`, a
+distinct closed object containing:
 
 ```text
 StageResult
@@ -1961,10 +1970,10 @@ equality, exact shapes, exact canonical array digests, and zero absolute and
 relative float tolerance for the currently representable digest-only array
 evidence; a non-zero numerical tolerance is prohibited until raw comparable
 numeric values and a reviewed algorithm exist. `BaselineReproductionRecord`
-contains eight ordered comparisons: dataset binding, implementation identity,
+contains nine ordered comparisons: dataset binding, implementation identity,
 scientific contract, participant/event accounting, central order, order
-distribution, participant-stage output, and all supplied fields. Its status,
-reasons, reference presence/identity, connected result, and
+distribution, participant-stage output, statistical diagnostics, and all supplied
+fields. Its status, reasons, reference presence/identity, connected result, and
 `validated_language_eligibility` are derived, and
 `baseline_reproduction_id` hashes the complete preimage with only its own field
 null. Validated-language eligibility is true if and only if status is

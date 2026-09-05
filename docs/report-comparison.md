@@ -1,122 +1,163 @@
-# Inspecting and comparing local reports
+# Inspect and compare saved reports
+
+Use `summary` to inspect one saved run and `diff` to compare two:
 
 ```sh
 ebm-audit summary --run-dir ./run-a
 ebm-audit diff --left ./run-a --right ./run-b
 ```
 
-These offline commands inspect saved artifacts. They do not execute a worker,
-load participant-level result arrays, contact a service, or rehydrate scientific
-authority. `ebm-audit report` remains disabled for persisted scientific evidence.
-An `UNCHANGED` comparison means the inspected values and states match; it is not
-a finding of scientific stability. Two unavailable measurements remain unavailable.
+Both commands work offline on existing files. They do not run a worker, load
+participant-level result arrays, contact a service or create a new scientific
+report. `ebm-audit report` remains disabled for saved scientific evidence.
 
-`summary` requires a complete run directory with a schema-valid `run-status.json`
-and `report/report.json`. It verifies the publication inventory digest, the
-length and SHA-256 of every report artifact, and joins the report to the status by
-plan, terminal-index and scientific-evidence identities. Candidate identities,
-ordinals, individual terminal states and counts must agree. The bound scientific
-projection supplies ordered event identities and existing within-fit/chain
-metrics that are absent from the report's shorter candidate table.
+Each input must contain the complete set of report files, including valid
+`run-status.json` and `report/report.json` files. An interrupted run may not
+contain them. Inspection checks that the files belong to the same run and have
+not changed since the run recorded their hashes.
 
-Native central orders are read separately from canonical result JSON whose
-schema, self-hash, publication hash, candidate/status and event identity all
-match. Participant arrays are never loaded from their referenced files or
-included in output. `objective_orders` and `objective_order_distances` preserve
-each native chain order separately; retained-state modal order uncertainty is
-not inferred from them. Strict Kendall and footrule distances reuse the existing
-metrics only when candidates, chain positions, event sets and methods match.
-Event-direction semantics must also match; equal event names alone do not make
-opposite-direction definitions comparable.
-Declared versus authenticated input classification is retained separately:
-ordinary declared-synthetic input can correctly remain `PRIVATE_LOCAL_INPUT`
-in the scientific report without the project's synthetic-provenance authority.
+## Read a comparison
 
-Inspection rejects symbolic links in any path component, non-regular files,
-malformed JSON, duplicate JSON keys, non-finite JSON numbers, unsupported schemas,
-and detached or changed artifacts. Reads are limited to 16 MiB per artifact and
-64 MiB per inspection, with 200,000 JSON nodes, nesting depth 48, and 10,000
-candidates. Larger runs are explicitly refused rather than partially summarized.
-Errors contain a fixed code and message, without rejected values or paths.
+`UNCHANGED` means the inspected values and states match. It does not establish
+scientific stability: two unavailable measurements remain unavailable.
 
-Only packaged enum tokens, numeric values, nulls and hashed identities are
-projected. Arbitrary event names, choice labels, prose and dictionary keys cannot
-appear in the new command output or decision panel. Event identity hashes preserve
-sequence order. These unsalted hashes are identifiers, not an anonymization or
-confidentiality guarantee. Treat the full original run as private local evidence.
+The comparison shows added or removed **candidates** (planned analyses), changes
+to each candidate's final status, event order, numerical differences, aggregate
+stage values, and whether the measurements can be compared. A stage describes
+progress through the event sequence under the model's declared definition.
+It retains capability states and all six uncertainty layers, including each
+layer's `implementation_status`.
 
-The sibling `<run-name>.operations/replay.json`, when present, is checked using
-its bounded loader, self-hash, plan digest and source run identity. Its nonsecret
-input/configuration/worker/randomness/environment bindings are compared separately.
-Missing metadata is `MISSING_REPLAY_BINDINGS`; an invalid existing sidecar fails
-inspection. Attempt lineage and run-specific provenance changes do not turn
-identical metric values into scientific movement.
+The six layers separate uncertainty within a fit, between model-fitting chains,
+from participant sampling, from analyst decisions, from participant influence
+(sensitivity to removing participants), and from null calibration (comparison
+with results expected without signal). They are never pooled into one measure.
 
-The comparison retains candidate additions/removals and individual status swaps,
-ordered events, numeric deltas, stage aggregate values and comparability states,
-all six uncertainty layers, their `implementation_status`, and capability states.
-Provenance differences are reported separately. Changed candidate membership or
-event/stage semantics is marked `NOT_COMPARABLE`; it is not silently treated as
-a like-for-like numeric experiment. Existing `NOT_ASSESSABLE`, failed, invalid
-and unavailable states remain visible in each side's projections and summary.
+Changed candidate membership or event/stage definitions is marked
+`NOT_COMPARABLE`; it must not be treated as a like-for-like numerical experiment.
+Existing `NOT_ASSESSABLE`, failed, invalid and unavailable states remain visible
+for each run. Changes to provenance (records of where results came from) are
+reported separately from changes to measurements.
 
-Local hashes establish consistency with the saved status, not cryptographic
-authenticity against someone rewriting the whole directory and its hashes.
-Inspection never issues scientific capabilities, unlocks validated language,
-reclassifies an incomplete report, or changes a frozen contract.
+Keep the full original run private. Inspection outputs and the decision panel
+use fixed tokens defined by Anim, numbers, nulls and hashed identities; they
+exclude arbitrary event names, choice labels, prose and dictionary keys. The
+hashes preserve event sequence order. They are unsalted identifiers, so they do
+not guarantee anonymity or confidentiality.
 
-## The opening HTML summary
+## Read the opening HTML summary
 
-New live reports include a decision panel above the detailed sections. It uses
-the existing comparison metrics to show, separately for each uncertainty layer:
+New reports created during an audit include a decision panel above the detailed
+sections. For each uncertainty layer, it shows:
 
-- How many order/stage comparisons had exactly zero difference, differed, or
-  were unavailable, and the range of their reported magnitudes.
+- How many order/stage comparisons had exactly zero difference, differed or
+  were unavailable, and the range of reported magnitudes.
 - Declared choices associated with those comparisons, using local `Decision 1 /
   Option 1` aliases and expandable full hashed identities.
-- Software execution, baseline reproduction, worker capability and scientific
-  completion as separate assessments, with implementation and missing states.
-- Null calibration and the explicit caveat that stable or concentrated outputs
-  can occur with no signal.
+- Separate assessments of software execution, baseline reproduction, worker
+  capability and scientific completion, with implementation and missing states.
+- Null calibration and the warning that stable or concentrated outputs can
+  occur with no signal.
 
-An additional native-order panel shows descriptive objective-order comparisons
-on literal declared-choice edges, when both fits succeeded with exactly one
-native order and matching semantics. Multiple-chain results are not reduced to
-a selected chain. Its `objective_summary` projection is separate from scientific
-uncertainty. This panel is built from existing live sealed result owners during
-report creation; saved inspection never issues those owners. The frozen report
-JSON schema is unchanged.
+An additional panel compares **native central orders**: the representative
+event orders supplied by the backend's declared method. It compares pairs
+connected by a declared analysis choice when both fits succeeded, each supplied
+exactly one native order, and their definitions match. It does not select one
+chain from a result with multiple chains.
 
-Zero versus positive distance is a descriptive display rule, not a new scientific
-stability threshold. Signed means, stage agreement and other measures without a
-zero-distance interpretation are displayed only as magnitudes. Different metric
-units, operation families and uncertainty layers are never pooled. Association
-does not establish a cause. Detailed JSON, CSV and HTML evidence remains available.
+This panel's `objective_summary` is descriptive and separate from scientific
+uncertainty. Anim builds it from verified live results during report creation.
+Inspecting a saved report cannot recreate the live objects needed for that
+step. The fixed scientific report JSON schema is unchanged.
 
-## Focused synthetic verification
+Zero versus positive distance is a display rule, not a new scientific stability
+threshold. Signed means, stage agreement and other measures for which zero
+does not mean identical results are displayed only as magnitudes. Different
+metric units, operation families and uncertainty layers are never pooled.
+An association with a choice does not establish a cause. Detailed JSON, CSV
+and HTML evidence remains available.
+
+## Reference: Python API
+
+The functions are `ebm_audit.reporting.inspect_report(run_dir)` and
+`ebm_audit.reporting.compare_reports(left_dir, right_dir)`. Both raise
+`ReportInspectionError` if inspection fails, with a fixed code and message that
+omit rejected values and paths.
+
+Their output schema versions are `anim-report-inspection/1` and
+`anim-report-comparison/1`. These summaries do not replace the fixed scientific
+report schema.
+
+## Reference: file and identity checks
+
+Inspection verifies the publication inventory (the list of files recorded when
+the run was finalized), its digest, and the length and SHA-256 hash of every
+report artifact. It matches the report to the status by plan, terminal-index
+(the record of final candidate outcomes) and scientific-evidence identities.
+Candidate identities, plan positions, individual final states and counts must
+agree. The linked scientific evidence also supplies ordered event identities
+and existing within-fit/chain metrics omitted from the report's shorter
+candidate table.
+
+Native central orders are read separately from result JSON in Anim's standard
+format. Its schema, self-hash, publication hash, candidate/status and event
+identity must all match. Referenced participant array files are never loaded or
+included in the output.
+
+`objective_orders` and `objective_order_distances` keep each native chain order
+separate. They do not infer uncertainty in the modal order (the most frequent
+order among retained sampling states). Strict Kendall distance measures
+pairwise order disagreements; footrule distance measures displacement in event
+positions. These existing metrics are used only when candidates, chain
+positions, event sets and methods match. Event directions must also match:
+equal names do not make opposite definitions of abnormal change comparable.
+
+Inspection keeps declared input classification separate from classification
+verified by Anim. Ordinary input declared synthetic can correctly remain
+`PRIVATE_LOCAL_INPUT` in the scientific report if it lacks the project's
+verified synthetic-origin record.
+
+When `<run-name>.operations/replay.json` exists beside the run, inspection checks
+it with the size-limited loader and verifies its self-hash, plan digest and
+source run identity. Its nonsecret input, configuration, worker, randomness and
+environment identities are compared separately. Missing metadata is
+`MISSING_REPLAY_BINDINGS`; an invalid existing file causes inspection to fail.
+Attempt history and run-specific provenance changes do not make identical
+metrics a scientific change.
+
+## Reference: read limits and trust
+
+Inspection rejects symbolic links in any path component, non-regular files,
+malformed JSON, duplicate JSON keys, non-finite JSON numbers, unsupported
+schemas, and changed files or files that do not match the recorded run.
+The limits are 16 MiB per artifact and 64 MiB per inspection, with 200,000 JSON
+nodes, nesting depth 48 and 10,000 candidates. Runs that exceed these limits
+are refused rather than partially summarized.
+
+Local hashes establish consistency with saved status. They cannot establish
+authenticity against someone who rewrites the whole directory and its hashes.
+Inspection does not grant scientific capabilities, permit validated claims,
+reclassify an incomplete report or change a fixed specification.
+
+## Maintainer reference: focused synthetic verification
 
 ```sh
 .venv/bin/pytest -q tests/reporting --basetemp=tmp/reporting-tests
 ```
 
-The tests generate three genuine synthetic conformance CLI runs and exercise
-summary/diff, matching inputs, changed capabilities, typed missing states and the
-new HTML panel. Synthetic artifact copies test status swaps, ordered values,
-numeric changes, tampering, schema errors, bounded reads, symbolic links, FIFOs
-and private-string canaries. Mutated fixtures are inspection tests, never evidence
-of scientific issuance or baseline reproduction. No historical evaluator suite
-or upstream participant dataset is involved.
+The tests execute three synthetic conformance CLI runs and exercise
+`summary`/`diff`, matching inputs, changed capabilities, explicit missing states
+and the HTML panel. Copies of synthetic artifacts test status swaps, ordered
+values, numerical changes, tampering, schema errors, read limits, symbolic
+links, FIFOs (named pipes), and strings planted to detect private-data leaks.
+Edited test fixtures verify inspection only; they do not demonstrate scientific
+report creation or baseline reproduction. No historical evaluator suite or
+upstream participant dataset is involved.
 
-An additional ordinary CLI test uses the existing custom-worker transport
+An additional ordinary CLI test uses the existing custom-worker communication
 fixture with declared one/two/three-chain choices. Its insufficient-convergence
 states remain `CONVERGENCE_NOT_ASSESSABLE`; its supplied native orders still
-exercise descriptive same-input comparison. Those deterministic fixture traces
-are transport scaffolding, never genuine-backend acceptance. The real-backend
-tests in `tests/replay/test_real_backend_replay.py` cover the implementation's native orders and
-populated native decision panel on locally generated synthetic rows.
-
-Python integration functions are `reporting.inspect_report(run_dir)` and
-`reporting.compare_reports(left_dir, right_dir)`. Both raise the privacy-safe
-`ReportInspectionError` when inspection fails. Their JSON schema versions are
-`anim-report-inspection/1` and `anim-report-comparison/1`; they do not replace the
-frozen scientific report schema.
+exercise descriptive same-input comparison. The deterministic fixture traces
+test communication with a worker, not acceptance of a real backend. Tests in
+`tests/replay/test_real_backend_replay.py` cover a real implementation's native
+orders and populated native decision panel on locally generated synthetic rows.

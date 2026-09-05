@@ -1,31 +1,33 @@
-# Frozen Notebook Handoff
+# Preserve a notebook baseline before integration
 
 This guide is for a research team whose current event-based model (EBM) lives in
 a private Jupyter notebook. The notebook and its data remain private and local.
 Anim does not require the notebook, participant rows, or private outputs to be
 published.
 
-The goal is to preserve the original scientific baseline before integration,
-then run the same model through a deterministic local worker.
+Save the original model, settings, and results before changing the notebook.
+This saved baseline lets you check whether the integrated model reproduces the
+original analysis. Then extract a worker: a separate local command that runs
+the same model with explicit settings and a supplied random seed.
 
 ## 1. Preserve the private baseline
 
 Before changing the notebook or model, record its exact private identity:
 
-- notebook byte hash and trusted storage location;
+- notebook byte hash (a digest identifying its exact contents) and trusted storage location;
 - Python and Jupyter versions;
 - exact installed package versions or environment lock;
 - model implementation, algorithm, settings, seeds, and chain settings;
-- dataset and participant-alignment identity;
-- preprocessing, inclusion, missingness, event labels, and stage semantics; and
-- the outputs that the original notebook genuinely produced.
+- dataset identity and the mapping between participants and result rows;
+- preprocessing, inclusion, missingness, event labels, and the definition of each stage; and
+- the outputs that the original notebook actually produced.
 
 Keep this private record under the research team's approved storage and access
 rules. Do not place the notebook, participant data, absolute private paths, or
 reversible identifiers in the Anim repository, reports, issues, or support
 material.
 
-## 2. Export the canonical reference bundle
+## 2. Export a reference bundle in Anim's required format
 
 Create the private export draft without fitting:
 
@@ -46,9 +48,9 @@ arrays.npz
 private-alignment.json
 ```
 
-The bundle binds the supplied model outputs to their dataset, implementation,
-settings, preprocessing, stage semantics, software identity, and private row
-alignment. It does not infer fields the notebook did not produce.
+The bundle records which dataset, implementation, settings, preprocessing,
+stage definitions, software version, and private row mapping produced the
+outputs. It does not infer fields the notebook did not produce.
 
 Validate the bundle offline before changing the notebook:
 
@@ -60,12 +62,13 @@ ebm-audit baseline-reference validate \
 ```
 
 Keep all three bundle files private, together, and outside repositories and
-report output. A valid receipt proves structural integrity, not scientific
+report output. Successful validation confirms that the bundle follows the
+required format and its recorded hashes match. It does not establish scientific
 validity.
 
 ## 3. Extract a deterministic worker
 
-Keep the notebook as a development and reference surface. Move its fitting and
+Keep the notebook for development and reference. Move its fitting and
 staging call into a local command that:
 
 1. receives every model setting explicitly;
@@ -74,7 +77,8 @@ staging call into a local command that:
 4. uses internal indexes and declared event IDs instead of private IDs or
    implicit DataFrame order;
 5. cannot reuse cached notebook state;
-6. translates only genuine outputs into Anim's strict order and stage fields;
+6. translates only outputs the model produces, or mathematically valid derivations,
+   into Anim's strict order and stage fields;
 7. declares unsupported outputs honestly;
 8. contains plots and standard output without hiding warnings; and
 9. runs successfully as a fresh local process with network access denied.
@@ -100,6 +104,6 @@ frozen reference bundle.
 or outputs can produce at most `BASELINE_PARTIALLY_REPRODUCED`. Similarity to a
 paper figure or reported event order is never a reference result.
 
-This handoff preserves provenance and makes changes visible. It does not prove
-that the original notebook, connected worker, EBM, dataset, or scientific result
-is valid.
+This handoff records where results came from and makes changes visible. It does
+not prove that the original notebook, connected worker, EBM, dataset, or
+scientific result is valid.

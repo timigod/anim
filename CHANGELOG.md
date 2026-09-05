@@ -4,31 +4,36 @@ All notable public changes to Anim are recorded here.
 
 ## 0.2.0 - 2026-09-06
 
-- Adds worker identity pinning, capability negotiation, safe conformance
-  diagnostics, generated starter tests, and a separately provisioned open-source
-  EBM example using synthetic data and explicit source/version/license provenance.
-- Adds local replay recipes that bind configuration, inputs, seeds, worker and
-  environment; `rerun` refuses drift and starts a fresh complete attempt. The
-  real pysaebm synthetic CLI run/rerun check completes both candidates with
-  matching bindings and evidence while preserving the original files.
-- Adds saved-report summaries and evidence-aware comparisons while preserving
-  missing, invalid, failed and incomparable states and separate uncertainty types.
-- Adds progress, cooperative cancellation and explicit memory admission for
-  bounded execution without removing planned candidates or reusing stored results
-  as live scientific evidence.
-- Fixes report sealing for successful central-order-only workers without retained
-  chains: analyst-decision evidence remains `NOT_ASSESSABLE` instead of crashing
-  or inventing chain evidence.
-- Adds version consistency and distribution metadata, resource,
-  integrity, and public-inventory validation.
-- Adds fresh installed-wheel offline synthetic smoke and macOS/Linux CPython
-  3.12 CI, including Linux containment-unavailable failure.
-- Fixes contained adversary startup by launching the packaged worker entry point
-  directly; tests verify exact rejection codes, intentional crash exits, and
-  Linux cancellation on Python builds without `os.pidfd_open`.
-- Publishes through the existing GitHub/PyPI trusted-publisher workflow after
-  the complete macOS/Linux regression and offline installation matrix.
-- Preserves the immutable 0.1.1 release hashes and scientific claim boundaries.
+See [what changed in 0.2.0](docs/handoff/whats-new-0.2.md) for a plain-English
+explanation and the limits of each addition.
+
+- Makes it easier to connect a model: the worker starter includes runnable tests,
+  `adapter pin` records the intended software, and `adapter check` tests the
+  connection and requested outputs.
+- Adds an optional example using the open-source pysaebm model on synthetic data.
+  It returns an estimated event order; sampling and staging uncertainty remain
+  unavailable. Its source, version, and licence are documented.
+- Adds `rerun` to repeat a complete analysis plan in a new directory after checking
+  the original data, settings, seeds, software, and environment. Changed inputs
+  or software prevent an exact repeat; earlier results stay intact.
+- Adds `summary` and `diff` to inspect and compare saved audits. Missing, invalid,
+  failed, and incomparable results remain distinct from measured agreement.
+- Makes the HTML report easier to read, with counts and sizes of differences
+  across declared choices. Comparisons of single selected event orders are shown
+  separately from uncertainty within a model fit.
+- Adds progress messages, cancellation with process cleanup, and a memory
+  allowance for scheduling concurrent model runs. Cancellation preserves saved
+  results; memory settings change concurrency without dropping planned analyses.
+- Fixes a report crash when a successful model returns an event order without
+  retained samples. Checks that need those samples now remain `NOT_ASSESSABLE`.
+- Fixes Linux test-worker startup and cancellation checks, including Python builds
+  without `os.pidfd_open`. Isolates optional numerical-library tests so they do
+  not change the environment of unrelated tests.
+- Checks package versions, contents, and hashes, and tests fresh offline package
+  installations on macOS and Linux with CPython 3.12. Tests also check that Anim
+  refuses model execution when the required Linux sandbox is unavailable.
+- Publishes the validated packages to PyPI and GitHub through the release
+  workflow. Earlier 0.1.1 release files and their recorded hashes are unchanged.
 
 ## 0.1.1 - 2026-08-25
 

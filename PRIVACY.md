@@ -1,26 +1,29 @@
-# Privacy contract
+# Privacy requirements
 
-## Status and scope
+Keep participant data on approved local storage. Install the required software
+before opening those data, run audits offline, and keep individual results
+private. Removing names does not make an output anonymous: estimated stages,
+influence results, and other individual measurements may still identify someone.
 
-This is the normative privacy contract for EBM Robustness Auditor 0.1. `MUST`,
-`MUST NOT`, `SHOULD`, and `MAY` are requirements in the sense used by RFC 2119.
-It applies whenever a researcher supplies participant-level data, including input
-validation, worker execution, caching, result generation, reporting, and failure
-handling.
+Start with the [researcher checklist](#researcher-checklist-before-a-real-data-run).
+The detailed requirements below apply throughout Anim, including version 0.2.0:
+reading data, running the model, saving results, reporting, and handling errors.
+They are also a reference for developers and institutional reviewers.
 
-The repository currently contains public information and clearly labelled
-synthetic fixtures only. The controls below are requirements for the product;
-they are not evidence that an incomplete implementation has passed them. Until
-the corresponding privacy tests pass, the control status is `UNVERIFIED`.
+`MUST` and `MUST NOT` are mandatory requirements. `SHOULD` is a recommendation;
+`MAY` permits an option. A protection remains `UNVERIFIED` until its corresponding
+tests pass. A written requirement alone does not demonstrate that a particular
+installation meets it.
 
-This contract describes technical behavior. It does not claim GDPR, NHS, KCL,
-HIPAA, medical-device, or institutional information-governance compliance. The
-researcher and institution remain responsible for approval, lawful use, storage,
-retention, access control, and scientific governance.
+Anim does not certify GDPR, NHS, KCL, HIPAA, medical-device, or institutional
+compliance. The researcher and institution remain responsible for permission to
+use the data, lawful processing, storage, retention, access, and scientific review.
+The project repository contains public information and labelled synthetic test
+data only.
 
 ## Data that must never enter this project repository
 
-The repository, its Git history, issue trackers, corpus notes, test snapshots,
+The repository, its Git history, issue trackers, shared notes, test snapshots,
 and documentation MUST NOT contain:
 
 - participant-level research data, whether public, private, or controlled;
@@ -37,7 +40,7 @@ Development and committed tests MUST use only clearly labelled synthetic data.
 Synthetic examples MUST use generic event names and MUST NOT imitate or claim to
 reconstruct the Idris cohort.
 
-## Participant-data-time boundary
+## Running with participant data
 
 A real audit MUST run locally inside a researcher-approved environment. The
 auditor and report generator MUST work without:
@@ -49,10 +52,10 @@ auditor and report generator MUST work without:
 - an LLM; or
 - Docker or another container runtime.
 
-Every participant-data command requires an explicit `--offline`
-acknowledgement. The CLI also forces that posture before argument parsing and
-has no online alternative. This is not a statement that the host has no
-network interface. The core MUST refuse known network-backed configuration,
+Every command that processes participant data requires `--offline`. Anim also
+enables its offline checks before reading command arguments and provides no online
+run mode. Your computer may still have a network connection; this option does not
+disconnect it. The core MUST refuse known network-backed configuration,
 the test harness MUST block or detect socket and DNS attempts, and any observed
 attempt MUST fail the affected operation. See
 [`docs/security/threat-model.md`](docs/security/threat-model.md) for the limit of
@@ -61,11 +64,12 @@ this control with a malicious native worker.
 Dependencies and worker environments SHOULD be acquired and verified before
 participant data are opened. A local wheelhouse or institutionally approved
 package mirror MAY be used during setup, but dependency acquisition MUST NOT be
-mixed into a participant-data-time run.
+performed during a run that processes participant data.
 
-## Identity model
+## Participant identifiers and report labels
 
-The core MUST keep three identities distinct:
+Anim MUST keep the original participant identifier, the worker's row index, and
+the report label separate:
 
 | Identity | Purpose | Allowed destinations |
 | --- | --- | --- |
@@ -90,7 +94,8 @@ an undeclared identifier field. Every returned stage array carries and exactly
 round-trips the corresponding index array; count equality does not prove row
 alignment.
 
-An optional reversible mapping is a separate high-risk artifact. It MUST be:
+An optional file can map report labels back to the original participant IDs.
+This file is particularly sensitive. It MUST be:
 
 - created only after an explicit opt-in;
 - written under the run's `private/` directory, never the report bundle;
@@ -123,10 +128,10 @@ exist only in:
 4. backend memory during that request.
 
 The auditor MUST NOT create an unrequested working copy of the input dataset.
-The default run directory, cache metadata, provenance, logs, exceptions, report,
-figures, and warning/failure ledgers MUST NOT contain raw participant-level event
-values. Default provenance records digests, shapes, counts, decisions, versions,
-and statuses instead.
+The default run directory, cache metadata, processing records, logs, exceptions,
+report, figures, and warning/failure logs MUST NOT contain raw participant event
+values. Processing records contain hashes, array shapes, counts, analysis choices,
+versions, and statuses instead.
 
 Machine-readable canonical results MAY contain row-level derived stage or
 influence outputs keyed only by internal indexes or aliases. They MUST NOT contain
@@ -162,10 +167,10 @@ by the current user. The implementation MUST:
 
 Cleanup MUST validate the exact run-owned path before deletion. It MUST NOT follow
 symlinks or recursively delete an unresolved, broad, or caller-supplied path. If
-cleanup is incomplete, the run MUST record a privacy-safe stale-workspace receipt
-and return a visible warning or failure. The receipt MAY contain a random
-workspace token and cleanup command, but MUST NOT reveal the input filename or a
-private path by default.
+cleanup is incomplete, the run MUST record the remaining temporary workspace
+without exposing private data, and return a visible warning or failure. That
+record MAY contain a random workspace identifier and a cleanup command. By
+default it MUST NOT reveal the input filename or a private path.
 
 Deletion is best-effort file removal, not a guarantee of forensic erasure from
 SSDs, backups, snapshots, or institutional storage. A researcher requiring secure
@@ -173,8 +178,9 @@ erasure MUST use institution-approved encrypted storage and lifecycle controls.
 
 ## Worker trust boundary
 
-The command-worker protocol is dependency and failure isolation; by itself it is
-not a security sandbox. A conforming worker MUST write only inside its assigned
+Running the model in a separate worker keeps its Python dependencies and ordinary
+failures separate from Anim. That separation alone does not make an untrusted
+program safe. A conforming worker MUST write only inside its assigned
 directory, remain offline, avoid telemetry, avoid persistent caches, and return
 only declared outputs. The core MUST validate and inventory its response.
 
@@ -187,11 +193,12 @@ access. Therefore:
 - a merely passing `describe` or contract test MUST NOT be treated as proof that
   a hostile worker is safe;
 - a worker that needs broader filesystem access or network access MUST NOT be used
-  for a participant-data-time audit;
+  for an audit of participant data;
 - untrusted workers require a separate OS account or institutionally approved
   sandbox with explicit filesystem and network denial; and
-- separate worker-executable, worker-code, backend-source, environment, and
-  capabilities digests MUST be bound into run provenance.
+- separate hashes of the worker executable, worker code, model source,
+  environment, and supported operations MUST be included in the run's software
+  records.
 
 Without an OS filesystem sandbox, absence of an observed outside write proves
 only the assigned/watched roots were clean; arbitrary filesystem containment is
@@ -200,7 +207,7 @@ reviewed worker code. Untrusted code requires OS-level containment.
 
 A misconfigured worker that crashes, writes unexpected files, attempts network,
 prints raw values, substitutes a backend, or silently drops rows/events MUST
-produce a visible typed failure. It MUST NOT contribute scientific evidence.
+produce a visible failure status. It MUST NOT contribute scientific evidence.
 
 ## Results, logs, reports, and caches
 
@@ -254,24 +261,27 @@ algorithm/settings, preprocessing/inclusion, stage semantics, dataset binding,
 and adequate richer order/stage outputs. Central order and counts alone can
 produce at most `BASELINE_PARTIALLY_REPRODUCED`.
 
-## Saved summaries and operational replay
+## Reading saved reports and repeating a run
 
-`summary` and `diff` read bounded, schema/hash-bound artifacts without loading
-participant result arrays or invoking a worker. They retain typed absence and
-failure and expose numeric aggregates, closed tokens and hashed identities.
-Identity hashes are unsalted and are not anonymisation; keep report bundles
-and their source directories private. They are local integrity checks, not
-proof against a party rewriting the entire bundle and its hashes.
+`summary` and `diff` check saved report formats, file hashes, and size limits.
+They do not load individual participant result arrays or run the model. Their
+output contains aggregate numbers, recognised labels, and hashed identifiers;
+missing and failed results stay visible. These identifier hashes are unsalted
+and do not anonymise data, so keep the report files and their source directories
+private. Hashes detect inconsistencies but cannot protect against someone replacing
+an entire set of files and recalculating its hashes.
 
-Ordinary runs store `replay.json` and `attempt-status.json` in a private sibling
-`<run-name>.operations/` directory. Recipes contain hashes and a profile, not
-participant rows, original paths or runnable configuration. A `rerun` still
-requires the original private inputs and worker, verifies their bindings, and
-creates a fresh complete attempt. Previous results are never rehydrated as
-live scientific authority. Progress and cancellation diagnostics contain only
-closed phases and candidate counts; cancellation leaves unfinished work unsealed.
-See [report comparison](docs/report-comparison.md) and
-[reproducibility](docs/reproducibility.md) for exact command and limit details.
+Ordinary runs store `replay.json` and `attempt-status.json` beside the results,
+in a private `<run-name>.operations/` directory. These record hashes and the
+selected profile, without participant rows, original paths, or a runnable
+configuration. `rerun` still needs the original inputs and worker. It checks
+them and repeats the whole analysis plan in a new directory, rather than using
+old results to calculate a new scientific report.
+
+Progress messages and cancellation errors contain only recognised phase names
+and analysis counts. A stopped run remains incomplete. See
+[report comparison](docs/report-comparison.md) and
+[repeating an audit](docs/reproducibility.md) for commands and limits.
 
 ## Required privacy gates
 
@@ -301,5 +311,5 @@ An unavailable or unrun gate is `UNVERIFIED`, never a pass.
 6. Run validation and inspect predicted row/event accounting before fitting.
 7. Do not enable a reversible mapping unless it is required and approved.
 8. Treat derived row-level results and data digests as sensitive.
-9. Review stale temporary-workspace and privacy-failure receipts before archiving.
+9. Check for leftover temporary files and unresolved privacy failures before archiving.
 10. Export only the approved aggregate report bundle.

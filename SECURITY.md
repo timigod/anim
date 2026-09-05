@@ -1,51 +1,58 @@
-# Security policy and runtime contract
+# Security policy
 
-## Current status
+Anim runs on a researcher's local computer. It keeps model execution and reports
+offline, checks the files exchanged with the model, and restricts temporary-file
+access. Use trusted model code, an approved workstation, and your institution's
+data-handling procedures. These software protections do not replace them.
 
-Anim 0.2.0 is local research software. The backend-neutral integration and
-local audit path completed the project's synthetic readiness review, with
-macOS/Linux integration and containment checks. This is not a penetration-test
-certification, institutional approval, or scientific
-approval of an EBM or dataset. A control remains `UNVERIFIED` unless a retained
-test or review receipt proves it on the exact candidate and supported host.
+To report a problem, see [Reporting a security or privacy issue](#reporting-a-security-or-privacy-issue).
+Do not include participant data in the report.
 
-Do not use participant data merely because this file describes intended
-protections. A researcher must have separate institutional authority, privacy
-review, approved local storage, and a reviewed worker. Anim's release readiness
-does not certify a named backend or a future researcher-specific integration.
+Anim 0.2.0 passed synthetic integration and operating-system sandbox checks on
+macOS and Linux. Those checks do not constitute a penetration test, institutional
+approval, or scientific validation of your model. A particular protection remains
+`UNVERIFIED` unless a recorded test or review establishes it for the version
+and operating system in use.
 
-## Supported security posture
+## What the protections cover
 
-The supported design is one researcher running trusted, pinned code on an
-approved local workstation. The supported path is:
+The supported setup is one researcher running reviewed model code on an approved
+workstation. Pinning records the software files and versions so that changes can
+be detected. In this setup Anim requires:
 
 - local CPU execution;
 - explicit offline mode;
-- a backend-neutral core and a separately installed command worker;
-- one fresh, restrictive workspace per worker invocation;
-- validated, hashed request and response bundles;
+- a model run by a separately installed worker program;
+- a new, access-restricted working directory each time a worker runs;
+- checks of the format and file checksums of each request and response;
 - no direct participant identifiers at the worker boundary;
 - deterministic local reporting with no remote assets; and
-- fail-closed statuses for malformed, unsupported, crashed, timed-out,
-  non-converged, network-attempting, or privacy-violating work.
+- visible failure or unavailable statuses when a request is malformed or
+  unsupported, a process crashes or times out, sampling does not converge,
+  or a network or privacy rule is violated.
 
 The product is not a multi-user service, access-control system, secure research
 environment, malware sandbox, secrets manager, anonymisation tool, secure eraser,
 or data-loss-prevention product. It does not make a worker safe merely by running
 it as a subprocess.
 
-Saved-report inspection and operational replay preserve this boundary.
-`summary` and `diff` validate bounded regular artifact files and publish only
-closed tokens, numeric values and hashed identities. Those local hashes detect
-inconsistency; they cannot authenticate a whole directory rewritten by an adversary.
-`rerun` verifies configuration, inputs, worker and runtime again and performs a
-fresh complete attempt. It never promotes saved results into live scientific
-authority. Cancellation retains an unsealed completed prefix; memory admission
-reserves concurrency rather than enforcing an operating-system RSS cap. See
-[reproducibility](docs/reproducibility.md), [report comparison](docs/report-comparison.md),
-and the exact [supported-host verification scope](docs/handoff/packaging-validation.md).
+`summary` and `diff` check saved report files, enforce size limits, and output
+only recognised status labels, numbers, and hashed identifiers. Hashes help detect
+changed files; they cannot protect against someone replacing an entire directory
+and recalculating all its hashes.
 
-The shipped top-level `sitecustomize.py` worker-containment sentinel is inert unless
+`rerun` checks the inputs and software again and repeats the complete analysis
+plan. It does not calculate a new scientific report from old saved results.
+Stopping a run preserves the results already saved and leaves unfinished work
+incomplete. The memory options limit simultaneous workers using your estimates;
+they do not impose a hard limit on the memory used by the operating system.
+See [repeating an audit](docs/reproducibility.md),
+[report comparison](docs/report-comparison.md), and
+[supported operating systems and tests](docs/handoff/packaging-validation.md).
+
+### Note for Python environment maintainers
+
+The installed top-level `sitecustomize.py` adds worker checks only when
 `EBM_AUDIT_OFFLINE=1` and Anim supplies valid `EBM_AUDIT_WORK_DIR`,
 `EBM_AUDIT_INVOCATION_ROOT`, `EBM_AUDIT_REQUEST_DIR`,
 `EBM_AUDIT_NETWORK_ATTEMPT_FILE`, `EBM_AUDIT_OUTSIDE_ATTEMPT_FILE`, and
@@ -69,11 +76,15 @@ filesystem access. Protocol validation, file inventories, and Python-level socke
 tests detect important mistakes, but cannot contain arbitrary native code with
 the same operating-system permissions as the researcher.
 
-## Mandatory controls
+## Requirements for developers and security reviewers
+
+The sections below specify the required implementation. `MUST` and `MUST NOT`
+are mandatory; `SHOULD` is a recommendation and `MAY` is permission. They include
+technical details needed to implement or review the protections.
 
 ### Offline execution
 
-Every participant-data-time command MUST expose and honour `--offline`. Offline
+Every command that processes participant data MUST expose and honour `--offline`. Offline
 mode MUST reject known remote configuration, disable telemetry, prevent the core
 from initiating network access, propagate the offline requirement to the worker,
 and treat a detected worker network attempt as a failed operation. Reports MUST
@@ -100,8 +111,8 @@ Each invocation MUST have:
 - a minimal allowlisted environment;
 - captured stdout and stderr with size limits and privacy sanitisation;
 - an inventory of created files;
-- response schema, hash, and scientific-invariant validation; and
-- a typed terminal status.
+- checks of the response format, file hashes, and required mathematical properties; and
+- an explicit final status code.
 
 Worker/request seeds are canonical 16-lowercase-hex `UInt64Hex` strings on every
 wire/JCS boundary, not JSON numbers. Full-range and malformed-seed tests are part
@@ -162,9 +173,9 @@ sandbox that property is `UNVERIFIED`; trusted/reviewed workers are the normal
 participant-data boundary.
 
 Raw input MUST not be copied into the run directory or cache. After a worker
-terminal state, the core MUST attempt bounded, path-validated cleanup and record
-a privacy-safe stale-workspace receipt if it cannot complete. Removal is not a
-claim of forensic erasure.
+finishes or fails, Anim MUST attempt cleanup with time limits and validated paths.
+If files remain, it MUST record the cleanup failure without exposing private
+paths or data. Removing files does not guarantee secure erasure from storage.
 
 ### Logging and error handling
 
@@ -181,8 +192,8 @@ non-converged, and privacy-failed universes MUST remain visible.
 ### Supply chain and executable identity
 
 The core and every worker MUST record exact versions, acquired-artifact hashes,
-and separate core-code, worker-executable, worker-code, backend-source, and
-environment digests under the protocol's normative preimages. The core MUST not import an
+and separate hashes for the Anim code, worker executable, worker code, model
+source, and environment, using the inputs defined by the protocol. The core MUST not import an
 EBM backend. The optional `pysaebm` reference worker is valid only for exact
 source commit `54521a9adfedf58facd7bafd741a14d9ed110d2a`, expected source version
 `7.7.9`, and the separately verified environment and licence bytes. PyPI version
@@ -202,10 +213,10 @@ fresh locked installation and an offline end-to-end run. Anim is distributed
 under Apache-2.0. Optional EBM backends remain separate installations with their
 own licence, identity, and review requirements.
 
-### Cache and provenance integrity
+### Checking saved results before reuse
 
-A cached result is reusable only when the full scientific and executable identity
-matches: input digest, selected participants/events, preprocessing and group
+Where caching is supported, a result may be reused only when every recorded
+input and software detail matches: input digest, selected participants/events, preprocessing and group
 rules, event directions, protocol and schema versions, the five distinct code/
 executable/backend/environment digests, settings, canonical string seed, and
 result schema.
@@ -231,13 +242,14 @@ The protocol terminal statuses include:
 - `PRIVACY_VIOLATION`
 - `PROTOCOL_ERROR`
 
-A worker `SUCCESS` is immutable candidate evidence for one command/chain, not a
-core-final scientific success. The core writes a separate final result after the
-complete cross-chain convergence rule; it may quarantine all successful chain
-responses as `CONVERGENCE_FAILED` or `CONVERGENCE_NOT_ASSESSABLE` without
-rewriting or discarding them. Only a fully validated core-final `SUCCESS` can
-contribute scientific outputs. All failures remain in summaries. A privacy or
-protocol failure cannot be downgraded because other universes succeeded.
+A worker's `SUCCESS` records that one command or sampling chain completed.
+Anim then checks convergence across chains and writes a separate final result.
+That result may be `CONVERGENCE_FAILED` or `CONVERGENCE_NOT_ASSESSABLE` even
+when the individual chains completed. Their original results remain on disk,
+but are excluded from calculations that require successful convergence. Only a
+fully checked final `SUCCESS` can supply scientific outputs. Summaries retain
+all failures, and success in other analyses cannot cancel a privacy or protocol
+failure.
 
 Baseline-reference status is independent of process success:
 
@@ -267,7 +279,8 @@ The exact release candidate MUST pass:
 - cache poisoning/partial-write/digest-mismatch tests;
 - deterministic report and external-resource scans;
 - fresh locked installation and offline synthetic end-to-end execution; and
-- an independent privacy/security review with no unresolved P0/P1 finding.
+- an independent privacy/security review with no unresolved critical or
+  high-priority (P0/P1) finding.
 
 An unavailable test is `UNVERIFIED`. A hard privacy failure blocks real-data
 readiness regardless of aggregate benchmark results.
@@ -276,8 +289,8 @@ readiness regardless of aggregate benchmark results.
 
 Do not place participant data, direct identifiers, raw values, credentials, or
 private paths in a bug report. Record a minimal local reproduction using synthetic
-data, the affected version or commit, operating system, typed status, and
-sanitised digests. Submit the report through a
+data, the affected version or commit, operating system, status code, and
+file hashes that are safe to share. Submit the report through a
 [private GitHub security advisory](https://github.com/timigod/anim/security/advisories/new),
 not a public issue. Never attach participant data or a real-data artifact to the
 advisory. Use the institution's incident channel for any matter that requires

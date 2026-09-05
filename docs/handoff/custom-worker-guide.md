@@ -1,57 +1,82 @@
-# Custom worker guide
+# Connect your model with a custom worker
+
+Use this guide to connect a private or different event-based model (EBM) to Anim
+without changing the auditor core. A **worker** is a separate local executable:
+it reads a request, invokes your model, and writes a response. The **backend**
+is the model implementation it calls. Model source and any participant data stay
+inside the researcher's approved local environment. The core must not import
+the private model package.
 
 ## Start here
 
-Complete the README's [Offline first start](../../README.md)
-route first. This guide begins only after the auditor is installed and the
-six-file worker scaffold has been created with `ebm-audit adapter init`; it does
-not replace the offline installation and initialization prerequisites.
+Complete the README's [Offline first start](../../README.md) installation and
+initialization steps. After creating the six-file starter with
+`ebm-audit adapter init`, run these commands from the generated worker directory
+in the environment containing Anim:
 
-For the current onboarding commands, use the [adapter runbook](adapter-runbook.md):
-`adapter pin` records the exact worker identity, `adapter check` negotiates
-requested capabilities and runs synthetic conformance, and the generated tests
-exercise the worker through real subprocesses. The runbook also includes a
-separately provisioned public pysaebm example with exact source/license hashes.
-This guide remains the detailed worker protocol and implementation reference.
+```sh
+ebm-audit adapter describe --worker-config worker.yaml
+ebm-audit adapter pin --worker-config worker.yaml
+ebm-audit adapter check --worker-config worker.yaml --output check.json
+python -m pytest -q tests/test_worker.py
+```
 
-## Status and purpose
+The starter is a synthetic protocol example, not an EBM. Replace its complete
+model declaration and callbacks as described below. `adapter pin` records the
+exact worker identity so later checks detect changes. `adapter check` checks
+required outputs and capabilities and runs applicable synthetic protocol tests.
+A passing result establishes software behavior on those tests, not scientific
+suitability. The [adapter runbook](adapter-runbook.md) explains these commands
+and the optional pysaebm example, which runs an actual open-source EBM on
+synthetic data.
 
-This guide defines the runnable researcher-facing route for connecting a private
-or different EBM implementation without changing the auditor core. The worker
-SDK, `adapter pin`, `adapter check`, `adapter describe`, and `adapter conformance` commands are implemented and
-tested with the project-owned fixture and custom-worker example. Adapter
-conformance runs Describe plus the synthetic contract cases and produces
-researcher-facing protocol and capability evidence; it is not scientific backend
-acceptance. The linked
-[`adapter protocol`](../spec/adapter-protocol.md) remains a normative draft until
-the specification freeze. After freeze, its exact frozen version wins if a later
-detail conflicts with this guide.
+This guide provides the detailed implementation reference. The worker software
+development kit (SDK), `adapter pin`, `adapter check`, `adapter describe`, and
+`adapter conformance` commands are implemented and tested with the project-owned
+fixture and custom-worker example. The [adapter protocol](../spec/adapter-protocol.md)
+is a frozen scientific contract. Its exact frozen requirements take precedence
+if this guide conflicts with it.
 
-This generic worker-conformance route is the integration surface for product
-readiness. The only product readiness state is exactly
+The product readiness state is exactly
 `READY FOR RESEARCHERS TO INTEGRATE AN EBM AND RUN THE AUDITOR LOCALLY`. It does
-not require a named backend, a public package, or participant data.
+not require a named backend, a public package, or participant data. Protocol
+conformance means following the worker's data-exchange and execution rules; it
+does not establish scientific acceptance of a backend.
 
-Use the executable schemas
-[`../../schemas/worker-protocol.schema.json`](../../schemas/worker-protocol.schema.json),
-[`../../schemas/canonical-records.schema.json`](../../schemas/canonical-records.schema.json),
-and the exact output/check registry
-[`../../schemas/protocol-registry.json`](../../schemas/protocol-registry.json).
-Do not recreate a payload shape from the prose examples.
+The supported model is cross-sectional: one observation per participant, with
+one strict event sequence and stages `0..N`, where `N` is the event count.
+Subtypes, temporal/dwell-time models, simultaneous/grouped events, longitudinal
+visits, raw MRI processing, and automatic feature discovery cannot be converted
+to supported outputs by flattening them. Declare them unsupported.
 
-A worker is an external local executable. It reads one versioned request bundle,
-invokes the researcher's model, and writes one canonical response bundle. The
-model source and, for optional downstream real-data use, participant data remain
-entirely inside the researcher's approved local environment. The core must not
-import the private package.
+## Reference: formats and terms
 
-The MVP contract supports one cross-sectional, strict single-sequence EBM with
-stages `0..N`. Subtypes, temporal/dwell-time models, simultaneous/grouped events,
-longitudinal visits, raw MRI processing, and automatic feature discovery are not
-valid flattened outputs. Declare them unsupported rather than converting them to
-a strict order.
+Use the executable schemas for
+[worker messages](../../schemas/worker-protocol.schema.json) and
+[canonical records](../../schemas/canonical-records.schema.json), plus the exact
+[output/check registry](../../schemas/protocol-registry.json).
+Do not recreate a message format from prose examples.
 
-## 1. Invocation contract
+- **Canonical** means Anim's standard representation, including its event,
+  row, stage, and sampling-index rules.
+- A **capability** is an output or behavior this exact worker supports.
+- A **digest** is a hash identifying specific contents. A domain-separated
+  digest also identifies the kind of record, so different record types cannot
+  be confused.
+- A **closed schema** rejects fields it does not declare. Draft 2020-12 names
+  the JSON Schema standard used here.
+- **Fixed-cohort staging** applies a fitted model to a separate, unchanged
+  evaluation cohort. A stage posterior gives probabilities for stages `0..N`;
+  the maximum a posteriori (MAP) stage is the most probable stage, while the
+  expected stage is its probability-weighted mean.
+- **MCMC** means Markov chain Monte Carlo sampling. Burn-in discards initial
+  states; thinning retains states at a declared interval.
+- A **candidate** is a declared analysis configuration. It becomes a
+  **universe** once its inputs have been prepared successfully, creating a
+  `UniverseSpec`. An unprepared candidate has no `UniverseSpec`. Failed
+  candidates and universes remain part of the audit's accounting.
+
+## Reference 1: invoke the worker
 
 The core appends the exact protocol arguments to the configured worker
 argv:
@@ -64,7 +89,8 @@ argv:
   --response-dir <absolute-run-owned-response-dir>
 ```
 
-The core invokes this as an argument vector without a shell. The closed worker
+The core invokes this as an argument vector (a list of command tokens) without
+a shell. The closed worker
 configuration stores those tokens in `worker.argv`, a non-empty list of strings,
 not a command string to interpolate. Its first token must be an absolute
 executable path. Any later token that the worker needs as a filesystem path must
@@ -79,7 +105,7 @@ The worker process current directory is a fresh, run-owned directory. The worker
 must not depend on the caller's current directory, home-directory caches, mutable
 global state, a notebook kernel, or an internet connection.
 
-## 2. Required commands
+## Reference 2: required commands
 
 ### `describe`
 
@@ -99,12 +125,13 @@ Runs without participant data and returns:
 `describe` must not probe a remote service, create persistent files, or claim a
 capability merely because the upstream library has a similarly named function.
 `backend_name` is always one stable, non-secret, non-null machine identifier;
-only an unavailable backend version/source commit may be null.
-The exact command set must include `describe`, `validate`, `fit`, and
-`self-test`. Standalone `stage` is reserved wire framing only in protocol v2: a
+only an unavailable backend version/source commit may be null. The exact
+command set must include `describe`, `validate`, `fit`, and `self-test`. The
+protocol v2 schema reserves a standalone `stage` message for future use: a
 worker does not advertise, parse, dispatch, or execute it. Fixed-cohort staging
-remains inside `fit`; a future standalone command would require a reviewed typed
-portable-artifact output path and a new admitted runtime contract.
+remains inside `fit`; a future standalone command would first require a
+reviewed, explicitly typed way to export fitted models and a new runtime
+contract.
 
 ### `validate`
 
@@ -121,22 +148,23 @@ coerce a row, cell, participant, or event.
 
 Fits exactly the supplied training data and model settings, using the supplied
 seed. It may also stage a separately supplied fixed evaluation matrix when the
-capability is declared. It returns only canonical outputs it genuinely has or can
+capability is declared. It returns only canonical outputs it produces or can
 derive under a documented, mathematically valid rule.
 
 The worker must not silently substitute a backend, model family, algorithm, seed,
 default setting, preprocessing step, event order, cache, or evaluation cohort.
 
-### `stage` (reserved wire framing only in protocol v2)
+### `stage` (reserved schema only; unavailable in protocol v2)
 
-Protocol v2 does not admit a standalone `stage` worker command or portable
-fitted-model artifact. It is absent from worker CLI parsing and dispatch; callers
-cannot request it. Do not guess a sibling response path or write an undeclared
-model file. A future protocol must add one SDK-owned typed artifact-output
-channel first.
+Protocol v2 does not support a standalone `stage` worker command or portable
+fitted-model artifact. It is absent from worker CLI parsing and dispatch;
+callers cannot request it. Do not guess a sibling response path or write an
+undeclared model file. A future protocol must first add an SDK-managed output
+channel with an explicit type for the fitted model.
 
-Any future admitted success payload remains a distinct `StageResult`: aligned
-stage posterior/MAP/expected-stage outputs and artifact/provenance binding only.
+Any future success response must use a distinct `StageResult`: aligned stage
+posterior/MAP/expected-stage outputs and references to the fitted model and its
+origin only.
 It does not require or fabricate a central order, fit chain, or fit likelihood
 trace.
 
@@ -145,10 +173,10 @@ trace.
 Runs a tiny backend-owned, clearly labelled synthetic smoke test without external
 data or network access. It checks install/runtime health; it is not scientific
 acceptance and must not be presented as convergence proof.
-Its receipt lists the exact synthetic fixture digest and every requested check as
+Its result lists the exact synthetic fixture digest and every requested check as
 `PASS` or `FAIL`; any failed/missing check requires a typed negative response.
 
-## 3. Request and response bundles
+## Reference 3: request and response files
 
 The invocation directory contract is:
 
@@ -167,15 +195,15 @@ invocation/
   work/              # only permitted scratch location
 ```
 
-JSON carries versioned metadata and small structured objects. Numeric arrays use
-stored-only NumPy NPZ and must be opened with `allow_pickle=False`. The core
-raw-checks the bounded central directory and aggregate uncompressed size before
-ZIP or NumPy loading; private workers should use the supplied deterministic NPZ
-writer. Every file is hashed and listed in its manifest. Compression, ZIP64,
-encryption, data descriptors, extras, comments, unsafe names, absolute paths,
-path traversal, symlinks, device files, FIFOs, undeclared files, duplicate
-archive members, object arrays, and arrays that exceed declared byte/shape limits
-must fail.
+JSON carries versioned metadata and small structured objects. Numeric arrays
+use stored-only NumPy NPZ and must be opened with `allow_pickle=False`. Before
+ZIP or NumPy loading, the core checks the raw ZIP directory against its limits
+and checks the total uncompressed size; private workers should use the supplied
+deterministic NPZ writer. Every file is hashed and listed in its manifest.
+Compression, ZIP64, encryption, data descriptors, extras, comments, unsafe
+names, absolute paths, path traversal, symlinks, device files, FIFOs,
+undeclared files, duplicate archive members, object arrays, and arrays that
+exceed declared byte/shape limits must fail.
 
 The core creates the request. The worker must treat it as read-only. The worker
 creates response files only beneath `response/` and scratch files only beneath
@@ -184,8 +212,9 @@ and atomic rename so a partial response cannot look complete.
 
 `request.json` and `response.json` are excluded from their own file maps. Each
 closed map must equal the physical regular-file set for its bundle (apart from
-the metadata file itself), and its RFC 8785 metadata digest binds every mapped
-path, byte length, and file hash. Missing, extra, or self-listed files fail.
+the metadata file itself), and its metadata digest, using RFC 8785 canonical
+JSON, covers every mapped path, byte length, and file hash. Missing, extra, or
+self-listed files fail.
 
 ### Identifier rule
 
@@ -198,16 +227,16 @@ not contain:
 - source filenames or paths that embed identifiers; or
 - raw caller metadata unrelated to the model.
 
-Event machine IDs may cross the boundary because correct label alignment is a
-scientific invariant. Private source column names must be mapped or sanitised by
-the core before the request.
+Event machine IDs may cross the boundary because matching values to the correct
+event labels is required for scientific correctness. Private source column
+names must be mapped or sanitised by the core before the request.
 
 ### Numeric input rule
 
 The numeric request contains the selected event matrix and, where declared,
-encoded group or fixed-evaluation arrays. Version 0.1 covariate residualisation
-is performed by the core before invocation; no covariate array crosses this
-worker boundary. Shapes, dtypes, missingness,
+encoded group or fixed-evaluation arrays. Covariate residualisation (removing
+estimated covariate effects) is performed by the core before invocation; no
+covariate array crosses this worker boundary. Shapes, dtypes, missingness,
 directions, encoding semantics, and row/event counts are explicit in
 `request.json`. The worker must not infer meaning from array or alphabetical
 column order; it must use declared event IDs.
@@ -220,7 +249,7 @@ protocol failure even when counts match.
 Raw values are temporary and sensitive. They may not appear in response JSON,
 warnings, errors, stdout/stderr, caches, or side-effect inventories.
 
-## 4. Capability declaration
+## Reference 4: declare supported capabilities
 
 Declare, at minimum, whether the exact worker path supports:
 
@@ -246,7 +275,7 @@ it false. The core may derive position or precedence matrices from a valid sampl
 state chain, but the result must say it was core-derived. Never fabricate a field
 to make a report section appear complete.
 
-## 5. Canonical fit result
+## Reference 5: return a fit result
 
 Where supported, the response includes:
 
@@ -254,7 +283,7 @@ Where supported, the response includes:
 - separate worker-executable, worker-code, backend-source, and environment
   identity;
 - input, settings, distinct core/worker/backend/environment, and output digests;
-- canonical 16-lowercase-hex `UInt64Hex` seed, chain ID, raw proposal-iteration
+- `UInt64Hex` seed (16 lowercase hexadecimal characters), chain ID, raw proposal-iteration
   count, burn-in, thinning, and runtime;
 - event IDs and the central strict order as IDs and a valid permutation;
 - a complete unthinned post-burn state/likelihood chain plus its exactly indexed
@@ -273,7 +302,7 @@ Where supported, the response includes:
 All order rows must be permutations of the declared event set. Probability arrays
 must be finite, nonnegative, correctly shaped, and normalised within the protocol
 tolerance. Participant and event counts must match the validated request exactly.
-Version 0.1 defines no worker-side drop capability: any backend-required
+The current contract allows no worker-side row or event dropping: any backend-required
 exclusion or complete-case selection is compiled by the core into a distinct,
 fully accounted request before invocation. Any worker-side loss, whether
 disclosed or silent, is a hard protocol failure.
@@ -281,23 +310,24 @@ disclosed or silent, is a hard protocol failure.
 For an MCMC fit, `R=raw_iteration_count` is both the proposal count and the
 number of returned rows. Returned row `q`, `0<=q<R`, is the current state after
 proposal `q+1`, repeated on rejection when applicable. The initialized state
-`S0` is not returned. With `0<=B<R` and `T>=1`, return the complete unthinned
-post-burn slice `[B:R]` (`U=R-B` rows), then retained rows at returned indexes
-`B+m*T<R`, so `S=floor((R-1-B)/T)+1`. Transition count compares adjacent
-unthinned post-burn rows and has denominator `max(U-1,0)`; the count is zero and
-fraction is null when that denominator is zero. Do not report an upstream object
-named “accepted orders” as transition count. The contract suite checks the
-boundary and off-by-one cases.
+`S0` is not returned. With burn-in `B` (initial rows discarded), `0<=B<R`, and
+thinning interval `T>=1`, return the complete unthinned post-burn slice `[B:R]`
+(`U=R-B` rows), then retained rows at returned indexes `B+m*T<R`, so
+`S=floor((R-1-B)/T)+1`. Transition count compares adjacent unthinned post-burn
+rows and has denominator `max(U-1,0)`; the count is zero and fraction is null
+when that denominator is zero. Do not report an upstream object named “accepted
+orders” as transition count. The contract suite checks the boundary and
+off-by-one cases.
 
 Backend-native artifacts are optional and private. They must not be required to
-interpret the canonical result, escape the response directory, or contain direct
-identifiers or raw values. If a private model creates raw intermediate files,
-they remain inside its restrictive ephemeral worker workspace, are inventoried,
-and are deleted rather than returned or persisted in the response bundle.
-Version 0.1 defines no extension that weakens this rule. A non-portable in-memory
-model is not a portable standalone-stage capability.
+interpret the canonical result, escape the response directory, or contain
+direct identifiers or raw values. If a private model creates raw intermediate
+files, they remain inside its restrictive ephemeral worker workspace, are
+inventoried, and are deleted rather than returned or persisted in the response
+bundle. The current contract defines no extension that weakens this rule. A
+non-portable in-memory model is not a portable standalone-stage capability.
 
-## 6. Terminal statuses and failure logging
+## Reference 6: terminal statuses and failure logs
 
 Return exactly one terminal status:
 
@@ -314,22 +344,23 @@ Worker `SUCCESS` means only that this command/chain returned a valid candidate
 payload. A worker never emits `CONVERGENCE_WARN`, `CONVERGENCE_FAILED`, or
 `CONVERGENCE_NOT_ASSESSABLE`. Each response is immutable. The core alone
 finalises the complete chain set and may create those core-final states without
-rewriting or losing worker responses. Only a core-final admitted result
-contributes scientific output. Convergence states are not cosmetic warnings.
+rewriting or losing worker responses. Only a result accepted after those core
+checks contributes scientific output. Convergence states are not cosmetic
+warnings.
 
 Failure details must include a stable error category, safe message, phase, and
 relevant count/shape/type. They must not contain private IDs, raw values, full
 rows, credentials, or private source paths. Global warning suppression is
-forbidden. Captured stdout/stderr is not a result channel and may be retained only
-after bounding and privacy sanitisation; otherwise the core keeps a digest and
-byte count.
+forbidden. Captured stdout/stderr is not a result channel and may be retained
+only after limiting its size and removing sensitive content; otherwise the core
+keeps a digest and byte count.
 
 A timeout or crash remains a visible failed universe. A runner may perform one
 identical transient retry if the declared runner contract allows it. The worker
 must not retry internally with a changed seed, changed settings, or a fallback
 algorithm.
 
-## 7. Side effects, offline behavior, and isolation
+## Reference 7: file activity, offline behavior, and isolation
 
 A conforming worker:
 
@@ -344,35 +375,38 @@ A conforming worker:
 - can run with its working directory and cache/home variables pointed at fresh
   run-owned scratch.
 
-The side-effect arrays are a final retained-tree snapshot. They inventory every
-assigned-tree file still present at completion except exactly
-`response/.side-effects.json.tmp`, `response/side-effects.json`,
+The side-effect arrays list files that remain in the invocation directory at
+completion. They inventory every assigned-tree file still present at completion
+except exactly `response/.side-effects.json.tmp`, `response/side-effects.json`,
 `response/.response.json.tmp`, and `response/response.json`. The exact ordered
 tuple is serialized as `inventory_exclusions`. `side-effects.json` is hashed in
 the response `files` map; `response.json` is the completion metadata excluded
-from its own map. No other file is exempt, and neither atomic temporary file may
-remain at completion. Follow `$defs/SideEffectsRecord`; do not make the
-inventory hash itself. This record does not observe file reads, transient
+from its own map. No other file is exempt, and neither atomic temporary file
+may remain at completion. Follow `$defs/SideEffectsRecord`; the inventory must
+not include its own hash. This record does not observe file reads, transient
 create/modify/delete activity, or forbidden-operation attempts; those limits
 are named explicitly in `unobserved_activity_classes` and must not be converted
 into zero-activity claims.
 
-The subprocess boundary is not a malware sandbox. Contract tests detect common
-misconfiguration and observable violations, but a malicious worker with the same
-OS permissions can read/write outside the monitored directory or bypass
-Python-level network hooks. Only run reviewed workers on participant data. Use a
-separate OS account or institutionally approved filesystem/network sandbox for
-code that is not trusted. See the [threat model](../security/threat-model.md).
+A separate process alone does not protect against malicious code. Protocol
+tests detect common misconfiguration and observable violations; they do not
+establish that a worker is safe. Python-level network hooks can be bypassed,
+and code running with the same OS permissions can access files outside a
+monitored directory. Anim therefore also requires supported OS containment.
+Only run reviewed workers on participant data. Use a separate OS account or an
+institutionally approved filesystem/network sandbox for code that is not
+trusted. See the [threat model](../security/threat-model.md).
 
-## 8. Wrapping a private notebook/model
+## Reference 8: extract a worker from a private notebook
 
-Keep the notebook as a development/reference surface, but extract its fitting and
+Keep the notebook for development and reference, but extract its fitting and
 staging call into a deterministic local command with these properties:
 
 1. all required model settings are explicit inputs;
 2. one supplied seed controls every stochastic source the model exposes;
-3. preprocessing done by the notebook is either moved into declared auditor
-   choices or fully recorded as a named external data variant;
+3. preprocessing done by the notebook is moved into declared auditor choices
+   where supported; otherwise record it as a named external data variant and
+   stop, because `AuditConfig/0.3` does not yet execute `external-variant`;
 4. the command consumes internal indexes and declared event IDs, not private IDs
    or implicit DataFrame index order;
 5. cached notebook state is cleared or made impossible;
@@ -383,11 +417,11 @@ staging call into a deterministic local command with these properties:
 9. the command runs successfully in a fresh process with network denied.
 
 Do not rewrite the model algorithm to satisfy the contract. If the model cannot
-expose a required scientific output, report that limitation. If its model family
-is outside the MVP, the correct result is `UNSUPPORTED_CAPABILITY`, not a lossy
-conversion.
+expose a required scientific output, report that limitation. If its model
+family is outside the supported model scope, the correct result is
+`UNSUPPORTED_CAPABILITY`, not a lossy conversion.
 
-## 9. Trusted local Python helper contract
+## Reference 9: the Python worker helper
 
 The required Python convenience layer is a **worker-side helper**, not an
 in-process core plugin. The helper is imported by the researcher-owned
@@ -407,20 +441,20 @@ is no public stage callback: fixed evaluation staging happens inside `fit`; the
 standalone stage wire schemas are reserved for a future reviewed protocol. The
 runnable structural demonstration is
 [`../../examples/custom_worker`](../../examples/custom_worker).
-It deliberately retains fixture-owned identity, algorithm, capabilities,
-settings, and stage semantics and is therefore transport-demo-only. A real
+It retains the synthetic example's identity, algorithm, capabilities,
+settings, and stage semantics and is therefore a protocol demonstration only. A real
 adapter replaces that complete declaration as well as validation, fit, and
-self-test callbacks; replacing only three methods is never acceptance-ready.
+self-test callbacks; replacing only three methods is not a complete integration.
 
-`WorkerApplication` performs closed request/response schema parsing, file/hash
-binding, `UInt64Hex` validation, atomic response finalisation, safe negative
-errors, and array-catalog checks. The backend receives only canonical internal
-indexes, event/group arrays, settings, and the validated seed. It must return the
-same typed command payloads as any non-Python worker. The helper never imports or
-invokes the research model in the auditor core process, never receives private
-IDs, does no preprocessing, and does not weaken offline, file, privacy, identity,
-or contract-test requirements. Helper version and code digest are part of
-`worker_code_digest`.
+`WorkerApplication` performs closed request/response schema parsing, checks
+that files match their recorded hashes, `UInt64Hex` validation, atomic response
+finalisation, privacy-safe error responses, and array-catalog checks. The
+backend receives only canonical internal indexes, event/group arrays, settings,
+and the validated seed. It must return the same typed command payloads as any
+non-Python worker. The helper never imports or invokes the research model in
+the auditor core process, never receives private IDs, does no preprocessing,
+and does not weaken offline, file, privacy, identity, or contract-test
+requirements. Helper version and code digest are part of `worker_code_digest`.
 
 ## 10. Generic conformance route
 
@@ -449,20 +483,21 @@ ebm-audit adapter describe \
 
 A configured data-free `describe` explicitly allows `expected_identity: null`
 for discovery and may be run again while the configuration remains unpinned. It
-returns a versioned describe receipt containing the complete base
+returns a versioned description containing the complete base
 `backend_identity`, one `available_expected_identities` entry per algorithm, and
 the exact `selected_expected_identity` for the configured `algorithm_id`. Review
-the result, then copy that whole `selected_expected_identity` object into
+the result, then use `adapter pin` to record the selected identity. If recording
+it manually, copy the whole `selected_expected_identity` object into
 `expected_identity` in `worker.yaml` without shortening or editing it. The pin
 includes the complete base identity and digest, selected algorithm, selected
 identity digest, and selected capabilities digest.
 
-Only `self-test` and the synthetic contract harness's `validate`/`fit` executions
-require this complete pin. Pinning does not grant product execution authority:
-public scientific `validate`/`fit` remain blocked until their separately
-documented prepared-execution authority exists. The YAML loader is strict; do
-not use anchors, aliases, duplicate keys, custom tags, extra fields, or a shell
-command string.
+Discovery with `describe` can run unpinned. `self-test` and the synthetic
+contract harness's `validate`/`fit` executions require the complete pin.
+Pinning alone does not permit a scientific fit: ordinary runs must also pass
+input, plan, capability, and execution checks before calling worker
+`validate`/`fit`. The YAML loader is strict; do not use anchors, aliases,
+duplicate keys, custom tags, extra fields, or a shell command string.
 
 After pinning the complete identity, run the researcher-facing validation and
 diagnosis command:
@@ -478,9 +513,9 @@ ebm-audit adapter conformance \
 contract cases. It writes
 `/approved/local-output/adapter-conformance/adapter-conformance-receipt.json`,
 reports the `overall_protocol_result`, and identifies the
-`first_actionable_failure` with bounded `remediation` when correction is needed.
-The receipt is protocol and declared-capability evidence. It is not scientific
-acceptance of the EBM or its outputs.
+`first_actionable_failure` with a short `remediation` instruction when
+correction is needed. The result records protocol and declared-capability
+checks. It is not scientific acceptance of the EBM or its outputs.
 
 The synthetic harness covers or explicitly records the applicability of:
 
@@ -491,7 +526,7 @@ The synthetic harness covers or explicitly records the applicability of:
 4. finite complete-data happy path;
 5. invalid group and unsupported missingness failures;
 6. malformed bundle/schema/version behavior;
-7. timeout, crash, process-tree, and bounded stream capture;
+7. timeout, crash, process-tree, and size-limited stream capture;
 8. unexpected-file and path-escape inventory;
 9. same-seed repeatability;
 10. different-seed no-cache behavior;
@@ -515,9 +550,9 @@ remain `UNVERIFIED`; capability-dependent cases that do not apply remain visibly
 applicable unverified case prevents an aggregate pass.
 
 Those are low-level contract-case statuses, not the researcher-facing evidence
-decision. The conformance receipt projects an applicable missing case to
-`UNAVAILABLE` and an honestly out-of-scope capability case to `NOT_APPLICABLE`;
-it never projects either one to pass or fail.
+decision. The conformance result reports an applicable missing case as `UNAVAILABLE` and
+a case outside the declared capability scope as `NOT_APPLICABLE`. Neither
+status is treated as pass or fail.
 
 The conformance evidence retains one of two capability scopes:
 
@@ -547,33 +582,32 @@ ebm-audit adapter contract-test \
   --output-dir /approved/local-output/worker-contract-test
 ```
 
-This diagnostic writes `contract-test-receipt.json`. An unpinned
-`adapter contract-test` still runs the discovery describe and writes its receipt,
-but records the required immutable-identity case and pin-dependent command cases
-as `UNVERIFIED`; it cannot aggregate to `PASS`. This command exposes the
-low-level cases when needed; it does not replace `adapter conformance` as the
-researcher-facing route.
+This diagnostic writes `contract-test-receipt.json`. An unpinned `adapter
+contract-test` still runs discovery with `describe` and writes the diagnostic
+result, but records the required immutable-identity case and pin-dependent
+command cases as `UNVERIFIED`; it cannot aggregate to `PASS`. This command
+exposes the low-level cases when needed; it does not replace `adapter
+conformance` as the researcher-facing route.
 
 ## 11. Baseline reference integration
 
-If the private notebook is the scientific reference, export a canonical reference
-bundle before changing its behavior. It must bind the exact dataset, connected
-implementation/algorithm/settings, preprocessing/inclusion contract, stage
-semantics, effective event labels, statistical diagnostics, and software
-identity, and include central order plus adequate richer order-distribution and
-participant-stage outputs where the original baseline produced them. An
-effective event label is
-`privacy_sensitive_display_override` when that value is present, otherwise
-`display_name`, in the exact declared event order. Settings remain in the
-reference implementation identity; do not duplicate or move them into the
-scientific contract. Align rows through the closed private
-`PrivateReferenceAlignmentArtifact` or a shared private namespace and dataset
-digest. It binds every contiguous reference row to either one typed private ID
-or one framed participant token, plus the reference-row-order digest repeated by
-every participant-axis reference array. The reference uses
-`ReferenceParticipantEventManifest`, never the worker
-`ParticipantEventManifest`; direct IDs never enter the reference result, worker,
-report, or default manifest.
+If the private notebook is the scientific reference, export a reference bundle
+in Anim's standard format before changing its behavior. It must bind the exact
+dataset, connected implementation/algorithm/settings, preprocessing/inclusion
+contract, stage semantics, effective event labels, statistical diagnostics, and
+software identity, and include central order plus adequate richer
+order-distribution and participant-stage outputs where the original baseline
+produced them. An effective event label is `privacy_sensitive_display_override`
+when that value is present, otherwise `display_name`, in the exact declared
+event order. Settings remain in the reference implementation identity; do not
+duplicate or move them into the scientific contract. Align rows through the
+closed private `PrivateReferenceAlignmentArtifact` or a shared private
+namespace and dataset digest. It binds every contiguous reference row to either
+one typed private ID or one framed participant token, plus the
+reference-row-order digest repeated by every participant-axis reference array.
+The reference uses `ReferenceParticipantEventManifest`, never the worker
+`ParticipantEventManifest`; direct IDs never enter the reference result,
+worker, report, or default manifest.
 
 Create the deliberately non-importable private draft and notebook example with:
 
@@ -583,7 +617,7 @@ uv run ebm-audit baseline-reference init \
 ```
 
 Inside the approved private notebook, use
-`ebm_audit.baseline.build_reference_result` to self-identify the complete
+`ebm_audit.baseline.build_reference_result` to compute the identity of the complete
 `reference_body`, then use
 `ebm_audit.baseline.export.write_reference_bundle` with the resulting
 `reference`, `arrays`, and `private_alignment` objects. The generated draft
@@ -595,18 +629,19 @@ names these exact construction contracts from
 - `reference.scientific_contract` is a `ReferenceScientificContract`;
 - `reference.outputs` is `ReferenceOutputs`;
 - `reference.outputs.arrays` is the `ReferenceArrayCatalog`, while the separate
-  notebook `arrays` mapping supplies the exact array material named by that
+  notebook `arrays` mapping supplies the exact arrays named by that
   catalog;
 - `private_alignment` is a `PrivateReferenceAlignmentArtifact`; and
 - the convergence object used to derive reference diagnostics is a
   `ConvergenceRecord`.
 
 The writer validates these schemas, array/catalog equality, cross-field
-bindings, self-identities, and private alignment before writing. It never
-overwrites: if any canonical output already exists, export fails. A successful
-call creates exactly `reference-bundle.json`, `arrays.npz`, and
-`private-alignment.json` with private modes and publishes the manifest last.
-Keep the bundle outside repositories and report output.
+bindings, recorded identities against their contents, and private alignment
+before writing. It never overwrites: if any canonical output already exists,
+export fails. A successful call creates exactly `reference-bundle.json`,
+`arrays.npz`, and `private-alignment.json` with private file permissions and
+writes the manifest last. Keep the bundle outside repositories and report
+output.
 
 Derive the diagnostics field from the exact baseline convergence record and
 plan-ordered chain execution IDs through the public helper:
@@ -665,7 +700,7 @@ successful baseline candidate also emits
 `BASELINE_REFERENCE_NOT_SUPPLIED` outcome when no reference is configured. A
 non-successful baseline candidate emits the assessment only, with
 `BASELINE_NOT_ASSESSABLE`. A valid reference from another cohort is retained as
-scientific non-comparability: data-dependent rows are `NOT_COMPARABLE`; it is
+scientific non-comparability: data-dependent comparison rows are `NOT_COMPARABLE`; it is
 not silently treated as a match or rejected as malformed input.
 
 If baseline reproduction is not full, the report may characterise the connected
@@ -676,11 +711,10 @@ original analysis.
 or protocol checks. It never means clinical diagnosis or a participant-level
 clinical classification.
 
-## 12. Optional downstream real-data checklist
+## Reference 12: checks before optional participant-data use
 
-After library readiness, a researcher who independently chooses optional
-participant-data use should record the following inside the approved local
-environment:
+A researcher who chooses participant-data use should record the following
+inside the approved local environment:
 
 - [ ] immutable and separate executable/worker-code/backend-source/environment
   identity;
@@ -700,6 +734,5 @@ environment:
 Protocol conformance and per-integration scientific assessment are separate. A
 worker can be protocol-conforming yet scientifically `EXPERIMENTAL` or
 `REJECTED` for a particular downstream use. Such a result does not change product
-readiness. Real-data integration is optional, occurs only in the researcher's
-approved local environment after library readiness, and is never required for
-product completion.
+readiness. Real-data integration is optional, occurs only in the researcher's approved
+local environment, and is never required for product completion.

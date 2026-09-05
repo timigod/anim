@@ -1,14 +1,19 @@
-# Offline Kit Verification
+# Verify and install an offline kit
 
-This runbook describes an explicitly prepared **Anim 0.2.0** kit.
-For build and installed-worker proof, see [packaging validation](packaging-validation.md).
-The public 0.1.1 artifacts and recorded hashes remain unchanged.
+Use this guide to install **Anim 0.2.0** from a prepared kit on a computer with
+no package-index access. It verifies the transferred files, installs Anim,
+checks the installation and creates a custom-worker starter directory. It stops
+before worker execution.
 
-This route is for a researcher with local CPython 3.12 and an immutable,
-platform-compatible kit transferred outside this repository. It is not needed
-for the source-checkout quick start in the repository README.
+You need local CPython 3.12 and an unchanged kit prepared for the destination
+platform and transferred outside this repository. The source-checkout quick
+start in the repository README does not need a kit. For build and installed
+worker checks, see [packaging validation](packaging-validation.md). The public
+0.1.1 artifacts and recorded hashes remain unchanged.
 
-The kit must be prepared and verified before transfer and contain exactly:
+## Check the kit before installation
+
+The kit must be prepared and verified before transfer. It must contain exactly:
 
 ```text
 README.md
@@ -19,11 +24,12 @@ wheels/
   <all locked CPython 3.12 destination-platform runtime dependency wheels>
 ```
 
-`wheels/` contains the candidate wheel plus exactly one compatible wheel for
-each locked runtime dependency. Each wheel must match CPython 3.12 and the destination platform. The directory contains no
-source distribution or build, development, or test dependency.
+A wheel is a prebuilt Python package file. `wheels/` must contain the Anim wheel
+and exactly one compatible wheel for each locked runtime dependency. Every
+wheel must match CPython 3.12 and the destination platform. Do not include source
+archives or build, development or test dependencies.
 
-`KIT-IDENTITY.txt` records these five fields and the exact values used to
+`KIT-IDENTITY.txt` records these five fields with the exact values used to
 prepare the kit:
 
 ```text
@@ -34,13 +40,14 @@ platform=<destination platform and wheel tag>
 preparation_command=<literal local kit preparation and verification command>
 ```
 
-Authenticate the transferred kit and its provenance through the approved local
-process. `SHA256SUMS` lists `README.md`, `KIT-IDENTITY.txt`, and every wheel under
-`wheels/`, with two spaces between digest and relative path. It does not list itself. A checksum verifies integrity and
-transfer corruption, not provenance, authenticity, or trust on its own.
+Use the approved local process to authenticate who prepared the transferred kit
+and which source it came from. `SHA256SUMS` lists `README.md`, `KIT-IDENTITY.txt`
+and every wheel under `wheels/`, with two spaces between digest and relative
+path. It does not list itself. Checksums can detect changed files or transfer
+corruption; by themselves, they do not establish origin, authenticity or trust.
 
-Set absolute paths to the read-only transferred kit and a new neutral directory
-outside any repository, then verify the kit's exact file set and hashes:
+Set absolute paths to the read-only transferred kit and a new directory outside
+any repository. The following command checks the kit's exact file set and hashes:
 
 ```sh
 KIT_ROOT=/absolute/path/to/transferred-kit
@@ -79,9 +86,11 @@ PY
 )
 ```
 
-From that neutral directory, create a private virtual environment and install
-only the transferred binary wheels. No package index, URL, source build, or pip
-cache is allowed during installation.
+## Install from the transferred wheels
+
+In the new directory, create a private virtual environment and install only the
+transferred binary wheels. Do not use a package index, URL, source build or pip
+cache during installation.
 
 ```sh
 umask 077
@@ -103,8 +112,11 @@ VENV_ROOT=$PROOF_ROOT/auditor-venv
 )
 ```
 
-Verify the installed distribution version and that its origin is inside the
-selected virtual environment without printing either private absolute path:
+## Check the installed version and package location
+
+Verify that the installed version is 0.2.0 and the package is inside the selected
+virtual environment. The check avoids printing private absolute paths. Then
+run `doctor`:
 
 ```sh
 "$VENV_ROOT/bin/python" -I - "$VENV_ROOT" <<'PY'
@@ -125,8 +137,10 @@ PY
 "$VENV_ROOT/bin/ebm-audit" doctor
 ```
 
-Initialize, but do not execute, a custom worker and verify its exact six-file
-scaffold:
+## Create the custom-worker starter files
+
+Initialize, but do not execute, a custom worker. Verify the exact six-file
+scaffold (the generated starter directory):
 
 ```sh
 "$VENV_ROOT/bin/ebm-audit" adapter init "$PROOF_ROOT/my-ebm-worker"
@@ -150,7 +164,10 @@ print("\n".join(actual))
 PY
 ```
 
-This route ends after initialization. It does not execute the worker, run
-conformance or a scientific audit, obtain or use participant data, qualify a
-named backend, release or publish anything, or establish trust merely from the
-bundled SHA files.
+## What this procedure verifies
+
+This procedure verifies the transferred file checksums, local installation and
+starter files. It does not execute a worker, run conformance checks or a
+scientific audit, obtain or use participant data, qualify a named backend, or
+release or publish anything. Bundled checksum files alone do not establish
+trust in the kit.

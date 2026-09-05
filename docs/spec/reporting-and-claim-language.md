@@ -1,19 +1,25 @@
 # Reporting and claim-language developer contract
 
+For reading a report, start with [reading and comparing reports](../report-comparison.md).
+This developer reference explains how a running audit checks results before
+writing JSON, CSV, and HTML. It also retains the retired prototype below a
+separate heading. The [technical reference guide](../handoff/technical-reference-guide.md)
+explains the roles of the other specifications.
+
 Status: `LIVE_INCOMPLETE_SCIENCE_V2_REPORT; PERSISTED_REHYDRATION_FAILS_CLOSED`
 
 ## Current product boundary
 
-There is one narrow production report path: the `ebm-audit run` process may
-write a deterministic, visibly `INCOMPLETE` report while it still owns the
-exact in-process `SealedResultEvidenceSet` and the private artifact store that
-persisted it. The reporting component derives its own sealed science-v2
-projection from that capability. It does not accept a caller-authored
-projection. The report includes all fifteen required section headings and
+`ebm-audit run` can write a visibly `INCOMPLETE` report while the run is still
+active. Reporting calculates its fields from that run's validated results; it
+does not accept fields assembled by the caller. Internally, this requires the
+exact `SealedResultEvidenceSet` object and the private artifact store that saved
+it. These checks establish which execution supplied the results. The report
+includes all fifteen required section headings and
 preserves missing or unusable scientific layers as `BLOCKED`, `PARTIAL`, or
 `NOT_ASSESSABLE`.
 
-The live machine-readable contract is `ebm-audit-report/13.0`. It projects the
+The live machine-readable contract is `ebm-audit-report/14.0`. It projects the
 sealed privacy-safe sampling owner and analyst-decision owner as separate
 first-class objects, alongside the candidate within-fit/chain records,
 participant-influence owner, and null owner. The six-layer summary is an exact
@@ -23,8 +29,8 @@ rendering, reporting revalidates each complete layer with that layer's own
 schema, digest, accounting, and semantic rules; requires the common plan and
 terminal-index identities; matches coverage digests and component rows to the
 named owner; and matches every within-fit/chain coverage status and reason to
-the corresponding candidate. Swapping, relabelling, digest-forking, or
-count-forking layers fails closed as `REPORT.OUTPUT_CONTRACT`.
+the corresponding candidate. Swapping or relabelling layers, or inconsistent
+hashes or counts between records, fails closed as `REPORT.OUTPUT_CONTRACT`.
 
 The live path also derives one total baseline assessment from the same exact
 `SealedResultEvidenceSet`; it does not accept detached caller-authored baseline
@@ -62,8 +68,8 @@ baseline and other non-applicable analyst origins remain `NOT_CONTRIBUTING`;
 participant-stage comparisons remain sourced from their declared owner; and no
 overall score or combined uncertainty heatmap is produced.
 
-Persisted cross-process report rehydration remains unavailable. The package
-entrypoint `render_report_from_run_dir` still always raises
+Regenerating a report from a saved run in a new process remains unavailable.
+The package entrypoint `render_report_from_run_dir` still always raises
 `ReportUnavailableError` with code `REPORT.V1_DISABLED` and typed reason
 `PERSISTED_SCIENCE_V2_REHYDRATION_UNAVAILABLE`. It does so before opening the
 run directory, inspecting the output path, or creating an artifact. The standalone
@@ -101,15 +107,19 @@ can be `COMPLETE` with candidate exit `0`, while the current whole run is
 `PARTIAL` with process exit `12` because the report is `INCOMPLETE` and the
 science gate is `BLOCKED`. Specific candidate failure and privacy exits remain
 visible and are not collapsed into `12`.
-The standalone gate remains until a persisted authority can rehydrate all
-required owners without trusting caller-authored files. Caller-authored
+Standalone reporting remains disabled until it can reconstruct and validate
+all required evidence from saved files without trusting caller-authored results.
+Caller-authored
 `uncertainty-summaries.json` therefore cannot emit `AUDIT_COMPLETE`,
 `STRONGER_THAN_CHOSEN_REFITTED_NULLS`, or an authoritative participant-stage
 conclusion through either Python or the CLI. Inputs are not silently
 transformed into weaker claims.
 
-This separation slice is `BUILT_UNVERIFIED`. It does not complete report
-science, calibration, held-out evaluation, or standalone rehydration.
+The original implementation record used the development status
+`BUILT_UNVERIFIED`. That historical label is not the validation status of the
+0.2.0 package. The remaining scientific limitations still apply: no complete
+scientific assessment, completed calibration, held-out evaluation, or standalone
+report regeneration is claimed here.
 
 ## Deprecated prototype contract
 

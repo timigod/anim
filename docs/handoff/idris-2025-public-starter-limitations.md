@@ -1,33 +1,29 @@
-# Idris 2025 public starter: limitations and confirmation gate
+# Idris 2025 public starter: what you must confirm
 
-## Purpose and evidence boundary
+## Use the starter for mapping and planning
 
 The `idris-2025-public` starter is a local mapping and planning aid based only on
 publicly reported study information. It contains no Idris/LonDownS participant
 data, reconstructed values, inferred rows, private column names, or fitted model
 output.
 
-This starter is optional downstream per-integration context. It is not required
-for product completion. The only product readiness state is exactly
-`READY FOR RESEARCHERS TO INTEGRATE AN EBM AND RUN THE AUDITOR LOCALLY`, which
-does not require participant data, this paper mapping, or any named backend.
+Use it if the paper helps you plan a local event-based model (EBM) analysis. It
+is optional and is not required for product completion. The only product
+readiness state is exactly `READY FOR RESEARCHERS TO INTEGRATE AN EBM AND RUN
+THE AUDITOR LOCALLY`, which does not require participant data, this paper
+mapping, or any named backend.
 
 Motivating paper: Mina Idris et al., “Staging of Alzheimer’s disease progression
 in Down syndrome using mixed clinical and plasma biomarker measures with machine
 learning,” *Alzheimer’s & Dementia* (2025), DOI
 [`10.1002/alz.70446`](https://doi.org/10.1002/alz.70446).
 
-The public description is sufficient to create a fail-closed configuration. It
-is not sufficient to reproduce the published EBM, identify its implementation,
-or claim robustness of the unseen participant data.
-
-The retained starter now uses `AuditConfig/0.3`. Its physical
-`input.variant.variant_id`, baseline row-free
-`dataset_variant_intent.source_variant_id`, and unique baseline-input source
-registry ID are all exactly `baseline-input`. The zero exact-file digest is an
-explicit placeholder duplicated in the two required digest-owner fields; it is
-not proof that local bytes exist. The file remains structural-only and contains
-no participant rows.
+The starter blocks fitting until required local details are confirmed. Public
+information alone cannot reproduce the published EBM, identify its
+implementation, or establish robustness of the unseen participant data. Start
+with the commands in [real-data
+integration](real-data-integration.md#3-create-a-local-mapping-configuration),
+then resolve the uncertainties below with the local methods team.
 
 ## Public aggregate facts the starter may encode
 
@@ -39,9 +35,11 @@ no participant rows.
   independently established by the EBM.
 - The EBM used nine publicly named plasma/cognitive events and reported stages
   `0..9`.
-- Intellectual-disability-level residualisation was described as fitted in the
-  controls and applied to all observations.
-- Retaining plasma observations described as beyond a `1.5 IQR` rule changed the
+- Residualisation, an adjustment removing the estimated effect of
+  intellectual-disability level, was described as fitted in the controls and
+  applied to all observations.
+- Retaining plasma observations described as beyond a `1.5 IQR` rule
+  (IQR means interquartile range) changed the
   reported position of Aβ42/40.
 - The paper reports an event order and positional uncertainty, but that order is
   contextual evidence only. The starter must not encode it as truth, a benchmark
@@ -50,7 +48,7 @@ no participant rows.
 The paper's age-defined grouping is a reported study choice, not a universal
 control/disease definition and not a default scientific truth for another cohort.
 
-## Public event mapping surface
+## Public event names to map to local columns
 
 The starter may list these public display names so the researcher can map them to
 private local columns. It must not guess source column names, units, transformations,
@@ -68,8 +66,8 @@ or abnormal directions.
 | CANTAB Intra/Extra Dimensional Set Shift stages completed | Cognitive | `REQUIRES_CONFIRMATION` | Exact variable/scoring version, unit/range, abnormal direction |
 | NEPSY-II visuomotor precision car-and-motorcycle score | Cognitive | `REQUIRES_CONFIRMATION` | Exact variable/scoring version, unit/range, abnormal direction |
 
-Conventional expectations about a biomarker or test score do not resolve this
-gate. The researcher must confirm the actual local assay/score coding and the
+Conventional expectations about a biomarker or test score do not replace local
+confirmation. The researcher must confirm the actual local assay/score coding and the
 meaning of increasing values. A configuration with any
 `REQUIRES_CONFIRMATION` direction may validate and plan, but must not fit a real
 backend.
@@ -81,21 +79,22 @@ The public paper does not identify:
 - the EBM software package or source version;
 - a code repository or executable environment;
 - the exact mixture family and parameterisation;
-- the exact MCMC schedule, chain count, draw count, burn-in, thinning, or proposal
-  settings;
+- the exact Markov chain Monte Carlo (MCMC) sampling schedule, chain count, draw
+  count, burn-in (initial states discarded), thinning (spacing between retained
+  states), or proposal settings;
 - the random seed or complete random-number contract;
 - the convergence rule;
 - the stage-likelihood formula and stage prior;
-- the exact participant-stage posterior calculation;
+- the exact calculation of the posterior probability for each participant stage;
 - the exact handling of missing event values; or
 - a complete executable preprocessing/model configuration.
 
-Historical package-probe context only: an optional `pysaebm` worker was
-investigated as one downstream integration example. It was never identified as
-the paper implementation, designated as an accepted backend, or made a product
-completion dependency. No public package is presumed scientifically
-interchangeable with the reported classical mixture EBM or able to reproduce the
-reported output.
+Anim ships an optional [pysaebm example](adapter-runbook.md#optional-real-ebm-pysaebm)
+that runs an actual open-source EBM on synthetic data. It has not been identified
+as the paper implementation or accepted as scientifically suitable for this
+analysis. It is not a product completion dependency. No public package is
+presumed scientifically interchangeable with the reported classical mixture EBM
+or able to reproduce the reported output.
 
 ## Unresolved preprocessing semantics
 
@@ -116,7 +115,8 @@ complete executable formula. The starter must not guess:
 The researcher must either configure a confirmed explicit supported
 transformation or use unadjusted data as a separately labelled analysis choice.
 A documented external data variant is a future extension, not a current route:
-config v0.3 rejects it until a complete physical owner is implemented. None may
+config v0.3 rejects it because the input-file and provenance handling needed
+to execute it is not implemented. None may
 be called an exact reproduction without a matching reference manifest.
 
 ### Missing data
@@ -143,7 +143,7 @@ its backend.
 ### Outlier rule
 
 The reported sensitivity involving plasma observations beyond a `1.5 IQR` rule
-does not provide a complete predicate/application contract. Confirmation is
+does not provide a complete rule for identifying and handling outliers. Confirmation is
 required for:
 
 - which variables and cohort supplied the quartiles;
@@ -159,11 +159,14 @@ choices, but no one choice is the reconstructed paper rule.
 
 ### Ancillary analyses are separate
 
-The paper's ancillary multiple-imputation/PCA/GAM/LOESS work must not be silently
-imported into the EBM pipeline. The public report does not establish that these
-steps produced the EBM input. If the researcher supplies a data variant produced
-by another pipeline, it must be named and accompanied by local provenance rather
-than treated as built-in EBM preprocessing.
+The paper's separate analyses used multiple imputation to fill missing values,
+principal component analysis (PCA), generalised additive models (GAM), and
+locally estimated scatterplot smoothing (LOESS). These steps must not be
+silently imported into the EBM pipeline. The public report does not establish
+that these steps produced the EBM input. Any data prepared by another pipeline
+must be named and accompanied by a local record of how it was produced. Do not
+treat it as built-in EBM preprocessing or use the currently unsupported
+`external-variant` configuration route.
 
 ## Feature-selection contradiction
 
@@ -181,9 +184,10 @@ The starter must preserve this as an unresolved contradiction. It must not:
 The researcher should predeclare the baseline event set used by the original local
 analysis and, if scientifically justified, a separate named feature-set sensitivity.
 
-## Optional downstream baseline-reference check
+## Compare with the original baseline, if available
 
-An audit of the original analysis requires a canonical reference-result bundle
+An audit of the original analysis requires a reference-result bundle in Anim's
+standard format
 exported from the existing notebook/model where available. The comparison should
 cover the supported subset of:
 
@@ -213,14 +217,15 @@ evidence of baseline reproduction. If full reproduction fails or is unavailable,
 the report may describe the connected configuration's sensitivity but must stop
 short of calling it an audit of the original Idris analysis.
 
-## What the starter can do before confirmation
+## What you can do before confirmation
 
 With no participant data and unresolved fields, the starter may:
 
 - show the nine public mapping targets;
 - validate configuration structure;
 - list every `REQUIRES_CONFIRMATION` item;
-- compile a dry-run plan and invalid/unsupported universes;
+- compile a dry-run plan listing valid, invalid, and unsupported analysis
+  candidates;
 - describe worker capability mismatches; and
 - run an unrelated, clearly labelled project-owned synthetic demonstration.
 
@@ -244,17 +249,19 @@ Neither the starter nor a later real-data report may claim:
   data-quality rule; or
 - GDPR, NHS, KCL, HIPAA, or institutional information-governance compliance.
 
-The strongest permitted language remains conditional on the exact gates, for
-example: stable across the tested specifications; internally concentrated within
-the fitted samples; or stronger than the chosen refitted null diagnostics. These
-are distinct findings and none establishes scientific truth.
+Claims must be limited to the checks that passed, for example: stable across
+the tested specifications; internally concentrated within the fitted samples;
+or stronger than the chosen refitted null diagnostics. These are distinct
+findings and none establishes scientific truth.
 
-If null diagnostics are not validated, the report must state:
+Null diagnostics test what the same fitting procedure produces when the
+intended cross-event structure is absent. If those diagnostics are not
+validated, the report must state:
 
 > This audit describes sensitivity across the tested choices, but it does not
 > establish that the dataset contains a recoverable disease-order signal.
 
-## Optional downstream local decisions
+## Decisions to record before a real-data fit
 
 If a researcher chooses a real fit after library readiness, the researcher and
 local methods/domain team must resolve and record:
@@ -262,7 +269,8 @@ local methods/domain team must resolve and record:
 1. exact private column mapping and one-row-per-participant semantics;
 2. event direction, units, coding, and display/privacy names;
 3. group definitions and the scientific meaning of the older-group proxy;
-4. baseline event set and the feature-selection contradiction disposition;
+4. baseline event set and how the unresolved feature-selection contradiction is
+   handled;
 5. residualisation formula (external-variant provenance cannot yet be executed);
 6. missingness and outlier policies with predicted participant/event/cell counts;
 7. the actual model worker, software identity, settings, and capabilities;
@@ -271,3 +279,13 @@ local methods/domain team must resolve and record:
 
 Unknowns remain explicit. They must not be converted into defaults merely to make
 the configuration runnable.
+
+## Reference: starter configuration fields
+
+The starter uses `AuditConfig/0.3`. Three fields identify the same baseline
+input: `input.variant.variant_id`,
+`dataset_variant_intent.source_variant_id`, and the unique baseline-input source
+registry ID are all exactly `baseline-input`. The all-zero exact-file digest is
+an explicit placeholder in both required input-digest fields. Replace both with
+the digest of the actual local file; the placeholder does not show that a file
+exists. The starter contains no participant rows.

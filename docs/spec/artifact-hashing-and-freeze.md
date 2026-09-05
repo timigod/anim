@@ -1,5 +1,19 @@
 # Artifact hashing and freeze contract
 
+This developer reference defines how exact files and selected fields identify
+inputs, software, and verification records. A hash detects changed bytes; it
+does not prove who supplied them. “Preimage” means the exact bytes or fields
+hashed; “domain” is the prefix that distinguishes one type of identity from
+another.
+
+Some tables retain historical evaluator and worker definitions. In particular,
+older `/1` worker hash inputs below are not the active v2 protocol. Use the
+[protocol registry](../../schemas/protocol-registry.json) and
+[worker protocol](adapter-protocol.md) for new integrations. See the
+[technical reference guide](../handoff/technical-reference-guide.md) for the
+specific differences and historical files absent from the public package.
+The retained historical values below have not been rewritten.
+
 Status: `FROZEN`
 Contract version: `artifact-freeze/v0.1.0`
 

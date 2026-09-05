@@ -1,5 +1,16 @@
 # Analysis-universe contract
 
+Start with the [input guide](../handoff/input-data-dictionary.md) to declare
+analysis choices. A candidate is one planned analysis. After its inputs have
+been successfully prepared, it receives a universe record and planned sampling
+chains. Candidates that cannot be prepared remain visible without a universe.
+
+The identity details below let developers check that a result belongs to the
+intended analysis. A hash preimage is the exact fields or bytes used to calculate
+a hash; JCS is the fixed JSON serialization used here. See the
+[technical reference guide](../handoff/technical-reference-guide.md) for current
+execution limits and historical context.
+
 Status: `FROZEN`
 Contract version: `0.1.0`
 Governing scope: strict, single-sequence, cross-sectional EBM only
@@ -9,7 +20,10 @@ Executable Draft 2020-12 contract:
 Its identity projections and the ordered protocol vocabularies are registered in
 [`../../schemas/protocol-registry.json`](../../schemas/protocol-registry.json).
 
-This document defines how the auditor turns a predeclared set of defensible analysis choices into immutable, inspectable work. It is not permission to search all possible analyses. Invalid, unsupported, failed, and unrun specifications remain visible.
+This document defines how the auditor turns analysis choices specified in
+advance into a fixed plan, including analyses that cannot run. It does not
+permit searching every possible analysis for a favourable result. Invalid,
+unsupported, failed, and unrun specifications remain visible.
 
 ## 1. Identity model
 
@@ -510,7 +524,7 @@ Bootstrap, subsample, influence, and null replicates are already distinct `Analy
 The following are frozen operational ceilings, not scientific performance
 thresholds. A concrete plan may be smaller but must never exceed them:
 
-| Limit | Proposed value | Status | Reason |
+| Limit | Value | Status | Reason |
 |---|---:|---|---|
 | Ordinary logical specifications per audit | 256 | `FROZEN_OPERATIONAL` | Prevents accidental uncontrolled factorial expansion while allowing a substantial declared multiverse. |
 | Total executable fits, quick profile | 256 | `FROZEN_OPERATIONAL` | Keeps a diagnostic run bounded; a smaller explicitly declared experiment set is required rather than truncation. |
@@ -539,8 +553,10 @@ Every profile has both a logical-specification budget and total-fit budget. Exce
   match exactly. Ordinal 1 is forbidden unless ordinal 0 is a core-observed
   `PROCESS_FAILURE` with exact start/crash code.
 - A scientific or convergence failure is never retried under a new seed or altered settings unless that alternative existed in the frozen plan.
-- Resume loads only exact `chain_cache_key` and `universe_cache_key` matches. A
-  partial or failed result is not converted into success by cache lookup.
+- If resume/cache reuse is implemented in a future executor, it must load only
+  exact `chain_cache_key` and `universe_cache_key` matches. A partial or failed
+  result must not become success through cache lookup. The current executor
+  does not support this reuse; `rerun` repeats the complete plan.
 - Serial and parallel execution of the same immutable plan must produce value-equivalent canonical scientific results. Scheduling and timing fields are excluded from that equivalence assertion but retained in provenance.
 - A completed executable universe serializes one `FinalChainScientificPayload`
   per chain in exact plan order. The headline/reference payload is plan position
@@ -556,8 +572,8 @@ Before execution, `plan` emits:
 - baseline specification and ID;
 - plan digest and contract versions;
 - candidate, valid, invalid, unsupported, duplicate, and executable counts;
-- counts by experiment set, axis, operation, universe, chain execution, attempt,
-  and status;
+- planned counts by experiment set, axis, operation, seedless chain slot,
+  and static status;
 - exact fit multiplication for bootstrap, influence, and each null family;
 - every constraint failure with stable code;
 - estimated runtime and the evidence/status of that estimate;
@@ -566,7 +582,9 @@ Before execution, `plan` emits:
 
 These are fields of one closed `$defs/AnalysisPlan`, not an informal collection
 of console values. The plan digest binds every retained origin, candidate,
-constraint outcome, universe/chain identity, count partition, runtime-evidence
-status, and budget decision.
+constraint outcome, seedless chain slot, count partition, runtime-evidence
+status, and budget decision. Realized universe, chain-execution, and attempt
+identities are assigned after planning, as described in Section 6; they are not
+fields of `AnalysisPlan/3`.
 
 The plan is an auditable declaration, not a promise of successful fits. Reports use planned denominators and retain every terminal state.

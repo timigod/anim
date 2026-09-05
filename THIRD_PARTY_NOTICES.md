@@ -1,24 +1,27 @@
 # Third-party notices for Anim
 
-Status: **HISTORICAL CORE INVENTORY RETAINED; OPTIONAL EXAMPLE PROVENANCE DOCUMENTED**
+This page lists the software Anim depends on, its licences, and the checksums
+recorded for those packages. It also identifies the separately installed pysaebm
+example added in 0.2.0.
 
-Updated: 2026-09-05. The core wheel/license inventory below was verified for
-the 0.1.1 release on 2026-08-25 and is retained with its original platform scope.
+The core dependency list has not changed since 0.1.1. The package and licence
+checksums below were checked on 2026-08-25 for the stated platforms; this page
+retains that dated record.
 
-This file records technical licence and artifact evidence. It is not legal
+This is a technical record of licences and package files. It is not legal
 advice and does not replace the licence text shipped by each dependency.
 
 Anim is licensed under Apache-2.0. The project licence is in `LICENSE`.
 
-## Distribution boundary
+## What is included in the package
 
 The `anim` wheel contains Anim's own source and resources. It does not vendor or
 copy the source of NumPy, jsonschema, PyYAML, rfc8785, another runtime
 dependency, or an event-based model backend. Package installers obtain runtime
 dependencies as separate distributions.
 
-The public core explicitly pins nine runtime distributions, including the
-transitive dependencies of its primary libraries. The CPython 3.12 graph is:
+Anim specifies exact versions for nine runtime packages, including packages
+required by its main libraries. For CPython 3.12 they are:
 
 - `jsonschema==4.26.0`;
 - `numpy==2.3.1`;
@@ -30,8 +33,8 @@ transitive dependencies of its primary libraries. The CPython 3.12 graph is:
 - `rpds-py==2026.6.3`; and
 - `typing-extensions==4.16.0`.
 
-No named EBM backend is part of this core graph. Optional historical backend
-research and its environments are not part of the Anim 0.1.1 PyPI distribution.
+The core package does not include an EBM implementation. You install your chosen
+model separately.
 
 Anim 0.2.0 includes Anim's own optional adapter and provisioner
 under `workers/pysaebm_example`; it does not bundle the upstream backend source
@@ -41,11 +44,11 @@ or its optional dependencies. The example selects public pysaebm 7.7.9 commit
 source files and the upstream `LICENSE` bytes, which the provisioner retains.
 Optional software requirements are separate from the core graph and retain
 their own distribution licences and notices. See the
-[adapter runbook](docs/handoff/adapter-runbook.md) for software-only provisioning
-and the synthetic evidence boundary. No upstream participant datasets are bundled
+[model connection guide](docs/handoff/adapter-runbook.md) for setup instructions
+and an explanation of what the generated-data example can demonstrate. No upstream participant datasets are bundled
 or needed by that route.
 
-## Exact public artifact inventory
+## Package files and licence checksums
 
 All wheel hashes below matched `uv.lock`. “Both” means the same pure-Python
 wheel applies to macOS arm64 and manylinux x86_64.
@@ -82,12 +85,12 @@ The platform-specific top-level NumPy notice hashes are:
 - Linux `numpy-2.3.1.dist-info/LICENSE.txt`:
   `2046a3130e50b11c01659b3a0d963e6ae0b7436ff8e89cbcfd9e87bc6112d595`.
 
-## Technical compatibility finding
+## Licence compatibility review
 
-The exact core graph above contains permissive or PSF-style licences. The
+The nine core packages above use permissive or Python Software Foundation licences. The
 technical audit found no GPL, AGPL, or other reciprocal-copyleft component in
 the nine runtime artifacts. An Apache-2.0 project licence is technically
-compatible with the observed graph, subject to retaining required third-party
+compatible with those licences, subject to retaining required third-party
 notices. The project owner selected Apache-2.0 on 2026-08-25.
 
 The audit covers CPython 3.12 on macOS arm64 and manylinux x86_64. musl Linux,

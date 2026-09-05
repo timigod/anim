@@ -1,18 +1,27 @@
 # Product and scientific specification
 
+Anim checks how a model's results respond to analysis choices specified in
+advance. It does not establish that an estimated event order is biologically
+correct. Researchers should start with the [practical guides](../handoff/start-here.md).
+
+This reference retains scientific requirements and development history. Some
+required future features remain unavailable. See the
+[technical reference guide](../handoff/technical-reference-guide.md) for current
+behaviour, accepted readiness records, and historical references.
+
 Status: FROZEN SCIENTIFIC CONTRACT; READINESS AMENDED BY ADR-0014
 Product contract: `ebm-robustness-auditor-product/1.0`
 Freeze date: 2026-07-28
 
 ## 1. Authority and document set
 
-This is the top-level product and scientific contract for the private build of
-**EBM Robustness Auditor**. The final build prompt supersedes the deprecated
-master prompt. ADR-0001 closed prior-art research with `EXTEND`; ADR-0002 through
-ADR-0004 record the fixed build architecture. Accepted ADR-0014 and
-`ebm-integration-readiness.md` supersede only conflicting named-backend and
-Mina-dependent readiness requirements; all other scientific and product rules
-remain active.
+This is the top-level scientific design for **Anim (EBM Robustness Auditor)**.
+It began as a private development contract. The original decision records
+(ADRs) document that history; they are not required reading for package users.
+The [accepted readiness amendment](ebm-integration-readiness-1.2.0-candidate.md)
+amends the [earlier readiness contract](ebm-integration-readiness.md).
+Readiness no longer depends on one named backend or access to the motivating
+study's private material. Other scientific and privacy requirements remain.
 
 The following documents are jointly normative. The original frozen set was
 reviewed together; ADR-0014 later added the readiness contract:
@@ -25,15 +34,17 @@ reviewed together; ADR-0014 later added the readiness contract:
 - `synthetic-and-null-validation.md`;
 - `report-language-rules.md`;
 - `artifact-hashing-and-freeze.md`;
-- `ebm-integration-readiness.md` for the amended integration and readiness
-  boundary;
+- [accepted readiness amendment](ebm-integration-readiness-1.2.0-candidate.md)
+  and its inherited [earlier requirements](ebm-integration-readiness.md);
 - `../security/threat-model.md`; and
-- the current `../../evaluator/benchmark_contract.yaml`.
+- the historical `evaluator/benchmark_contract.yaml`, which is not included in
+  this public checkout. It is distinct from the packaged compact readiness
+  contract; see the technical reference guide.
 
 If two frozen documents conflict, execution fails closed until the conflict is
-resolved. For the readiness dependencies expressly listed in ADR-0014,
-`ebm-integration-readiness.md` is the later authority. A change to frozen
-scientific or benchmark semantics requires a new version, ADR,
+resolved. For readiness, apply the accepted 1.2.0 amendment and the earlier
+requirements it explicitly inherits. A change to frozen scientific or benchmark
+semantics requires a new version, ADR,
 benchmark-contract hash, and fresh held-out commitment. The published Idris
 event order and retained backend probe outputs are context, not ground truth and
 not authority to relax this contract.
@@ -108,15 +119,16 @@ These are not optimization choices:
    or imported by the core.
 6. Version 0.1 supports one strict single-sequence cross-sectional EBM only.
 7. The generic worker protocol, template, and contract harness are the sole EBM
-   integration surface. No competing SDK or model-specific execution boundary
+   integration interface. No competing SDK or model-specific execution boundary
    is a product deliverable.
 8. Specification and benchmark contracts receive independent review and freeze
    before substantive optimization.
 9. Participant-data-time execution and report generation are local and offline,
    with no telemetry, cloud/external API, remote assets, or LLM.
-10. The repository remains local/private. This build adds no project licence and
-    performs no push, publication, issue, pull request, package release, external
-    upload, or researcher/institution contact.
+10. Historical development restriction: the initial private build did not
+    include publication or researcher/institution contact. Anim 0.2.0 is now
+    publicly released under Apache-2.0. Participant privacy and restrictions on
+    scientific claims continue to apply.
 
 If primary evidence makes a fixed decision technically impossible, work stops at
 that boundary and records `IMPLEMENTATION-CONFLICT`; the strategy is not silently
@@ -603,8 +615,9 @@ calibration, false-positive behavior, and limitations receive separate review.
 ## 13. Exact oracle
 
 The project owns an independent exact oracle for fixed event likelihoods and a
-supported engineering ceiling of nine events. For
-participant `j`, candidate order `S`, and stage `k`:
+compact-summary ceiling of nine events. The public `solve_exact_oracle()`
+interface materializes the complete order distribution and supports at most
+eight events. For participant `j`, candidate order `S`, and stage `k`:
 
 ```text
 log p(x_j | S,k)
@@ -657,7 +670,8 @@ to it only when equivalent fixed-likelihood semantics can be exposed; otherwise
 that limitation is explicit and the oracle validates canonical metrics/reference
 sampling only.
 
-The supported ceiling is nine events (`362,880` orders). The deterministic
+The compact calculation ceiling is nine events (`362,880` orders); the public
+materialized-output ceiling is eight events. The deterministic
 57-participant, nine-event capacity regression enumerates the complete
 posterior and checks its exact order count, normalization, position
 probabilities, pairwise precedence, tie rule, and stage posterior. A dated
@@ -876,7 +890,7 @@ The current deterministic report carries the separate status `INCOMPLETE`
 regardless of candidate-execution success because the science and whole-run
 gates are not yet closed. A future complete status requires its own exact
 evidence authority; candidate `COMPLETE` or process exit `0` cannot create it.
-A live `ebm-audit-report/13.0` JSON report carries the exact privacy-safe
+A live `ebm-audit-report/14.0` JSON report carries the exact privacy-safe
 sampling and analyst-decision layer projections separately from candidate
 within-fit/chain records, participant influence, and null evidence. Its ordered
 six-layer coverage ledger is validated against those named owners, including
@@ -1066,8 +1080,9 @@ arbitrary backend error text.
 
 Each universe ledger record binds universe decisions, input/config/code/backend/
 environment/protocol digests, seed/chain, times/runtime, status, warnings/error,
-output hashes, and cache lineage. Resuming never drops prior failures or reuses a
-cache whose complete scientific identity differs.
+output hashes, and cache lineage. Future resume support must never drop prior
+failures or reuse a cache whose complete scientific identity differs. Current
+`rerun` repeats the whole plan without reusing saved scientific results.
 
 ## 19. Deterministic report and language
 
@@ -1158,8 +1173,9 @@ a product release gate.
 
 No candidate/upstream source is copied from `pysaebm`, `kde_ebm`, `pySuStaIn`,
 `pyebm`, ReduXis, or Academic Research Skills. Third-party notices are retained
-for distributed artifacts, but this private build adds no project `LICENSE` and
-makes no legal-compliance conclusion.
+for distributed files. The public Anim package includes an Apache-2.0
+`LICENSE`. Optional model installations retain their own licence requirements;
+this statement is not a legal-compliance assessment.
 
 ## 22. Specification and benchmark freeze gate
 
@@ -1599,10 +1615,12 @@ process** to read/write protocol objects; it is never an in-process plugin impor
 by `ebm_audit`. The baseline handoff includes a versioned reference template and
 export/validation command so reproduction evidence is not assembled ad hoc.
 
-## 27. Intentionally pending values, not product ambiguities
+## 27. Historical list of values requiring review
 
-The following are decided by independent review and development-only calibration,
-then fixed in the benchmark contract before held-out evaluation:
+This list records the original decisions that required review. It does not
+reopen values subsequently fixed by the applicable metric, protocol, or accepted
+readiness contract. For example, the exact-solver limits are now stated in
+Section 13. The original list was:
 
 - exact oracle event-count ceiling measured on supported hardware;
 - quick/full/release iteration, burn-in, thinning, chain, bootstrap, influence,
@@ -1613,6 +1631,6 @@ then fixed in the benchmark contract before held-out evaluation:
 - final strong-null-support false-positive allowance (proposal: 5%); and
 - runtime/memory reporting limits rather than scientific shortcuts.
 
-These pending numerical values do not authorize changing the product boundary,
+This historical list does not authorize changing the product boundary,
 truth semantics, null families, privacy rules, hard failures, or readiness
 requirements.

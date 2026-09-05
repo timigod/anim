@@ -1,5 +1,15 @@
 # External worker protocol specification
 
+Use this reference when writing a worker: a separate program that runs your model
+and exchanges requests and results with Anim. Start with the
+[model connection guide](../handoff/adapter-runbook.md), then use this document
+for exact fields and requirements. A capability is an operation or output the
+worker declares it supports. Passing the protocol checks does not validate the
+model for a study.
+
+The [technical reference guide](../handoff/technical-reference-guide.md) explains
+historical records and terms used in these specifications.
+
 Status: FROZEN SCIENTIFIC CONTRACT
 Protocol: `ebm-audit-worker/v2`
 Request schema: `ebm-audit-worker-request/2.0`
@@ -44,8 +54,9 @@ a truthful ordinary adapter and cannot block product readiness. Passing protocol
 conformance or ordinary adapter usability does not establish model validity or
 scientific suitability.
 
-ADR-0007 is historical evidence for this separation; ADR-0014 and
-`ebm-integration-readiness.md` govern readiness. This generic worker is the sole
+The original decision records are historical context. The
+[accepted readiness amendment](ebm-integration-readiness-1.2.0-candidate.md)
+amends the [earlier readiness contract](ebm-integration-readiness.md). This generic worker is the sole
 integration boundary. A per-integration profile may record only its own state;
 it cannot create a second SDK, parallel protocol, hidden product status, or
 release gate.
@@ -148,7 +159,7 @@ bytes/array catalog, authenticated Describe evidence, and ten-field
 revalidates that capability before any validate or fit work. A later fit
 authorization must derive from the exact successful validation authority. A
 `PlanningAuthority`, object, digest string, mapping, universe, or receipt alone
-never blesses raw ingress. No substitute token or compatibility seam is
+does not authorize direct calls with unvalidated inputs. No substitute token or compatibility seam is
 permitted before that atomic capability boundary.
 
 Each non-prepared candidate instead receives one sealed, non-serializable

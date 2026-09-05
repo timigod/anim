@@ -1,10 +1,8 @@
 # Reproduce an audit or recover an interrupted attempt
 
-An ordinary `ebm-audit run` saves a local replay recipe beside its scientific
-output. If `output.root` is `runs/first`, the recipe is
-`runs/first.operations/replay.json`. Both directories are private. The recipe
-contains hashes and a profile identifier, never participant rows, paths, or a
-copy of the private configuration.
+Use `ebm-audit rerun` to repeat an audit with the same configuration, inputs,
+worker and runtime. Recovery after cancellation or failure runs the **whole
+plan again**, including analyses that finished before interruption.
 
 ```sh
 ebm-audit run --config audit.yaml --offline --profile quick --progress
@@ -13,46 +11,84 @@ ebm-audit rerun --manifest runs/first.operations/replay.json \
 ebm-audit diff --left runs/first --right runs/retry
 ```
 
+This example assumes `audit.yaml` sets `output.root` to `runs/first`. An ordinary
+`run` saves its replay recipe at `runs/first.operations/replay.json`, beside the
+scientific output. Both directories are private. `diff` inspects saved reports;
+it requires the report files on both sides, which an interrupted run may lack.
+
+## Keep the original files and use a new output directory
+
 Keep the original configuration, inputs, pinned worker and its environment.
-`config.resolved.yaml` in the report is redacted and cannot replace the original.
-`--run-root` is relative to the original configuration directory and must be
-fresh. The command makes a temporary private sibling configuration and removes
-only that temporary file when it exits. It never overwrites previous results.
+The report's `config.resolved.yaml` is redacted and cannot replace the original
+configuration. The replay recipe contains hashes and a profile identifier,
+never participant rows, paths or a copy of the private configuration.
 
-The recipe binds parsed configuration (excluding only the output destination),
-all verified input and reference files, worker configuration and identity,
-randomness specification, selected profile, compiled plan, and local runtime.
-The runtime fingerprint includes Python/platform, installed core dependency
-versions, package code, normative resources, and numerical thread settings.
-Changes are rejected before fitting. Worker libraries and execution environment
-are also subject to the adapter's declared identity; qualification does not make
-an incomplete worker identity complete. A matching recipe is a reproducibility
-check, not a claim of cross-machine or cross-version numerical equivalence.
+`--run-root` is relative to the original configuration directory and must name
+a fresh directory. The command creates a temporary private configuration beside
+the original and removes only that temporary file when it exits. It never
+overwrites previous results.
 
-The same command recovers from cancellation or a process failure by executing a
-**fresh complete attempt**. It validates all identities again and refits all
-planned candidates. Existing result files remain useful evidence of the earlier
-attempt; they are never loaded as trusted live scientific authorities. Completed
-results are persisted in plan order. SIGINT or SIGTERM requests cancellation;
-an interrupted run may lack a final report and must not be described as complete.
+The `demo` command uses a temporary configuration and does not provide this
+recipe. Generator-managed development-null runs (synthetic checks using data
+with no signal) also use a separate synthetic replay procedure. For `rerun`,
+use an ordinary configuration with saved local input.
 
-`attempt-status.json` in the operations directory distinguishes `FINISHED`,
-`CANCELLED`, and `FAILED`. `FINISHED` means the ordinary workflow emitted its
-terminal result; read `run-status.json` for its separate scientific status and
-exit code. Missing attempt status means interruption or an unknown disposition,
-including power loss. Neither recipe nor attempt status is the frozen final
-scientific manifest, and neither reopens the standalone `report` command.
-The ephemeral `demo` command and generator-owned development-null runs do not
-advertise this recipe. Development-null retains its separate synthetic replay
-contract. Use an ordinary configuration with saved local input for `rerun`.
+## Monitor or stop the new attempt
 
 Use `--memory-budget-mb` with `--worker-memory-mb` to reserve worker capacity and
-reduce concurrency. These are admission reservations, not measured RSS or an OS
-memory limit. They never remove planned candidates. Progress is JSON on stderr;
-the final command result stays on stdout. See [execution controls](execution.md).
+reduce concurrency. These are declared reservations, not measurements of
+resident set size (RSS, memory currently held in RAM) or operating-system memory
+limits. They never remove planned analyses, called **candidates**. Progress is
+JSON on stderr; the final command result stays on stdout. See
+[execution controls](execution.md).
 
-All execution and comparison are offline. No telemetry, cloud model, or LLM
-interprets results. Software readiness, worker capability, robustness evidence,
-and scientific interpretation are separate claims. Sampling, chain, analyst
-decision, participant, and null uncertainty remain distinct; missing, failed,
-invalid and incomparable evidence must not be converted into numerical stability.
+`SIGINT` or `SIGTERM` requests cancellation. Results are saved in plan order,
+so a candidate that finished out of order may not yet have been saved. An
+interrupted attempt may lack a final report and must not be described as
+complete. Earlier result files remain evidence of that attempt; `rerun` does
+not load them to resume execution or create a new scientific report.
+
+## Read the attempt status
+
+`attempt-status.json` in the operations directory records one of these states:
+
+| State | Meaning |
+| --- | --- |
+| `FINISHED` | The ordinary workflow emitted its final result. Read `run-status.json` for the separate scientific status and exit code. |
+| `CANCELLED` | Cancellation ended the attempt before completion. |
+| `FAILED` | The attempt failed. |
+| File missing | The outcome is unknown; interruption or power loss can prevent a status update. |
+
+Neither the recipe nor attempt status is the final scientific manifest. Neither
+enables the standalone `report` command, which remains unavailable for saved
+scientific evidence.
+
+## Reference: what must match before fitting
+
+The recipe records hashes that identify the parsed configuration, excluding
+only the output destination; all verified input and reference files; worker
+configuration and identity; randomness specification; selected profile; compiled
+plan; and local runtime. `rerun` checks these identities again and rejects
+changes before fitting any candidate.
+
+The runtime fingerprint includes Python and platform, installed core dependency
+versions, package code, required schema and specification resources, and
+numerical thread settings. Worker libraries and the worker's execution
+environment must also be covered by the adapter's declared identity. Passing
+adapter qualification does not fill gaps in an incomplete identity declaration.
+
+A matching recipe checks reproducibility within these recorded conditions. It
+does not establish numerical equivalence across machines or software versions.
+
+## Reference: interpretation limits
+
+All execution and comparison are offline. No telemetry, cloud model or large
+language model (LLM) interprets results. Software readiness, worker capability,
+robustness evidence and scientific interpretation remain separate assessments.
+
+Anim also keeps six sources of uncertainty separate: variation within a fit,
+differences between model-fitting chains, sampling participants, analyst
+decisions, participant influence (sensitivity to removing participants), and
+null calibration (comparison with results expected without signal). Missing,
+failed, invalid and incomparable evidence must not be interpreted as numerical
+stability.

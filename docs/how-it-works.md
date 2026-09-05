@@ -1,24 +1,76 @@
-# How The Synthetic Route Works
+# How Anim runs a synthetic audit
 
-This walkthrough follows a deliberately small `SYNTHETIC-ONLY` example with two
-machine event IDs: `synthetic_event_a` and `synthetic_event_b`. It explains the
-public worker boundary without showing participant rows, private names, raw
-values, or a real EBM.
+Run `ebm-audit demo --conformance-ebm` to see how Anim sends work to a local
+worker and produces a report from its responses. The demo uses generated data
+labelled `SYNTHETIC-ONLY`. It tests communication and declared capabilities;
+it does not fit a researcher's event-based model (EBM) or establish scientific
+validity.
 
-The example is illustrative. JSON blocks labelled **complete** are complete
-values for their named schema definition, not complete worker messages. Python
-examples use placeholder values and are not directly runnable model integrations.
-The executable schemas remain authoritative:
+## Run the demo and inspect its output
+
+The demo writes these local files:
+
+```text
+ebm-audit-demo/
+  warnings.jsonl
+  report/
+    report.html
+    report.json
+    universes.csv
+```
+
+Open `report.html` for the readable report. `report.json` contains the structured
+report state. `universes.csv` records the final status of every **candidate**,
+meaning each planned analysis. A **universe** describes the prepared data,
+settings and seeds for an analysis that can proceed. `warnings.jsonl` records
+cautions and diagnostics.
+
+The current demo returns `PARTIAL`/`INCOMPLETE`. Conclusions must stay within
+the synthetic, protocol and capability evidence actually present in those
+files. A passing conformance check shows that a worker follows the communication
+protocol and its declared capabilities. It does not establish that the EBM is
+scientifically valid or accepted.
+
+Use `ebm-audit summary --run-dir ebm-audit-demo` to inspect the saved report.
+[Report comparison](report-comparison.md) explains `diff`, comparisons of orders
+supplied by the backend, and uncertainty measurements that remain unavailable.
+These commands inspect existing files; they do not create a new scientific
+report.
+
+For a researcher-owned EBM, start with the
+[custom worker guide](handoff/custom-worker-guide.md). The
+[adapter runbook](handoff/adapter-runbook.md) covers `adapter pin`, `adapter check`,
+generated tests and a separately installed pysaebm example that runs actual
+upstream model code on generated synthetic rows.
+
+For ordinary saved configurations, [reproducibility](reproducibility.md) covers
+`rerun`, which executes the full plan again, and
+[execution controls](execution.md) cover progress, cancellation and declared
+memory reservations. The demo's temporary configuration does not produce a
+replay recipe.
+
+## Reference: request and result examples
+
+The rest of this guide follows two synthetic event IDs, `synthetic_event_a` and
+`synthetic_event_b`, through the worker protocol. It contains no participant
+rows, private names, raw input values or real EBM implementation.
+
+JSON blocks labelled **complete** contain all fields for their named schema
+definition, not a complete worker message. Python snippets use placeholders and
+are not directly runnable model integrations. The executable schemas define
+which fields and values are accepted:
 
 - [`worker-protocol.schema.json`](../schemas/worker-protocol.schema.json)
 - [`canonical-records.schema.json`](../schemas/canonical-records.schema.json)
 - [`protocol-registry.json`](../schemas/protocol-registry.json)
 
-## 1. Start With A Synthetic Request
+### 1. Send a request to the worker
 
-The public demo creates a request bundle, invokes a local worker, and retains
-only bounded metadata and artifacts. Numeric values are in `values.npz`, never
-in JSON, stdout, warnings, or the default report.
+Anim creates a request directory and invokes a separate local worker process.
+The worker returns files in a response directory. Anim checks these files and
+retains the permitted metadata and artifacts within its size limits.
+Participant input values stay in `values.npz`; they must not appear in JSON,
+stdout, warnings or the default report.
 
 ```text
 invocation/
@@ -32,9 +84,9 @@ invocation/
     response.json           # completion marker, written last
 ```
 
-`request.json` carries protocol metadata. The following **complete**
+`request.json` carries protocol metadata. This **complete**
 `SelfTestRequestPayload` is the smallest public request shape: `seed` makes the
-synthetic check repeatable, `profile` fixes the small test profile, and
+synthetic check repeatable, `profile` selects the small test profile, and
 `requested_checks` names the checks the worker must report.
 
 ```json
@@ -45,18 +97,19 @@ synthetic check repeatable, `profile` fixes the small test profile, and
 }
 ```
 
-For a fit, the complete outer `WorkerRequest` also includes its command,
-versioned schema identifiers, UUID, timestamps, offline flag, digests, payload,
-and input file references. Its fields are defined by `WorkerRequest` and `FitRequestPayload` in the
-worker protocol; do not hand-assemble digests from this guide.
+A fit request needs the complete outer `WorkerRequest`, including its command,
+versioned schema identifiers, UUID, timestamps, offline flag, digests (hashes
+used to identify content), payload and input file references. `WorkerRequest`
+and `FitRequestPayload` in the worker protocol define those fields. Do not
+hand-assemble digests from this guide.
 
-## 2. Describe The Two-Event Data Without Exposing Values
+### 2. Describe the data without exposing participant values
 
-This **complete** `DatasetDescriptor` is a schema-valid metadata shape for two
-synthetic events and two training rows. It names arrays in `values.npz` but does
-not contain any numerical values. Every `sha256:` value below is a syntactically
-valid placeholder for a digest that the auditor calculates from real local
-content; it must never be copied as a claimed result.
+This **complete** `DatasetDescriptor` shows metadata for two synthetic events
+and two training rows. It names arrays in `values.npz` without including their
+values. Each `sha256:` value is a syntactically valid placeholder. In a real
+run, the auditor calculates digests from local content; these placeholders must
+never be copied as claimed results.
 
 ```json
 {
@@ -113,16 +166,17 @@ content; it must never be copied as a claimed result.
 }
 ```
 
-`event_ids` provide stable alignment across request and result. `event_directions`
+`event_ids` keep events aligned between request and result. `event_directions`
 state which direction is treated as abnormal; do not infer them from a desired
 order. `group_codebook` explains the integer group codes when the worker needs
-them for its declared model input.
+them as declared model input.
 
-## 3. Use The Public Fit SDK
+### 3. Implement a Fit callback with the worker SDK
 
-A researcher-owned executable imports `ebm_audit.worker_sdk`. It remains a
-separate local process from the auditor core. The Fit callback receives the full
-protocol request and its request directory:
+The worker executable imports `ebm_audit.worker_sdk`, Anim's software development
+kit for worker integrations. The worker remains a separate local process from
+the auditor. Its Fit callback receives the full protocol request and the
+request directory:
 
 ```python
 from collections.abc import Mapping
@@ -139,11 +193,11 @@ def fit(request: Mapping[str, Any], request_dir: Path) -> WorkerSuccess | Worker
     ...
 ```
 
-Create the context only from that callback input. Direct `FitContext()`
-construction is blocked because the SDK must validate and snapshot the exact
-request before result authoring. The request contains the scientific input and
-requested-output declaration; `values.npz` stays in the private request
-directory rather than in the JSON request or default reports.
+Create `FitContext` only from that callback input. Direct `FitContext()`
+construction is blocked because the SDK must validate and keep an unchanged
+copy of the exact request before it builds a result. The request describes the
+scientific input and requested outputs; the values themselves remain in the
+private `values.npz` file.
 
 ```python
 from collections.abc import Mapping
@@ -199,26 +253,28 @@ def fit(request: Mapping[str, Any], request_dir: Path) -> WorkerSuccess | Worker
     )
 ```
 
-This is **illustrative synthetic transport code, not an EBM**. It uses a
+This is **illustrative synthetic communication code, not an EBM**. It uses a
 placeholder digest and no participant values. Do not copy it as a scientific
 model or report its two-event order as scientific evidence.
 
-The adapter author supplies only facts their EBM actually produced: the central
-order, requested standard outputs, method declaration, field origins, iteration
-facts, any supported stage reference, artifacts, and warnings. The SDK derives
-the request-bound identities, input accounting, capability applicability,
-standard array member names and semantic versions, array catalog metadata,
-resource defaults, result digest, and canonical `WorkerSuccess` transport
-shape. It does not invent a scientific method, a field origin, a warning, an
-array, or a fitted artifact.
+Supply only facts the EBM produced: its central order (the representative event
+order chosen by the declared method), requested standard outputs, method
+declaration, field origins (how each result was obtained), iteration facts,
+any supported stage reference, artifacts and warnings.
 
-`FitOutputs()` is safely empty. Optional `stage_model_reference` and
-`backend_artifacts` also default to absent. Leave an output absent when the EBM
-did not supply it; do not fill it with a zero, an empty estimate, or an inferred
-value. The SDK then preserves the declared `UNAVAILABLE` or `NOT_APPLICABLE`
-capability state instead of silently turning absence into pass or fail.
+The SDK calculates the identities linking the result to the request, input
+accounting, capability applicability, standard array names and semantic versions,
+array catalog metadata, resource defaults, result digest and standard
+`WorkerSuccess` response. It does not invent a scientific method, field origin,
+warning, array or fitted artifact.
 
-At the callback boundary, `fit_success()` returns one of these typed shapes:
+`FitOutputs()` is empty by default. Optional `stage_model_reference` and
+`backend_artifacts` are also absent by default. Leave an output absent when the
+EBM did not supply it; do not fill it with zero, an empty estimate or an inferred
+value. The SDK preserves the declared `UNAVAILABLE` or `NOT_APPLICABLE`
+capability state instead of converting absence to a pass or fail.
+
+`fit_success()` returns one of these structured result types:
 
 ```text
 WorkerSuccess(
@@ -236,17 +292,18 @@ WorkerFailure(
 )
 ```
 
-Use a `WorkerFailure` for a truthful typed negative response. Its safe message
-is core-owned, so backend exception prose, raw values, identifiers, and private
-paths do not enter the default response.
+Use `WorkerFailure` to report an actual failure or unsupported capability with
+its defined status and code. Anim supplies the safe message, so backend
+exception text, raw values, identifiers and private paths do not enter the
+default response.
 
-`map_fit_result()` remains available for a separately prepared complete
-canonical payload. Prefer the request-bound `FitContext.from_request()` plus
-`FitOutputs` route in a normal Fit callback so the SDK can preserve the exact
-request binding.
+`map_fit_result()` remains available if you have separately prepared a complete
+payload in Anim's standard format. For a normal Fit callback, prefer
+`FitContext.from_request()` with `FitOutputs` so the SDK keeps the result linked
+to the exact request.
 
-The worker executable is then framed by `WorkerApplication`. The generated
-adapter uses this complete synthetic-only entry point:
+`WorkerApplication` handles the command and response protocol around the
+backend. The generated adapter uses this complete synthetic-only entry point:
 
 ```python
 from pathlib import Path
@@ -265,17 +322,16 @@ identity = build_synthetic_protocol_identity(
 raise SystemExit(WorkerApplication(SyntheticProtocolExampleBackend(identity)).run())
 ```
 
-That entry point is a protocol demonstration only. A research integration must
-replace the complete identity, algorithm declaration, capabilities, settings,
-limitations, validation, fit, and self-test behavior. It must not relabel the
-synthetic fixture as a model.
+This entry point demonstrates the protocol. A research integration must replace
+the complete identity, algorithm declaration, capabilities, settings,
+limitations, validation, fit and self-test behavior. It must not relabel the
+synthetic test implementation as a model.
 
-## 4. Return A Canonical Result Or A Safe Failure
+### 4. Return a standard result or a safe failure
 
-For the two-event order `[0, 1]`, a complete Fit result declares the array in
-its `array_catalog`. This **complete** `ArrayCatalogEntry` is the metadata shape
-for that in-memory `int32` array. The digest is illustrative and must be
-calculated by the SDK in real use.
+For the two-event order `[0, 1]`, a complete Fit result describes its array in
+`array_catalog`. This **complete** `ArrayCatalogEntry` describes that in-memory
+`int32` array. The digest is illustrative; the SDK calculates it in real use.
 
 ```json
 {
@@ -288,14 +344,14 @@ calculated by the SDK in real use.
 }
 ```
 
-The first position `0` refers to `synthetic_event_a`; the second position `1`
-refers to `synthetic_event_b`. This is an emitted synthetic order only. It is not
-evidence that an order is scientifically recoverable.
+The first entry, `0`, refers to `synthetic_event_a`; the second, `1`, refers to
+`synthetic_event_b`. This emitted synthetic order does not show that a true
+order can be recovered scientifically.
 
-If an output cannot be supplied, the worker returns a typed negative response.
-This **complete** `NegativeResponseError` is a schema-valid example. Its safe
-message is core-owned; it contains counts and no raw values, private paths, or
-identifier material.
+If an output cannot be supplied, the worker returns a defined negative response.
+This **complete** `NegativeResponseError` is a schema-valid example. Anim
+supplies its safe message; it includes counts but no raw values, private paths
+or identifying information.
 
 ```json
 {
@@ -316,42 +372,7 @@ identifier material.
 
 The complete outer `WorkerResponse` adds request/response metadata, backend
 identity, capabilities, resource summary, file map, timing, and either a
-payload or this error. The protocol schema, not this guide, defines its full
-closed shape. In active protocol v2, the executable commands are `describe`,
-`validate`, `fit`, and `self-test`; standalone `stage` wire framing is reserved
-and is not an active worker command.
-
-## 5. Inspect The Audit Artifacts
-
-`ebm-audit demo --conformance-ebm` writes local synthetic artifacts:
-
-```text
-ebm-audit-demo/
-  warnings.jsonl
-  report/
-    report.html
-    report.json
-    universes.csv
-```
-
-`report.html` is the readable local view. `report.json` carries the structured
-report state. `universes.csv` retains every candidate's terminal status, and
-`warnings.jsonl` retains visible cautions and diagnostics. The current demo's
-`PARTIAL`/`INCOMPLETE` state limits conclusions to the visible synthetic,
-protocol, and capability evidence in those files.
-
-For a researcher-owned EBM, begin with the [custom worker guide](handoff/custom-worker-guide.md).
-A passing conformance receipt demonstrates protocol and declared-capability
-behavior only. It does not make the EBM scientifically valid or accepted.
-
-The [adapter runbook](handoff/adapter-runbook.md) provides `adapter pin`,
-`adapter check`, generated tests, and a separately provisioned pysaebm example
-that runs actual upstream model code on generated synthetic rows. This walkthrough's
-transport snippets remain illustrative.
-
-Use `ebm-audit summary --run-dir ebm-audit-demo` to inspect the saved report.
-[Report comparison](report-comparison.md) explains `diff`, native-order distances,
-and the separate unavailable uncertainty states. For ordinary saved configurations,
-[reproducibility](reproducibility.md) covers fresh-attempt `rerun`, and
-[execution controls](execution.md) cover progress, cancellation, and memory
-admission. Ephemeral demo configurations do not produce a replay recipe.
+payload or this error. The protocol schema defines the full set of allowed
+fields. In active protocol v2, executable commands are `describe`, `validate`,
+`fit` and `self-test`. Standalone `stage` message framing is reserved and is not
+an active worker command.

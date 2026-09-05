@@ -1,6 +1,17 @@
 # Scenario Derivation Semantics
 
-Status: normative contract; runtime handlers are not implemented.
+This reference defines how each synthetic benchmark output is calculated from
+validated execution records. It does not, by itself, show that a benchmark ran
+or passed. Here, a “derivation” is a calculation; an “owner” is its validated
+source record; and a “predicate” is a check with a true/false or status result.
+
+The 104-fit proportional challenge described below is distinct from the accepted
+compact readiness check with six successful fits and 104 required outputs. See
+the [technical reference guide](../handoff/technical-reference-guide.md). The
+numbered calculations, exact identifiers, and explicit anchors are retained.
+
+Status: normative calculation requirements; complete runtime implementation
+is not established. The retained implemented subset is described below.
 
 Contract ID: `scenario-derivation-semantics/5`
 
