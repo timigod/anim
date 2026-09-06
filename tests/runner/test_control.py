@@ -260,6 +260,7 @@ def test_cleanup_stops_residual_child_process(tmp_path):
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
+    cleanup_verified = False
     try:
         deadline = time.monotonic() + 5
         while not child_ready.exists() and time.monotonic() < deadline:
@@ -268,6 +269,10 @@ def test_cleanup_stops_residual_child_process(tmp_path):
         invocation._terminate_and_reap_process(process)
         assert invocation._terminate_residual_process_group(process)
         assert not invocation._process_group_exists(process)
+        cleanup_verified = True
     finally:
-        invocation._terminate_and_reap_process(process)
-        invocation._terminate_residual_process_group(process)
+        # After verified exit, the OS can reuse the process-group ID. Only
+        # retry cleanup when the test did not already verify its completion.
+        if not cleanup_verified:
+            invocation._terminate_and_reap_process(process)
+            invocation._terminate_residual_process_group(process)
